@@ -50,6 +50,9 @@ Write each answer into the file named in brackets right after the round.
    master CV in that layout from their CV's content (same facts, nothing added). Show it and get a clear yes
    before setting it as master_cv. If they decline, tailoring still writes job.md and application.md, but the
    documents can't be built: say so plainly.
+   cv/variants.yaml starts with example entries that aren't in their CV, and the builder stops on those. Replace
+   them with the experience bullets of their CV that letters may reorder (exact master text, `variants: {}`), or
+   leave the file with only its header comments.
 6. **Strengths, facts and gaps** [CLAUDE.md "Real strengths", "Confirmed facts", "Gaps"]
    Read the CV, propose a list of strengths it clearly supports, and ask the candidate to tick what they can
    back up in an interview. Ask for numbers behind CV bullets (team size, users, incidents, time saved) and

@@ -81,6 +81,18 @@ def cv_layout(path):
     return problems
 
 
+def unmatched_variants(cv_path, variants_path):
+    """Ids in variants.yaml whose master text isn't found exactly once in the CV (the builder stops on these)."""
+    import docx
+    import yaml
+    key = lambda s: re.sub(r"\s+", " ", s).strip().lower().lstrip("- ")
+    table = docx.Document(str(cv_path)).tables[0]
+    paras = [key(p.text) for c in (table.rows[1].cells[0], table.rows[1].cells[-1]) for p in c.paragraphs]
+    variants = yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {}
+    return [vid for vid, v in variants.items()
+            if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
+
+
 def checks():
     """Every check as {area, item, status, fix}. Status: ok, todo (blocks the routine) or warn."""
     out = []
@@ -117,6 +129,12 @@ def checks():
             add("cv", "CV layout for the builder", not problems,
                 "; ".join(problems) + " (see cv/README.txt; tailoring still works, building documents doesn't)",
                 warn=True)
+            var_path = ROOT / str(cfg.get("variants") or "")
+            if not problems and cfg.get("variants") and var_path.is_file() and "yaml" not in missing:
+                left = unmatched_variants(p, var_path)
+                add("cv", "variants.yaml matches the master CV", not left,
+                    f"not in your CV: {', '.join(left[:6])}; replace these entries with your own CV bullets "
+                    "or delete them (onboarding does this)")
 
     for name, fix in (("CLAUDE.md", "fill in your profile (onboarding asks for it)"),
                       ("projects.md", "describe your projects, or delete the example ones")):
