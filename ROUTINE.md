@@ -4,7 +4,8 @@ This file is the only copy of the routine; the scheduled task just points here. 
 Today = the current local date. Work in this order. All tools run from the workspace folder: `python engine/tools/<name>.py --help` shows usage.
 
 0. Guard and mode
-- If daily/<today>.md already exists, this is a repeat or catch-up run: only add jobs that aren't in the ledger yet, append them to that brief, and skip step 6.
+- **Setup first:** run `python engine/tools/setup_check.py`. If it prints NOT READY (exit code 1), or there is no config.yaml or CLAUDE.md yet, stop here and follow engine/ONBOARDING.md instead (the first-run interview). Warnings alone don't stop the routine; list them under "Your actions" in the brief.
+- If daily/<today>.md already exists (and isn't a "Setup needed" brief), this is a repeat or catch-up run: only add jobs that aren't in the ledger yet, append them to that brief, and skip step 6.
 - **Weekend mode (Saturday and Sunday):** run steps 1, 2, 3, 4, 7 and a short brief (step 8: summary, scored jobs, actions for the candidate, sources). No tailoring, no outreach, no follow-ups. Monday tailors from the weekend's scored list first.
 
 1. Load context

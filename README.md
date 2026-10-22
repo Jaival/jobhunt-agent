@@ -22,9 +22,11 @@ workspace/                   your private folder (and private git repo)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
+   ├─ ONBOARDING.md          the first-run setup interview
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
-   ├─ tools/                 search_jobs, ledger, build_application, add_applied, archive, tracker_to_md
+   ├─ tools/                 setup_check, search_jobs, ledger, build_application, add_applied, archive, tracker_to_md
+   ├─ docs/                  visual setup guide
    └─ templates/             example workspace files
 ```
 
@@ -43,7 +45,9 @@ every claim must come from the master CV or `CLAUDE.md`, and the routine never s
 - Python 3 with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
 - Optional MCP connectors: Gmail, Indeed, a headless browser (obscura)
 
-See [SETUP.md](SETUP.md).
+See [SETUP.md](SETUP.md), or the visual guide in [docs/setup-guide.html](docs/setup-guide.html). Setup is mostly
+a conversation: on the first run the routine checks the workspace (`engine/tools/setup_check.py`) and, while
+anything is missing, asks you for it ([ONBOARDING.md](ONBOARDING.md)) instead of searching.
 
 ## Credits
 `career-ops-playbook.md` adapts rules from [career-ops](https://github.com/career-ops-hq/career-ops) (MIT licence).
