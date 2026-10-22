@@ -1,0 +1,21 @@
+# Approved alternative wordings for CV bullets, used by engine/tools/build_application.py.
+#
+# - Each id points at one bullet of the master CV (found by its `master` text; keep it in sync
+#   when you edit the master CV, or the builder stops with an error).
+# - `group` lets application.md reorder bullets: cv.bullets.job1: [monitoring, cicd, ...]
+#   (ids are written without the group prefix there).
+# - Alternatives use only facts from the master CV or CLAUDE.md. The builder refuses any
+#   alternative without approved: true. Review them once and set approved: true for the ones you like.
+
+job1.cicd:
+  group: job1
+  master: "Automated test and deployment pipelines for 3 products with GitHub Actions."
+  variants: {}
+job1.monitoring:
+  group: job1
+  master: "Caught CPU and memory problems before customers noticed by setting up CloudWatch alarms."
+  # default: short          # use an approved variant on every CV unless application.md says otherwise
+  variants:
+    short:
+      approved: false
+      text: "Set up CloudWatch alarms that caught CPU and memory problems early."

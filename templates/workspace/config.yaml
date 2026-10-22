@@ -1,0 +1,12 @@
+# Personal settings for the jobhunt-agent tools (engine/tools/config.py). Keep this file in your private workspace.
+applicant: Your Name                            # document author / ATS name, first line of the CV
+file_prefix: Your_Name                          # <file_prefix>_CV_<short>.docx
+master_cv: cv/Your_Name_CV.docx                 # see cv/README.txt for the structure the builder expects
+master_letter: cv/Your_Name_CoverLetter.docx
+variants: cv/variants.yaml
+letter_city: Berlin                             # letter date line "Berlin, DD.MM.YYYY"
+university: TU Berlin                           # student letters must mention it (leave empty for none)
+font: Open Sans                                 # font for CV and letter
+fallback_font: Open Sans                        # substitute named in the font table
+search:
+  home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)
