@@ -34,8 +34,8 @@ projects.md holds the full facts and CV text for every project.
 ## Routine settings (read by engine/ROUTINE.md)
 - Scope: <role families to search and score; student vs junior differences>.
 - Location: <preferences; what counts as a small plus>.
-- Student software roles: score against <your skill list>.
-- HiWi roles at <your university and nearby institutes> are strong fits.
+- Student roles: score against <your skill list>.
+- Research-assistant (HiWi) roles at <your university and nearby institutes, or delete this line> are strong fits.
 - Student letters: enrolment in <degree> at <university>; lead with <your strongest real work>.
 - Weekday sources beyond the APIs: <student boards, university board, watchlist companies>.
 - Tracker: it only holds sent applications. Sent = I say so, or a confirmation email arrived.
