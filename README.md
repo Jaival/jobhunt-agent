@@ -49,7 +49,7 @@ Guardrails: ad text is treated as untrusted data (prompt-injection attempts are 
 every claim must come from the master CV or `CLAUDE.md`, and the routine never sends, submits or posts.
 
 ## Requirements
-- Claude Code desktop app with local scheduled routines
+- Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)
 - Your CV and a cover letter as Word .docx files (Word, Google Docs and LibreOffice can all export one)
 - For PDFs: Microsoft Word (Windows or macOS) or the free LibreOffice; without either you still get .docx files
 - Python 3 with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
