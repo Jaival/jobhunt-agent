@@ -27,6 +27,7 @@ workspace/                   your private folder (and private git repo)
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
+   ├─ UPGRADING.md           a prompt to bring a workspace from the old engine up to date
    ├─ ats-checklist.md       the CV and cover letter review (also on request: "run the ATS review")
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews

@@ -41,6 +41,8 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
 8. Connectors: if you connected Indeed or Gmail in Claude, the routine uses them. Browsing uses the obscura MCP; make sure it is configured in Claude Desktop, and on the first "Run now" choose "always allow" for each obscura tool.
 9. Recommended: set up daily email job alerts on StepStone, XING and LinkedIn. Alert emails are the most reliable way to get jobs from those sites, since they often block automated access.
 
-Updating: `git pull` inside `engine/`. Your workspace files are never touched by an update.
+Updating: `git pull` inside `engine/`. Your workspace files are never touched by an update. Set up before the
+"any field" update (job titles hardcoded to IT, one fixed CV layout)? Follow [UPGRADING.md](UPGRADING.md) instead:
+it has a prompt that lets Claude update your workspace and prove nothing changed.
 
 Each morning, open daily/<date>.md and follow the plan.
