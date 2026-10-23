@@ -1,0 +1,23 @@
+# Sample workspace for a fictional marketing student (see README.md). Not a real person.
+applicant: Lena Fischer
+file_prefix: Lena_Fischer
+master_cv: cv/Lena_Fischer_CV.docx
+master_letter: cv/Lena_Fischer_CoverLetter.docx
+variants: cv/variants.yaml
+letter_city: Mannheim
+university: Universität Mannheim
+font: Arial
+fallback_font: Arial
+search:
+  home: {wo: Mannheim, umkreis: 50}
+profile:
+  role_types: [Werkstudent, Internship, Junior]
+  include_titles: [marketing, content, social media, kommunikation, communication, '\bpr\b', redaktion, brand]
+  junior_include_titles: [marketing, content, social media, communication]
+  junior_exclude_titles: []
+  exclude_titles: [senior, '\blead\b', principal, head of, director, manager, leiter, ausbildung, azubi,
+                   unsolicited, initiativ, vertrieb, sales]
+  score_bonus: [Instagram, Canva, Google Analytics]
+layout: cv/layout.yaml
+internship_duration: 6 months
+pdf_engine: auto

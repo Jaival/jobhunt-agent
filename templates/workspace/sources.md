@@ -5,12 +5,11 @@ Claude updates the "Status" column after each run (ok / blocked / error + date).
 
 ## Search terms
 Use each platform's search with these terms, 2-4 per platform per day, rotating through the list.
-Examples; replace them with your own:
-- Werkstudent DevOps
-- Working Student Cloud
-- Junior Cloud Engineer
-- Werkstudent Softwareentwicklung
-- Praktikum Softwareentwicklung
+Onboarding fills these in from your field (English and German job titles). Examples for a marketing student:
+- Werkstudent Marketing
+- Working Student Content
+- Praktikum Online-Marketing
+- Junior Online Marketing
 
 Locations: Germany (anywhere, remote OK); your home area first (config.yaml search.home). Switzerland only for the Swiss sources.
 Posted within: last 7 days (last 1-2 days on high-volume boards if the platform supports it).
@@ -30,7 +29,7 @@ The order within each row overrides this default.
 | yes | Indeed | Connector | Use the Indeed connector (search_jobs + get_job_details). Scraping returns 403. Never store or show the to.indeed.com short links (they expire): resolve each one with `curl -s -o /dev/null -w "%{redirect_url}"`, take the `jk` parameter and write https://de.indeed.com/viewjob?jk=<jk> | |
 | yes | SAP Careers | ALERTS > SEARCH | Cloudflare bot check blocks browsing; set up a job alert on jobs.sap.com | |
 | yes | EnglishJobs.de | FETCH > SEARCH | English-speaking roles; good fit if your German is basic. Use ?sort=date; extract titles with JS (links are huge) | |
-| yes | GermanTechJobs.de | FETCH > SEARCH | Tech-only board. Use https://germantechjobs.de/jobs/DevOps/all (also /jobs/System/all); read job links and the ad text with JS. Each ad shows Erfahrungsstufe and Sprache | |
+| yes | GermanTechJobs.de | FETCH > SEARCH | Tech-only board (skip it for non-tech fields). Use https://germantechjobs.de/jobs/DevOps/all (also /jobs/System/all); read job links and the ad text with JS. Each ad shows Erfahrungsstufe and Sprache | |
 | yes | Company watchlist | API > FETCH | See companies.md | |
 | yes | University job board | FETCH > SEARCH | Your university's student-assistant (HiWi) job board; add its URL here | |
 | yes | Stellenwerk | FETCH > SEARCH | Student job board run with universities, e.g. https://www.stellenwerk.de/<city>?search=IT | |

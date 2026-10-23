@@ -115,14 +115,14 @@ footer { margin-top: 48px; font-size: 0.85rem; color: var(--muted); }
   <header>
     <span class="eyebrow">jobhunt-agent · setup guide</span>
     <h1>Set up your daily job-hunt routine</h1>
-    <p class="lede">Claude searches job boards every morning, scores new ads against your CV and, on weekdays, drafts a tailored CV and cover letter for the best ones. You review and send them yourself; nothing is ever submitted for you.</p>
+    <p class="lede">Claude searches job boards every morning, scores new ads against your CV and, on weekdays, drafts a tailored CV and cover letter for the best ones, for student and junior roles in any field. You review and send them yourself; nothing is ever submitted for you.</p>
     <div class="needs" aria-label="Requirements">
-      <span>Claude Desktop, Code tab</span><span>Python 3</span><span>Git</span><span>Windows + Word for PDFs</span><span>Your CV (.docx)</span>
+      <span>Claude Desktop, Code tab</span><span>Python 3</span><span>Git</span><span>Word or LibreOffice for PDFs</span><span>Your CV (.docx)</span>
     </div>
   </header>
 
   <div class="phases">
-    <div class="phase"><span class="when">Once · about 10 min</span><span class="who you">You</span><h3>Install</h3><p>Clone the engine, create the folder, add the scheduled routine.</p></div>
+    <div class="phase"><span class="when">Once · about 10 min</span><span class="who you">You</span><h3>Install</h3><p>Clone the engine, create the folder, add the scheduled task.</p></div>
     <div class="phase"><span class="when">First run · about 15 min</span><span class="who claude">Claude asks</span><h3>Setup interview</h3><p>The routine notices nothing is filled in and asks you for what it needs.</p></div>
     <div class="phase"><span class="when">Every day</span><span class="who claude">Claude drafts</span><h3>Daily brief</h3><p>New jobs, scores and ready-to-check drafts in <code>daily/&lt;date&gt;.md</code>.</p></div>
   </div>
@@ -134,7 +134,7 @@ footer { margin-top: 48px; font-size: 0.85rem; color: var(--muted); }
       <ul>
         <li><a href="https://claude.ai/download">Claude Desktop</a>, signed in, with the Code tab available.</li>
         <li><a href="https://www.python.org/downloads/">Python 3</a> (tick "Add to PATH") and <a href="https://git-scm.com/downloads">Git</a>.</li>
-        <li>Microsoft Word, if you want PDFs. Without it you still get the .docx files.</li>
+        <li>For PDFs: Microsoft Word (Windows or macOS) or the free <a href="https://www.libreoffice.org/download/">LibreOffice</a>. Without either you still get the .docx files.</li>
       </ul>
       <div class="code"><button class="copy" type="button" id="copy-pip">Copy</button><pre>pip install python-docx openpyxl pypdf pyyaml requests</pre></div>
     </div></li>
@@ -159,16 +159,18 @@ python engine/tools/setup_check.py --init</pre></div>
 
     <li><div class="step">
       <span class="who you">You</span>
-      <h2>Add the scheduled routine</h2>
-      <p>In Claude Desktop open the Code tab, then <b>Routines → New routine → Local</b>, and fill in:</p>
+      <h2>Add the scheduled task</h2>
+      <p>In Claude Desktop open the Code tab, click <b>Scheduled</b> in the sidebar (or under <b>More</b>), then <b>New task</b> (choose <b>Set up manually</b> if asked), and fill in:</p>
       <dl class="fields">
         <div><dt>Name</dt><dd>job-hunt-daily</dd></div>
-        <div><dt>Description</dt><dd>Find, score and tailor jobs; update tracker; write daily brief</dd></div>
-        <div><dt>Folder</dt><dd>your <code>JobHunt</code> folder (trust it when asked)</dd></div>
-        <div><dt>Schedule</dt><dd>daily, e.g. 07:30. Weekends run a short search-only mode.</dd></div>
-        <div><dt>Model</dt><dd>the strongest one you have</dd></div>
-        <div><dt>Instructions</dt><dd>copy the text below</dd></div>
+        <div><dt>Instructions</dt><dd>copy the text below into the box under the name</dd></div>
+        <div><dt>Where it runs</dt><dd><b>Advanced settings → General</b>: turn on <b>Only on this computer</b> (it needs your local files). If that switch is at the top of the dialog instead, turn it on first.</dd></div>
+        <div><dt>Local folder</dt><dd>your <code>JobHunt</code> folder (trust it when asked)</dd></div>
+        <div><dt>Trigger</dt><dd><b>Daily</b>, e.g. 07:30. Weekends run a short search-only mode.</dd></div>
+        <div><dt>Model</dt><dd>the strongest one you have (menu in the instructions box)</dd></div>
+        <div><dt>Description</dt><dd>if asked: Find, score and tailor jobs; update tracker; write daily brief</dd></div>
       </dl>
+      <p class="note">Leave <b>Worktree</b> off in the task's Edit form: the routine has to write into your folder itself.</p>
       <div class="code"><button class="copy" type="button" id="copy-prompt">Copy</button><pre>Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly.
 On the first run it checks the setup and asks me for what it needs.
 Finish by replying with a 3-line summary and the path of today's brief.</pre></div>
@@ -179,7 +181,7 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
       <h2>Click "Run now" and answer the setup questions</h2>
       <p>The routine runs <code>setup_check.py</code> first. While something is still TODO it doesn't search; it interviews you in short rounds and writes your answers into <code>config.yaml</code>, <code>CLAUDE.md</code>, <code>projects.md</code> and <code>sources.md</code>.</p>
       <div class="rounds" aria-label="Interview rounds">
-        <span><b>1</b>About you</span><span><b>2</b>Studies</span><span><b>3</b>Roles you want</span><span><b>4</b>Languages</span><span><b>5</b>CV and letter</span>
+        <span><b>1</b>About you</span><span><b>2</b>Studies</span><span><b>3</b>Roles and job titles</span><span><b>4</b>Languages</span><span><b>5</b>CV and letter</span>
         <span><b>6</b>Strengths and gaps</span><span><b>7</b>Projects</span><span><b>8</b>Rules and daily plan</span><span><b>9</b>Search terms</span><span><b>10</b>Connectors</span>
       </div>
       <div class="chat" aria-label="Example of the setup interview">
@@ -189,9 +191,11 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
         <div class="msg c">Thanks. Round 3: which kinds of roles should I look for?
           <div class="opts"><span class="on">Working student</span><span class="on">Internship</span><span>Research assistant (HiWi)</span><span>Thesis</span><span>Junior</span></div>
         </div>
-        <div class="msg c">Round 6: your CV clearly supports Python, Docker and GitHub Actions. Which of these could you explain in an interview? I'll only ever claim the ones you confirm.</div>
+        <div class="msg c">Round 5: I checked your CV the way an applicant tracking system (ATS) reads it. Two things to fix: your phone number sits in the page header, which many systems skip, and "My Journey" isn't a heading they recognise. Shall I make an improved copy for you to look at? Your original stays as it is.</div>
+        <div class="msg u">Yes, please.</div>
+        <div class="msg c">Round 6: your CV clearly supports Instagram planning, Canva and Google Analytics. Which of these could you explain in an interview? I'll only ever claim the ones you confirm.</div>
       </div>
-      <p class="note">Weren't watching when it ran? The routine writes a "Setup needed" brief with the next questions. Reply in that session, or open Claude Code in the folder and say <i>continue the job-hunt setup</i>. Progress is saved after every round.</p>
+      <p class="note">Weren't watching when it ran? The routine writes a "Setup needed" brief with the next questions. Open that run from the task's <b>History</b> list on the Scheduled page and reply there, or open Claude Code in the folder and say <i>continue the job-hunt setup</i>. Progress is saved after every round.</p>
     </div></li>
 
     <li><div class="step">
@@ -199,7 +203,7 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
       <h2>Allow permissions and keep the computer awake</h2>
       <ul>
         <li>During the first run, choose <b>Always allow</b> for Python, curl and file writes so later runs don't stall.</li>
-        <li>Settings → Desktop app → General: turn on <b>Keep computer awake</b>. Routines only run while the app is open; a missed run catches up once.</li>
+        <li><b>Settings → This computer → System</b>: turn on <b>Keep computer awake</b>. Scheduled tasks only run while the app is open and the computer is awake; after sleep, one missed run from the last seven days catches up.</li>
         <li>Optional: connect Gmail and Indeed in Claude, and set up email job alerts on StepStone, XING and LinkedIn. Those sites often block automated searches, and alert emails get through.</li>
       </ul>
     </div></li>
@@ -237,9 +241,9 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
     <h2>If something goes wrong</h2>
     <dl class="faq">
       <div><dt>It keeps asking setup questions</dt><dd>Run <code>python engine/tools/setup_check.py</code> in the folder. Every TODO line says what is missing.</dd></div>
-      <div><dt>"CV layout" warning</dt><dd>The builder needs the layout described in <code>cv/README.txt</code>. During setup Claude can rebuild your CV in that layout from its content; until then you get the letter text and CV choices, but no finished documents.</dd></div>
+      <div><dt>"CV map" warning</dt><dd>The builder finds the parts it may change (headline, item order, letter text) through <code>cv/layout.yaml</code>, a map of your own CV. If you edited your master CV since it was mapped, say "remap my CV". Until the map works you get the letter text and CV choices, but no finished documents.</dd></div>
       <div><dt>The tracker didn't update</dt><dd>Close it in Excel before the run. Rows that couldn't be saved wait in <code>tracker/pending_rows.csv</code>.</dd></div>
-      <div><dt>Updating the engine</dt><dd>Run <code>git pull</code> inside <code>engine/</code>. Your own files are never touched.</dd></div>
+      <div><dt>Updating the engine</dt><dd>Run <code>git pull</code> inside <code>engine/</code>. Your own files are never touched. Set up with the older version (IT job titles only, one fixed CV layout)? Paste the prompt from <code>engine/UPGRADING.md</code> into Claude Code in your folder instead; it updates your settings and checks that nothing changed.</dd></div>
     </dl>
   </section>
 

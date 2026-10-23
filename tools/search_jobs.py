@@ -4,6 +4,7 @@ Sources: Arbeitsagentur API (search terms from sources.md, home area from config
 Arbeitnow API (German site only), and the Personio / Ashby / Greenhouse / Lever endpoints listed in
 companies.md. Indeed (connector) and Gmail alerts stay manual tool calls in the routine.
 
+Titles are filtered by the profile: block in config.yaml (role types, include / exclude words; scope.py).
 Writes data/candidates.json (all in-scope jobs, each marked new / seen) and prints the new ones.
 It does not change the ledger: after scoring, run `python engine/tools/ledger.py record`.
 
@@ -28,6 +29,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import ledger  # noqa: E402
 from config import CFG  # noqa: E402
+from scope import Scope, role_type  # noqa: E402
 
 ROOT = ledger.ROOT
 OUT = ROOT / "data" / "candidates.json"
@@ -36,40 +38,12 @@ BA_DETAIL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/job
 BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", "User-Agent": "Mozilla/5.0"}
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
 
-# Title filter (CLAUDE.md "What I'm looking for"; routine step 3).
-DROP = re.compile(r"senior|\blead\b|principal|staff|architect|architekt|manager|leiter|head of|director|"
-                  r"vertrieb|sales|marketing|recruit|buchhalt|accounting|finanz|einkauf|procurement|"
-                  r"ausbildung|azubi|dozent|logopäd|lager|empfang|bar &|service \(|social media|design|"
-                  r"elektro|mechan|maschinenbau|gebäude|tga|flight|unsolicited|initiativ|"
-                  r"fachinformatiker|wirtschaftsinformatiker", re.I)
-INFRA = re.compile(r"devops|cloud|platform|plattform|infrastru|\bsre\b|reliabil|linux|system ?admin|"
-                   r"systemadmin|system engineer|systems engineer|kubernetes|network|netzwerk|it-admin|"
-                   r"\bit\b|informatik|security|sicherheit", re.I)
-SOFTWARE = re.compile(r"software|backend|frontend|full.?stack|entwickl|developer|web|app|mobile|python|"
-                      r"test|qa\b|quality|automation|automatisierung|engineer", re.I)
-JUNIOR = re.compile(r"junior|einsteiger|berufseinstieg|graduate|absolvent|entry", re.I)
-ROLE_TYPES = [
-    ("Thesis", re.compile(r"masterarbeit|abschlussarbeit|thesis|bachelorarbeit", re.I)),
-    ("HiWi", re.compile(r"hiwi|studentische hilfskraft|wissenschaftliche hilfskraft|studentische aushilfe", re.I)),
-    ("Internship", re.compile(r"praktik|intern\b|internship", re.I)),
-    ("Werkstudent", re.compile(r"werkstudent|working student|studentische|student\b", re.I)),
-]
-
-
-def role_type(title):
-    for name, rx in ROLE_TYPES:
-        if rx.search(title):
-            return name
-    return "Junior" if JUNIOR.search(title) else "Other"
-
-
-def in_scope(title):
-    if DROP.search(title):
-        return False
-    rt = role_type(title)
-    if rt in ("Werkstudent", "HiWi", "Internship", "Thesis"):
-        return bool(INFRA.search(title) or SOFTWARE.search(title))
-    return bool(INFRA.search(title)) and not re.search(r"informatik", title, re.I)  # junior/unlabelled: infra only
+# Title filter (routine step 3): built from the profile: block in config.yaml, see scope.py.
+try:
+    SCOPE = Scope(CFG.get("profile"))
+except ValueError as e:
+    sys.exit(str(e))
+in_scope = SCOPE.in_scope
 
 
 def search_terms():

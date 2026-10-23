@@ -6,8 +6,10 @@
 !templates/**/*.json
 config.yaml
 !templates/workspace/config.yaml
+!examples/sample-workspace/config.yaml
 # Python and Office temp files
 __pycache__/
+.pytest_cache/
 *.pyc
 ~$*
 *.tmp

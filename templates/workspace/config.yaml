@@ -1,7 +1,7 @@
 # Personal settings for the jobhunt-agent tools (engine/tools/config.py). Keep this file in your private workspace.
 applicant: Your Name                            # document author / ATS name, first line of the CV
 file_prefix: Your_Name                          # <file_prefix>_CV_<short>.docx
-master_cv: cv/Your_Name_CV.docx                 # see cv/README.txt for the structure the builder expects
+master_cv: cv/Your_Name_CV.docx                 # your own CV design; cv/layout.yaml maps it (cv/README.txt)
 master_letter: cv/Your_Name_CoverLetter.docx
 variants: cv/variants.yaml
 letter_city: Berlin                             # letter date line "Berlin, DD.MM.YYYY"
@@ -10,3 +10,16 @@ font: Open Sans                                 # font for CV and letter
 fallback_font: Open Sans                        # substitute named in the font table
 search:
   home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)
+profile:                                        # which job titles search_jobs.py keeps (engine/tools/scope.py)
+  # Each entry is a word (or regular-expression fragment) matched anywhere in the title, upper/lower case ignored.
+  # Onboarding fills this in from your answers; the examples below are for a marketing student.
+  role_types: [Werkstudent, Internship, Junior]          # pick from Werkstudent, HiWi, Internship, Thesis, Junior
+  include_titles: [your field]                            # e.g. [marketing, content, social media, kommunikation]
+  junior_include_titles: []                               # optional: a narrower list for junior roles
+  junior_exclude_titles: []                               # optional: extra words to drop for junior roles
+  exclude_titles: [senior, '\blead\b', principal, head of, director, manager, leiter, ausbildung, azubi,
+                   unsolicited, initiativ]                # seniority words; add fields you never want
+  score_bonus: []                                         # skills that add points when scoring, e.g. [SEO, Canva]
+layout: cv/layout.yaml                          # CV map (engine/tools/cv_map.py); 'none' = drafts only, no documents
+internship_duration: ""                         # e.g. 6 months; internship letters must then state it
+pdf_engine: auto                                # auto (Word if installed, else LibreOffice) | word | libreoffice | none
