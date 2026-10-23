@@ -71,6 +71,12 @@ Write each answer into the file named in brackets right after the round.
 5. **CV and cover letter** [cv/, config.yaml: master_cv, master_letter]
    Ask for the path of their CV and a cover letter they like (.docx preferred; PDF is fine to read from).
    Copy them into cv/ as `<file_prefix>_CV.docx` and `<file_prefix>_CoverLetter.docx` and set the paths.
+   If they only have a PDF, ask whether they can export a .docx from the program they wrote it in (Word, Google
+   Docs, LibreOffice; Canva exports are often text boxes and can't be tailored).
+   **ATS review first:** follow engine/ats-checklist.md. Scan both files, explain the findings in plain words,
+   write cv/ats-review.md, and on a yes make the improved copies and switch the master to them only after the
+   candidate has looked at them. If they want to keep a layout the scan warns about (tables, columns), record
+   that as a decision in CLAUDE.md "My decisions on the rules" so later reviews don't flag it again.
    Run `setup_check.py`: if it warns about the CV layout, explain what cv/README.txt expects and offer to build a
    master CV in that layout from their CV's content (same facts, nothing added). Show it and get a clear yes
    before setting it as master_cv. If they decline, tailoring still writes job.md and application.md, but the
