@@ -19,4 +19,7 @@ If you edit your master CV later and an anchor stops matching, setup_check.py wa
 building documents until you say "remap my CV". If your CV can't be mapped (for example a PDF only), set
 `layout: none` in config.yaml: the routine then writes drafts (job.md, application.md) but no documents.
 
-Building PDFs uses Microsoft Word (engine/tools/docx2pdf.ps1), so it needs Windows with Word installed.
+PDFs are made with Microsoft Word if it's installed (Windows or macOS), otherwise with the free LibreOffice
+(config.yaml `pdf_engine`, see engine/tools/pdf_export.py). Without either you still get the .docx files.
+LibreOffice needs your CV fonts installed, and its page count can differ slightly from Word's, so open the
+first CV PDF once to check.

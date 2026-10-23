@@ -162,8 +162,16 @@ def checks():
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
 
-    add("documents", "Microsoft Word (PDF export)", sys.platform == "win32",
-        "PDF export needs Windows with Word; the .docx files are still built", warn=True)
+    import pdf_export
+    try:
+        engine = pdf_export.pick(cfg.get("pdf_engine"))
+        add("documents", f"PDF export: {engine}", engine != "none",
+            "pdf_engine: none, so only .docx files are built", warn=True)
+        if engine == "libreoffice":
+            add("documents", "PDF page counts", False, "LibreOffice's page count can differ from Word's: open "
+                "the first CV PDF to check it fits the page limit", warn=True)
+    except pdf_export.PdfError as e:
+        add("documents", "PDF export", False, f"{e}; the .docx files are still built", warn=True)
     return out
 
 

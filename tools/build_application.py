@@ -7,7 +7,8 @@ The master CV and master cover letter stay the templates (CLAUDE.md rule 5): the
 changes the headline, reorders the items of the sections named in the CV map (cv/layout.yaml, see
 cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. It fails before writing anything if a check breaks.
 Every CV keeps all projects; cv.omit_projects only works together with cv.omit_approved: <date>
-(the applicant's approval). After the PDF export it fails if the CV is over 2 pages or the letter over 1.
+(the applicant's approval). After the PDF export (pdf_export.py, config pdf_engine) it fails if the CV is
+over 2 pages or the letter over 1.
 
 Output for ATS autofill: file names start with the applicant's name (parsers read names from file
 names), document metadata carries the applicant as author and a neutral title (Word copies it into
@@ -20,7 +21,6 @@ import argparse
 import copy
 import datetime as dt
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -30,11 +30,11 @@ import yaml
 
 import appdirs
 import cv_map
+import pdf_export
 from cv_map import MapError, paragraphs
 
 from config import CFG, ROOT, path
 
-TOOLS = Path(__file__).resolve().parent
 MASTER_CV = path("master_cv")
 MASTER_LETTER = path("master_letter")
 VARIANTS = path("variants")
@@ -375,8 +375,17 @@ def main():
     for line in summary:
         print(f"  {line}")
     if not a.no_pdf:
-        subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(TOOLS / "docx2pdf.ps1"),
-                        str(cv_out), str(letter_out)], check=True)
+        try:
+            engine = pdf_export.export([cv_out, letter_out], CFG.get("pdf_engine"))
+        except pdf_export.PdfError as e:
+            print(f"WARNING {folder.name}: no PDFs ({e}); the .docx files are built, page limits unchecked",
+                  file=sys.stderr)
+            return 0
+        if engine == "none":
+            print("  no PDFs (pdf_engine: none); page limits unchecked")
+            return 0
+        if engine == "libreoffice":
+            print("  PDFs from LibreOffice: its page count can differ from Word's, open the CV PDF once to check")
         problems = check_pages(cv_out.with_suffix(".pdf"), letter_out.with_suffix(".pdf"))
         if problems:
             print(f"FAILED {folder.name}: page check:\n  - " + "\n  - ".join(problems), file=sys.stderr)
@@ -385,7 +394,7 @@ def main():
 
 
 def check_pages(cv_pdf, letter_pdf):
-    """Word's page count is the real one (LibreOffice under-counts)."""
+    """Page limits from the exported PDFs (Word's count is the reliable one; LibreOffice can differ)."""
     import pypdf
     problems = []
     for name, path, limit in (("CV", cv_pdf, CV_MAX_PAGES), ("letter", letter_pdf, LETTER_MAX_PAGES)):

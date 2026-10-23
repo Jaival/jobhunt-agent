@@ -22,3 +22,4 @@ profile:                                        # which job titles search_jobs.p
   score_bonus: []                                         # skills that add points when scoring, e.g. [SEO, Canva]
 layout: cv/layout.yaml                          # CV map (engine/tools/cv_map.py); 'none' = drafts only, no documents
 internship_duration: ""                         # e.g. 6 months; internship letters must then state it
+pdf_engine: auto                                # auto (Word if installed, else LibreOffice) | word | libreoffice | none
