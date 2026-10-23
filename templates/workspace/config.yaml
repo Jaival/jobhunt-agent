@@ -10,3 +10,13 @@ font: Open Sans                                 # font for CV and letter
 fallback_font: Open Sans                        # substitute named in the font table
 search:
   home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)
+profile:                                        # which job titles search_jobs.py keeps (engine/tools/scope.py)
+  # Each entry is a word (or regular-expression fragment) matched anywhere in the title, upper/lower case ignored.
+  # Onboarding fills this in from your answers; the examples below are for a marketing student.
+  role_types: [Werkstudent, Internship, Junior]          # pick from Werkstudent, HiWi, Internship, Thesis, Junior
+  include_titles: [your field]                            # e.g. [marketing, content, social media, kommunikation]
+  junior_include_titles: []                               # optional: a narrower list for junior roles
+  junior_exclude_titles: []                               # optional: extra words to drop for junior roles
+  exclude_titles: [senior, '\blead\b', principal, head of, director, manager, leiter, ausbildung, azubi,
+                   unsolicited, initiativ]                # seniority words; add fields you never want
+  score_bonus: []                                         # skills that add points when scoring, e.g. [SEO, Canva]

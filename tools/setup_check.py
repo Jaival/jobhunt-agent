@@ -119,6 +119,19 @@ def checks():
                 f"set {key} (onboarding asks for it)")
         home = (cfg.get("search") or {}).get("home") or {}
         add("config.yaml", "search.home", bool(home.get("wo")), "set search.home.wo to your city", warn=True)
+        prof = cfg.get("profile")
+        inc = (prof or {}).get("include_titles") if isinstance(prof, dict) else None
+        add("config.yaml", "profile (which job titles to keep)",
+            isinstance(prof, dict) and inc != ["your field"],
+            "fill in profile: role_types and include_titles (onboarding round 3)")
+        if isinstance(prof, dict):
+            sys.path.insert(0, str(ENGINE / "tools"))
+            from scope import Scope
+            try:
+                Scope(prof)
+                add("config.yaml", "profile is valid", True)
+            except Exception as e:  # bad role type or a broken regex fragment
+                add("config.yaml", "profile is valid", False, str(e))
 
     for key, label in (("master_cv", "master CV"), ("master_letter", "master cover letter")):
         p = ROOT / str(cfg.get(key) or "")
