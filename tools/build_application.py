@@ -4,8 +4,8 @@ application.md = YAML frontmatter (CV choices, letter header) + the letter body 
 (one paragraph per block, blank line between paragraphs). See engine/templates/application_template.md.
 
 The master CV and master cover letter stay the templates (CLAUDE.md rule 5): the builder only
-changes the headline, reorders sections found by their heading names, and swaps bullet text for
-approved variants from cv/variants.yaml. It fails before writing anything if a check breaks.
+changes the headline, reorders the items of the sections named in the CV map (cv/layout.yaml, see
+cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. It fails before writing anything if a check breaks.
 Every CV keeps all projects; cv.omit_projects only works together with cv.omit_approved: <date>
 (the applicant's approval). After the PDF export it fails if the CV is over 2 pages or the letter over 1.
 
@@ -29,6 +29,8 @@ import docx.text.paragraph
 import yaml
 
 import appdirs
+import cv_map
+from cv_map import MapError, paragraphs
 
 from config import CFG, ROOT, path
 
@@ -36,6 +38,8 @@ TOOLS = Path(__file__).resolve().parent
 MASTER_CV = path("master_cv")
 MASTER_LETTER = path("master_letter")
 VARIANTS = path("variants")
+LAYOUT = str(CFG.get("layout") or "cv/layout.yaml")
+CV_KEYS = {"headline", "bullets", "variants", "omit_projects", "omit_approved"}  # plus the mapped section names
 
 STUDENT_TYPES = {"Werkstudent", "HiWi", "Internship"}
 WORDS_MIN, WORDS_MAX = 250, 350
@@ -45,10 +49,10 @@ BANNED = [
     "touching base", "circling back", "team player", "synergy", "hit the ground running",
     "dynamic environment", "results-driven", "go-getter",
 ]
-CV_SECTIONS = ("PROJECTS", "EXPERIENCE", "EDUCATION", "CERTIFICATIONS")
 APPLICANT = CFG["applicant"]          # name in metadata; files start with FILE_PREFIX
 FILE_PREFIX = CFG["file_prefix"]
 UNIVERSITY = CFG.get("university", "")   # student letters must name it
+INTERNSHIP_DURATION = str(CFG.get("internship_duration") or "")   # internship letters must state it, e.g. "12 months"
 FONT = CFG.get("font", "Open Sans")                # font for CV and letter
 FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when FONT isn't installed on the reader's machine
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -83,7 +87,7 @@ def set_text(p, text):
     """Replace a paragraph's text, keeping the first run's formatting (or the '-' bullet run)."""
     runs = p.runs
     # A "- " bullet whose dash shares a run with the text keeps its dash; without it the
-    # abilities parser would treat the bullet as a heading and move it.
+    # no_dash item rule (cv_map.py) would treat the bullet as an item start and move it.
     prefix = "- " if p.text.lstrip().startswith("-") and not text.lstrip().startswith("-") else ""
     if not runs:
         p.add_run(prefix + text)
@@ -121,43 +125,42 @@ def reorder_blocks(blocks, order, names, what):
     return final
 
 
-def split_blocks(paras, is_start, name_of):
-    blocks, names = {}, []
-    current = None
-    for p in paras:
-        if is_start(p):
-            current = name_of(p)
-            names.append(current)
-            blocks[current] = []
-        if current:
-            blocks[current].append(p._p)
-    return blocks, names
-
-
-def section_range(paras, start_text, end_texts):
-    start = next(i for i, p in enumerate(paras) if p.text.strip() == start_text)
-    end = next((i for i, p in enumerate(paras) if i > start and p.text.strip() in end_texts), len(paras))
-    return start, end
+def load_layout():
+    if LAYOUT.lower() == "none":
+        raise BuildError("config.yaml has layout: none, so the CV isn't mapped and documents can't be built; "
+                         "send the drafts by hand or say 'remap my CV'")
+    try:
+        return cv_map.load(ROOT / LAYOUT)
+    except MapError as e:
+        raise BuildError(str(e))
 
 
 # ---------- CV ----------
 
-def build_cv(meta, variants, out):
+def build_cv(meta, variants, layout, out):
     cvm = meta.get("cv") or {}
+    lmap = layout.get("cv") or {}
+    sections = lmap.get("sections") or {}
+    unknown = [k for k in cvm if k not in CV_KEYS and k not in sections]
+    if unknown:
+        raise BuildError(f"unknown cv keys {unknown}; mapped sections: {list(sections)} (cv/layout.yaml)")
     d = docx.Document(MASTER_CV)
-    t = d.tables[0]
-    head, left, right = t.rows[0].cells[0], t.rows[1].cells[0], t.rows[1].cells[1]
     summary = []
 
     if cvm.get("headline"):
-        set_text(head.paragraphs[1], cvm["headline"])
+        if not lmap.get("headline"):
+            raise BuildError("cv.headline is set but cv/layout.yaml maps no headline")
+        try:
+            set_text(cv_map.find(paragraphs(d), lmap["headline"], "headline"), cvm["headline"])
+        except MapError as e:
+            raise BuildError(str(e))
         summary.append(f"headline: {cvm['headline']}")
 
     # Variants and bullet order use ids from cv/variants.yaml, located by their master text.
     by_id = {}
+    paras = paragraphs(d)
     for vid, v in variants.items():
-        hits = [p for c in (left, right) for p in c.paragraphs
-                if key(p.text) and key(p.text).startswith(key(v["master"])[:60])]
+        hits = [p for p in paras if key(p.text) and key(p.text).startswith(key(v["master"])[:60])]
         if len(hits) != 1:
             raise BuildError(f"variant '{vid}': master text found {len(hits)} times in the master CV")
         by_id[vid] = hits[0]
@@ -186,61 +189,34 @@ def build_cv(meta, variants, out):
         reorder_blocks(blocks, [f"{group}.{n}" for n in order], ids, f"bullet in '{group}'")
         summary.append(f"{group} bullets: {', '.join(order)}")
 
-    # Projects: a block starts with a non-empty line after a blank line, or with a title line (no '|')
-    # followed by its stack line (with '|'); name = text before the first comma.
-    lp = left.paragraphs
-    s, e = section_range(lp, "PROJECTS", {"EXPERIENCE"})
-    proj = lp[s + 1:e]
-    starts = {i for i, p in enumerate(proj) if p.text.strip() and (
-        i == 0 or not proj[i - 1].text.strip()
-        or ("|" not in p.text and i + 1 < len(proj) and "|" in proj[i + 1].text))}
-    blocks, names = split_blocks(
-        proj, lambda p: proj.index(p) in starts, lambda p: p.text.split(",")[0].strip())
-    if names:  # blank spacer lines at the end of the section stay put instead of moving with the last project
-        last = blocks[names[-1]]
-        while len(last) > 1 and not "".join(last[-1].itertext()).strip():
-            last.pop()
     # Every CV keeps all projects (CLAUDE.md rule 5); omit_projects only works with the applicant's dated approval.
     omit = cvm.get("omit_projects") or []
-    if omit:
-        approved = cvm.get("omit_approved") or meta.get("omit_approved")
-        if not approved or not re.match(r"^\d{4}-\d{2}-\d{2}$", str(approved)):
-            raise BuildError("omit_projects needs omit_approved: <YYYY-MM-DD>, set only after the applicant approved "
-                             "leaving these projects out of this CV")
-        unknown = [n for n in omit if n not in blocks]
-        if unknown:
-            raise BuildError(f"omit_projects: unknown project: {unknown}; known: {names}")
-        both = [n for n in omit if n in (cvm.get("projects") or [])]
-        if both:
-            raise BuildError(f"project listed in both projects and omit_projects: {both}")
-        for n in omit:
-            for e in blocks.pop(n):
-                e.getparent().remove(e)
-            names.remove(n)
-        summary.append(f"omitted projects (approved {approved}): {', '.join(omit)}")
-    if cvm.get("projects"):
-        reorder_blocks(blocks, cvm["projects"], names, "project")
-        summary.append(f"projects: {', '.join(cvm['projects'])}")
-
-    # Abilities: headings are the non-empty lines that don't start with '-'.
-    rp = right.paragraphs
-    s, e = section_range(rp, "Skills", {"LEADERSHIP & INITIATIVE"})
-    ab = rp[s + 1:e]
-    blocks, names = split_blocks(
-        ab, lambda p: p.text.strip() and not p.text.strip().startswith("-"), lambda p: p.text.strip())
-    if cvm.get("abilities"):
-        reorder_blocks(blocks, cvm["abilities"], names, "ability")
-        summary.append(f"abilities: {', '.join(cvm['abilities'])}")
-
-    # Technical Proficiency: "Name: ..." lines, each with the blank line after it.
-    rp = right.paragraphs
-    s = next(i for i, p in enumerate(rp) if p.text.strip() == "Technical Proficiency")
-    tech = rp[s + 2:]
-    blocks, names = split_blocks(
-        tech, lambda p: ":" in p.text, lambda p: p.text.split(":")[0].strip())
-    if cvm.get("technical"):
-        reorder_blocks(blocks, cvm["technical"], names, "technical line")
-        summary.append(f"technical: {', '.join(cvm['technical'])}")
+    if omit and "projects" not in sections:
+        raise BuildError("omit_projects needs a section named 'projects' in cv/layout.yaml")
+    for name, spec in sections.items():
+        try:
+            names, blocks = cv_map.section(d, name, spec or {})
+        except MapError as e:
+            raise BuildError(str(e))
+        if name == "projects" and omit:
+            approved = cvm.get("omit_approved") or meta.get("omit_approved")
+            if not approved or not re.match(r"^\d{4}-\d{2}-\d{2}$", str(approved)):
+                raise BuildError("omit_projects needs omit_approved: <YYYY-MM-DD>, set only after the applicant approved "
+                                 "leaving these projects out of this CV")
+            unknown = [n for n in omit if n not in blocks]
+            if unknown:
+                raise BuildError(f"omit_projects: unknown project: {unknown}; known: {names}")
+            both = [n for n in omit if n in (cvm.get("projects") or [])]
+            if both:
+                raise BuildError(f"project listed in both projects and omit_projects: {both}")
+            for n in omit:
+                for e in blocks.pop(n):
+                    e.getparent().remove(e)
+                names.remove(n)
+            summary.append(f"omitted projects (approved {approved}): {', '.join(omit)}")
+        if cvm.get(name):
+            reorder_blocks(blocks, cvm[name], names, f"{name} item")
+            summary.append(f"{name}: {', '.join(cvm[name])}")
 
     d.save(out)
     return d, summary
@@ -257,23 +233,28 @@ def key(s):
 
 # ---------- letter ----------
 
-def build_letter(meta, body, out):
+def build_letter(meta, body, layout, out):
     d = docx.Document(MASTER_LETTER)
-    ps = d.paragraphs
+    if not layout.get("letter"):
+        raise BuildError("cv/layout.yaml maps no letter (date, recipient, subject, greeting)")
+    try:
+        parts = cv_map.letter_parts(d, layout["letter"])
+    except MapError as e:
+        raise BuildError(str(e))
     date = meta.get("date") or dt.date.today()
     if isinstance(date, str):
         date = dt.date.fromisoformat(date)
-    set_text(ps[3], f"{CFG['letter_city']}, {date:%d.%m.%Y}")
-    set_text(ps[4], meta["recipient"])
-    set_text(ps[5], meta["subject"])
-    set_text(ps[7], meta["greeting"])
-    closing_blank = next(p for i, p in enumerate(ps) if i > 7 and not p.text.strip())
-    proto = ps[8]._p
-    old = [p._p for p in ps[8:] if p._p is not closing_blank._p and ps.index(p) < ps.index(closing_blank)]
+    for part, text in (("date", f"{CFG['letter_city']}, {date:%d.%m.%Y}"), ("recipient", meta["recipient"]),
+                       ("subject", meta["subject"]), ("greeting", meta["greeting"])):
+        if part in parts:
+            set_text(parts[part], text)
+    old = [p._p for p in parts["body"]]
+    proto, anchor = old[0], old[-1]
     for text in body:
         new = copy.deepcopy(proto)
-        closing_blank._p.addprevious(new)
-        set_text(docx.text.paragraph.Paragraph(new, closing_blank._parent), text)
+        anchor.addnext(new)
+        anchor = new
+        set_text(docx.text.paragraph.Paragraph(new, parts["body"][0]._parent), text)
     for e in old:
         e.getparent().remove(e)
     d.save(out)
@@ -349,12 +330,12 @@ def check(meta, body, cv_doc, letter_doc):
         problems.append(f"letter body has {words} words (allowed {WORDS_MIN}-{WORDS_MAX})")
     if meta["role_type"] in STUDENT_TYPES:
         letter = " ".join(body).lower()
-        for need, label in ((UNIVERSITY.lower(), f"{UNIVERSITY} enrolment"), ("as soon as possible", "start 'as soon as possible'"),
+        for need, label in (*(((UNIVERSITY.lower(), f"{UNIVERSITY} enrolment"),) if UNIVERSITY else ()), ("as soon as possible", "start 'as soon as possible'"),
                             ("hours per week", "hours per week")):
             if need not in letter:
                 problems.append(f"student letter must mention {label}")
-        if meta["role_type"] == "Internship" and "12 months" not in letter:
-            problems.append("internship letter must mention the 12-month duration")
+        if meta["role_type"] == "Internship" and INTERNSHIP_DURATION and INTERNSHIP_DURATION.lower() not in letter:
+            problems.append(f"internship letter must mention the duration ({INTERNSHIP_DURATION})")
     return problems, words
 
 
@@ -369,12 +350,13 @@ def main():
     try:
         meta, body = read_application(folder)
         variants = yaml.safe_load(VARIANTS.read_text(encoding="utf-8")) or {}
+        layout = load_layout()
         short = meta["short"]
         cv_out = folder / f"{FILE_PREFIX}_CV_{short}.docx"
         letter_out = folder / f"{FILE_PREFIX}_Cover_Letter_{short}.docx"
         tmp_cv, tmp_letter = folder / f"~build_CV_{short}.docx", folder / f"~build_Letter_{short}.docx"
-        cv_doc, summary = build_cv(meta, variants, tmp_cv)
-        letter_doc = build_letter(meta, body, tmp_letter)
+        cv_doc, summary = build_cv(meta, variants, layout, tmp_cv)
+        letter_doc = build_letter(meta, body, layout, tmp_letter)
         for d, kind, path in ((cv_doc, "CV", tmp_cv), (letter_doc, "Cover Letter", tmp_letter)):
             apply_fonts(d)
             set_metadata(d, kind)

@@ -65,29 +65,14 @@ def placeholders(path):
     return sorted(set(PLACEHOLDER.findall(text)))
 
 
-def cv_layout(path):
-    """Problems with the master CV layout that engine/tools/build_application.py needs (cv/README.txt)."""
-    import docx
-    doc = docx.Document(str(path))
-    problems = []
-    if not doc.tables:
-        return ["the CV is not one Word table (header row + main/side columns)"]
-    text = "\n".join(c.text for row in doc.tables[0].rows for c in row.cells)
-    for heading in ("PROJECTS", "EXPERIENCE", "EDUCATION"):
-        if heading not in text:
-            problems.append(f"no {heading} heading")
-    if "Skills" not in text:
-        problems.append("no Skills heading in the side column")
-    return problems
-
-
 def unmatched_variants(cv_path, variants_path):
     """Ids in variants.yaml whose master text isn't found exactly once in the CV (the builder stops on these)."""
     import docx
     import yaml
+    sys.path.insert(0, str(ENGINE / "tools"))
+    from cv_map import paragraphs
     key = lambda s: re.sub(r"\s+", " ", s).strip().lower().lstrip("- ")
-    table = docx.Document(str(cv_path)).tables[0]
-    paras = [key(p.text) for c in (table.rows[1].cells[0], table.rows[1].cells[-1]) for p in c.paragraphs]
+    paras = [key(p.text) for p in paragraphs(docx.Document(str(cv_path)))]
     variants = yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {}
     return [vid for vid, v in variants.items()
             if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
@@ -137,13 +122,25 @@ def checks():
         p = ROOT / str(cfg.get(key) or "")
         present = bool(cfg.get(key)) and p.is_file()
         add("cv", label, present, f"put your {label} (.docx) at {cfg.get(key) or 'cv/'}")
-        if key == "master_cv" and present and "docx" not in missing:
-            problems = cv_layout(p)
-            add("cv", "CV layout for the builder", not problems,
-                "; ".join(problems) + " (see cv/README.txt; tailoring still works, building documents doesn't)",
-                warn=True)
+        if key == "master_cv" and present and "docx" not in missing and "yaml" not in missing:
+            layout = str(cfg.get("layout") or "cv/layout.yaml")
+            letter = ROOT / str(cfg.get("master_letter") or "")
+            if layout.lower() == "none":
+                add("cv", "CV map (cv/layout.yaml)", False,
+                    "layout: none: the CV isn't mapped, so tailoring writes drafts only and no documents are built",
+                    warn=True)
+            elif not (ROOT / layout).is_file():
+                add("cv", "CV map (cv/layout.yaml)", False,
+                    "map the CV and letter for the builder (onboarding round 5), or set layout: none for drafts only")
+            elif letter.is_file():
+                sys.path.insert(0, str(ENGINE / "tools"))
+                import cv_map
+                problems = cv_map.check(ROOT / layout, p, letter, out=lambda _: None)
+                add("cv", "CV map matches the master CV and letter", not problems,
+                    "; ".join(problems) + " (documents aren't built until this is fixed: say 'remap my CV')",
+                    warn=True)
             var_path = ROOT / str(cfg.get("variants") or "")
-            if not problems and cfg.get("variants") and var_path.is_file() and "yaml" not in missing:
+            if cfg.get("variants") and var_path.is_file():
                 left = unmatched_variants(p, var_path)
                 add("cv", "variants.yaml matches the master CV", not left,
                     f"not in your CV: {', '.join(left[:6])}; replace these entries with your own CV bullets "

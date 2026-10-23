@@ -77,10 +77,16 @@ Write each answer into the file named in brackets right after the round.
    write cv/ats-review.md, and on a yes make the improved copies and switch the master to them only after the
    candidate has looked at them. If they want to keep a layout the scan warns about (tables, columns), record
    that as a decision in CLAUDE.md "My decisions on the rules" so later reviews don't flag it again.
-   Run `setup_check.py`: if it warns about the CV layout, explain what cv/README.txt expects and offer to build a
-   master CV in that layout from their CV's content (same facts, nothing added). Show it and get a clear yes
-   before setting it as master_cv. If they decline, tailoring still writes job.md and application.md, but the
-   documents can't be built: say so plainly.
+   **Map the CV** (also the "remap my CV" request; the format is at the top of engine/tools/cv_map.py): run
+   `python engine/tools/cv_map.py outline <master_cv>` and the same for the letter. Write cv/layout.yaml: the
+   headline line under the name, the sections whose items may be reordered per job (projects, skill groups,
+   ... with the rule that splits them into items) and the letter's date, recipient, subject and greeting
+   lines. Use anchor text that appears only once and won't change per job. Run `python engine/tools/cv_map.py
+   check` until it says OK, then show the candidate in plain words what will change per job (the headline, the
+   order of those items, the letter text) and that everything else stays exactly as they designed it.
+   If the CV can't be mapped (no .docx, text boxes the scan flagged and they want to keep), set `layout: none`
+   in config.yaml and say plainly: tailoring still writes job.md and application.md, but no finished
+   documents; they can send the drafts by hand or say "remap my CV" once they have a .docx.
    cv/variants.yaml starts with example entries that aren't in their CV, and the builder stops on those. Replace
    them with the experience bullets of their CV that letters may reorder (exact master text, `variants: {}`), or
    leave the file with only its header comments.
@@ -110,7 +116,7 @@ Write each answer into the file named in brackets right after the round.
 ## 3. Finish
 - Run `python engine/tools/setup_check.py` until it says READY. Fix what you can, ask about the rest.
 - Show a short summary: target roles, the title words from 3b, location, languages, strengths, projects, search terms, and anything
-  they should still check (for example the CV layout or a missing connector).
+  they should still check (for example a CV that couldn't be mapped or a missing connector).
 - Ask them to read CLAUDE.md once: it's what every letter will be based on.
 - Tell them the next scheduled run will search, score and (on weekdays) draft. If they want results today,
   they can say "run the routine now".

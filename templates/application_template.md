@@ -8,13 +8,13 @@ recipient: Company GmbH, City
 subject: "Application: <exact job title from the ad>"
 greeting: Dear <Company> team,
 cv:
-  headline: DevOps Engineer | Cloud, CI/CD & Python
-  # Every list below is optional; leave one out to keep the master order.
+  headline: Marketing Student | Content, Social Media & Analytics   # needs cv.headline in cv/layout.yaml
+  # One list per section mapped in cv/layout.yaml, keyed by its name there (cv_map.py check shows the item names).
+  # Every list is optional; leave one out to keep the master order.
   # Anything you don't list keeps its place after the listed ones.
   # order by the job ad using projects.md; every CV keeps all projects
   projects: [Project A, Project B, Project C]
-  abilities: [Cloud Infrastructure & AWS, CI/CD & Release Management, Troubleshooting & Monitoring, Security & Networking Fundamentals, Communication & Teamwork]
-  technical: [Cloud, DevOps, Security, Code, AI, Data, Learning]
+  skills: [Skill group A, Skill group B]
   # only with my approval: leave a project out of this one CV
   # omit_projects: [Project C]
   # omit_approved: 2026-10-21    # the date I said yes

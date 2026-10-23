@@ -237,7 +237,7 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
     <h2>If something goes wrong</h2>
     <dl class="faq">
       <div><dt>It keeps asking setup questions</dt><dd>Run <code>python engine/tools/setup_check.py</code> in the folder. Every TODO line says what is missing.</dd></div>
-      <div><dt>"CV layout" warning</dt><dd>The builder needs the layout described in <code>cv/README.txt</code>. During setup Claude can rebuild your CV in that layout from its content; until then you get the letter text and CV choices, but no finished documents.</dd></div>
+      <div><dt>"CV map" warning</dt><dd>The builder finds the parts it may change (headline, item order, letter text) through <code>cv/layout.yaml</code>, a map of your own CV. If you edited your master CV since it was mapped, say "remap my CV". Until the map works you get the letter text and CV choices, but no finished documents.</dd></div>
       <div><dt>The tracker didn't update</dt><dd>Close it in Excel before the run. Rows that couldn't be saved wait in <code>tracker/pending_rows.csv</code>.</dd></div>
       <div><dt>Updating the engine</dt><dd>Run <code>git pull</code> inside <code>engine/</code>. Your own files are never touched.</dd></div>
     </dl>
