@@ -2,8 +2,10 @@
 
 A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.html).
 
-1. Install Claude Desktop (Code tab), Python 3, Git and, for PDFs, Microsoft Word. Then the Python packages:
-   `pip install python-docx openpyxl pypdf pyyaml requests`
+1. Install Claude Desktop (Code tab), Python 3 and Git. For PDFs you need Microsoft Word (Windows or macOS) or
+   the free LibreOffice (libreoffice.org); without either you still get .docx files. Then the Python packages
+   (the first run offers to install them for you):
+   `pip install python-docx openpyxl pypdf pyyaml requests` (on macOS with Word, also `docx2pdf`)
 2. Create a workspace folder somewhere permanent (e.g. Documents/JobHunt), clone this repo into it as `engine`
    and let the check script copy the templates and create the folders (it never overwrites a file):
    ```
@@ -23,7 +25,10 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
    - Model: a strong model
 4. Click "Run now" and stay with it. The routine runs `setup_check.py` first; while anything is TODO it doesn't
    search but follows [ONBOARDING.md](ONBOARDING.md): about ten short rounds of questions (you, studies, roles,
-   languages, CV, strengths and gaps, projects, rules, search terms, connectors), saved after every round.
+   which job titles to keep, languages, CV, strengths and gaps, projects, rules, search terms, connectors),
+   saved after every round. Any field works, not only tech. In the CV round it reviews your CV and cover letter
+   for ATS problems (cv/ats-review.md; any improved copy is used only after you say yes) and maps your CV
+   (cv/layout.yaml) so the builder can tailor your own design. If you change your CV later, say "remap my CV".
    If a scheduled run finds the setup unfinished while you're away, it writes a "Setup needed" brief with the
    next questions; reply in that session or say "continue the job-hunt setup" in Claude Code in the folder.
 5. During that first run, when it asks for permissions (bash, curl, python, writing files), choose "always allow". Future runs then go through without stalling.

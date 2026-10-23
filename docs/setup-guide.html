@@ -115,9 +115,9 @@ footer { margin-top: 48px; font-size: 0.85rem; color: var(--muted); }
   <header>
     <span class="eyebrow">jobhunt-agent · setup guide</span>
     <h1>Set up your daily job-hunt routine</h1>
-    <p class="lede">Claude searches job boards every morning, scores new ads against your CV and, on weekdays, drafts a tailored CV and cover letter for the best ones. You review and send them yourself; nothing is ever submitted for you.</p>
+    <p class="lede">Claude searches job boards every morning, scores new ads against your CV and, on weekdays, drafts a tailored CV and cover letter for the best ones, for student and junior roles in any field. You review and send them yourself; nothing is ever submitted for you.</p>
     <div class="needs" aria-label="Requirements">
-      <span>Claude Desktop, Code tab</span><span>Python 3</span><span>Git</span><span>Windows + Word for PDFs</span><span>Your CV (.docx)</span>
+      <span>Claude Desktop, Code tab</span><span>Python 3</span><span>Git</span><span>Word or LibreOffice for PDFs</span><span>Your CV (.docx)</span>
     </div>
   </header>
 
@@ -134,7 +134,7 @@ footer { margin-top: 48px; font-size: 0.85rem; color: var(--muted); }
       <ul>
         <li><a href="https://claude.ai/download">Claude Desktop</a>, signed in, with the Code tab available.</li>
         <li><a href="https://www.python.org/downloads/">Python 3</a> (tick "Add to PATH") and <a href="https://git-scm.com/downloads">Git</a>.</li>
-        <li>Microsoft Word, if you want PDFs. Without it you still get the .docx files.</li>
+        <li>For PDFs: Microsoft Word (Windows or macOS) or the free <a href="https://www.libreoffice.org/download/">LibreOffice</a>. Without either you still get the .docx files.</li>
       </ul>
       <div class="code"><button class="copy" type="button" id="copy-pip">Copy</button><pre>pip install python-docx openpyxl pypdf pyyaml requests</pre></div>
     </div></li>
@@ -179,7 +179,7 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
       <h2>Click "Run now" and answer the setup questions</h2>
       <p>The routine runs <code>setup_check.py</code> first. While something is still TODO it doesn't search; it interviews you in short rounds and writes your answers into <code>config.yaml</code>, <code>CLAUDE.md</code>, <code>projects.md</code> and <code>sources.md</code>.</p>
       <div class="rounds" aria-label="Interview rounds">
-        <span><b>1</b>About you</span><span><b>2</b>Studies</span><span><b>3</b>Roles you want</span><span><b>4</b>Languages</span><span><b>5</b>CV and letter</span>
+        <span><b>1</b>About you</span><span><b>2</b>Studies</span><span><b>3</b>Roles and job titles</span><span><b>4</b>Languages</span><span><b>5</b>CV and letter</span>
         <span><b>6</b>Strengths and gaps</span><span><b>7</b>Projects</span><span><b>8</b>Rules and daily plan</span><span><b>9</b>Search terms</span><span><b>10</b>Connectors</span>
       </div>
       <div class="chat" aria-label="Example of the setup interview">
@@ -189,7 +189,9 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
         <div class="msg c">Thanks. Round 3: which kinds of roles should I look for?
           <div class="opts"><span class="on">Working student</span><span class="on">Internship</span><span>Research assistant (HiWi)</span><span>Thesis</span><span>Junior</span></div>
         </div>
-        <div class="msg c">Round 6: your CV clearly supports Python, Docker and GitHub Actions. Which of these could you explain in an interview? I'll only ever claim the ones you confirm.</div>
+        <div class="msg c">Round 5: I checked your CV the way an applicant tracking system (ATS) reads it. Two things to fix: your phone number sits in the page header, which many systems skip, and "My Journey" isn't a heading they recognise. Shall I make an improved copy for you to look at? Your original stays as it is.</div>
+        <div class="msg u">Yes, please.</div>
+        <div class="msg c">Round 6: your CV clearly supports Instagram planning, Canva and Google Analytics. Which of these could you explain in an interview? I'll only ever claim the ones you confirm.</div>
       </div>
       <p class="note">Weren't watching when it ran? The routine writes a "Setup needed" brief with the next questions. Reply in that session, or open Claude Code in the folder and say <i>continue the job-hunt setup</i>. Progress is saved after every round.</p>
     </div></li>

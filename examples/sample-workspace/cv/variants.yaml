@@ -1,0 +1,16 @@
+# Approved alternative wordings for CV bullets (see engine/templates/workspace/cv/variants.yaml).
+intern.posts:
+  group: intern
+  master: "Planned and published three posts a week on Instagram and LinkedIn for four clients."
+  variants:
+    short:
+      approved: true
+      text: "Planned and published three social media posts a week for four clients."
+intern.reporting:
+  group: intern
+  master: "Built a monthly reporting sheet in Google Sheets that the account team still uses."
+  variants: {}
+intern.newsletters:
+  group: intern
+  master: "Wrote first drafts of two client newsletters a month."
+  variants: {}

@@ -1,0 +1,18 @@
+# CV map for the sample CV (format: engine/tools/cv_map.py). Check: python engine/tools/cv_map.py check
+cv:
+  headline: {after: "Lena Fischer"}      # the line under the name
+  sections:
+    projects:
+      start: PROJECTS
+      end: [SKILLS]
+      items: bold                        # each project starts at its bold title line
+    skills:
+      start: SKILLS
+      end: [EDUCATION]
+      items: colon                       # "Content: ...", "Analytics: ..."
+      name_split: ":"
+letter:
+  date: {starts_with: "Mannheim,"}
+  recipient: {starts_with: "Example Company"}
+  subject: {starts_with: "Application:"}
+  greeting: {starts_with: "Dear"}
