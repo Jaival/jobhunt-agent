@@ -5,6 +5,8 @@ master_cv: cv/Jonas_Becker_Lebenslauf.docx
 master_letter: cv/Jonas_Becker_Anschreiben.docx
 variants: cv/variants.yaml
 letter_city: Regensburg
+name_in_master: Jonas Michael Becker     # the master files say this; documents say Jonas Becker
+letter_languages: [de, en]               # a German and an English letter for every application
 university: ""
 font: Arial
 fallback_font: Arial

@@ -139,6 +139,14 @@ def checks():
                 add("cv", "CV map matches the master CV and letter", not problems,
                     "; ".join(problems) + " (documents aren't built until this is fixed: say 'remap my CV')",
                     warn=True)
+            name = cfg.get("name_in_master")
+            if name and name != cfg.get("applicant"):
+                import docx
+                texts = [r.text for f in (p, letter) if f.is_file()
+                         for para in docx.Document(str(f)).paragraphs for r in para.runs]
+                add("cv", "name_in_master found in the master files", any(name in t for t in texts),
+                    f"'{name}' isn't in one piece in the master CV or letter: fix name_in_master in config.yaml, "
+                    "or retype the name in Word", warn=True)
             var_path = ROOT / str(cfg.get("variants") or "")
             if cfg.get("variants") and var_path.is_file():
                 left = unmatched_variants(p, var_path)

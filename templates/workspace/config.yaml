@@ -5,6 +5,9 @@ master_cv: cv/Your_Name_CV.docx                 # your own CV design; cv/layout.
 master_letter: cv/Your_Name_CoverLetter.docx
 variants: cv/variants.yaml
 letter_city: Berlin                             # letter date line "Berlin, DD.MM.YYYY"
+letter_languages: [en]                          # [en], [de] or [de, en]: one letter per language per application
+name_in_master: ""                              # optional: your name as the master CV/letter spell it, if documents
+                                                # should say `applicant` instead (e.g. without a middle name)
 university: TU Berlin                           # student letters must mention it (leave empty for none)
 font: Open Sans                                 # font for CV and letter
 fallback_font: Open Sans                        # substitute named in the font table
