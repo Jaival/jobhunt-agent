@@ -71,3 +71,27 @@ def test_load_rejects_unknown_keys(tmp_path):
         cv_map.load(tmp_path / "layout.yaml")
     with pytest.raises(MapError, match="not found"):
         cv_map.load(tmp_path / "missing.yaml")
+
+
+def test_not_list_rule_and_name_split_list(tmp_path):
+    d = docx.Document()
+    for text, bullet in (("PROJEKTE", False), ("Alpha, Thesis\t2025", False), ("did a", True), ("did b", True),
+                         ("Beta\t2024", False), ("did c", True)):
+        d.add_paragraph(text, style="List Bullet" if bullet else None)
+    p = tmp_path / "cv.docx"
+    d.save(p)
+    names, blocks = cv_map.section(docx.Document(str(p)), "projects",
+                                   {"start": "PROJEKTE", "items": "not_list", "name_split": ["\t", ","]})
+    assert names == ["Alpha", "Beta"] and len(blocks["Alpha"]) == 3
+
+
+def test_letter_closing_and_address_block(tmp_path):
+    d = make(tmp_path, ["Acme GmbH", "Street 1", "12345 Town", "", "Berlin, 01.10.2026", "Dear team,",
+                        "First.", "Second.", "Kind regards,", "Jane"])
+    lmap = {"recipient": {"text": "Acme GmbH"}, "date": {"starts_with": "Berlin,"}, "greeting": {"starts_with": "Dear"},
+            "closing": {"starts_with": "Kind regards"}}
+    parts = cv_map.letter_parts(d, lmap)
+    assert [p.text for p in parts["recipient"]] == ["Acme GmbH", "Street 1", "12345 Town"]
+    assert [p.text for p in parts["body"]] == ["First.", "Second."]
+    with pytest.raises(MapError, match="unknown part"):
+        cv_map.letter_parts(d, {**lmap, "signature": {"text": "Jane"}})

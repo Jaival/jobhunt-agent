@@ -19,7 +19,7 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
 3. Open Claude Desktop, go to the Code tab, click **Scheduled** in the sidebar (or under **More**), then
    **New task** (choose **Set up manually** if a menu opens).
    - Name: job-hunt-daily
-   - Instructions (the box under the name): "Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly. On the first run it checks the setup and asks me for what it needs. Finish by replying with a 3-line summary and the path of today's brief."
+   - Instructions (the box under the name): "Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly. It checks the setup at the start of every run and only asks me questions if something is missing. Finish by replying with a 3-line summary and the path of today's brief."
    - Advanced settings > General: turn on **Only on this computer** (the routine needs your local files). If
      that switch is at the top of the dialog instead, turn it on before filling in anything else.
    - Local folder: the workspace folder (trust it when asked)

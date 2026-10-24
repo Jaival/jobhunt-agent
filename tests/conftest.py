@@ -10,25 +10,47 @@ import pytest
 ENGINE = Path(__file__).resolve().parents[1]
 TOOLS = ENGINE / "tools"
 SAMPLE = ENGINE / "examples" / "sample-workspace"
+SAMPLE_DE = ENGINE / "examples" / "sample-workspace-de"
 sys.path.insert(0, str(TOOLS))
-sys.path.insert(0, str(SAMPLE))
+
+
+def make_workspace(src, dst):
+    """A fresh copy of a sample workspace with its CV and letter written by its make_docs.py."""
+    import importlib.util
+    shutil.copytree(src, dst)
+    spec = importlib.util.spec_from_file_location(f"make_docs_{src.name}", src / "make_docs.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.write(dst)
+    return dst
+
+
+def runner(root):
+    """run("cv_map.py", "check") runs an engine tool against the workspace at root."""
+    def run(name, *args):
+        env = {**os.environ, "JOBHUNT_ROOT": str(root), "PYTHONIOENCODING": "utf-8", "JOBHUNT_OFFLINE": "1"}
+        return subprocess.run([sys.executable, str(TOOLS / name), *map(str, args)], cwd=root, env=env,
+                              capture_output=True, text=True, encoding="utf-8")
+    return run
 
 
 @pytest.fixture
 def sample(tmp_path):
-    """A fresh copy of the sample workspace with its CV and letter written."""
-    import make_docs
-    root = tmp_path / "workspace"
-    shutil.copytree(SAMPLE, root)
-    make_docs.write(root)
-    return root
+    """The marketing-student sample workspace (single-column English CV)."""
+    return make_workspace(SAMPLE, tmp_path / "workspace")
 
 
 @pytest.fixture
 def tool(sample):
-    """tool("cv_map.py", "check") runs an engine tool against the sample workspace."""
-    def run(name, *args):
-        env = {**os.environ, "JOBHUNT_ROOT": str(sample), "PYTHONIOENCODING": "utf-8"}
-        return subprocess.run([sys.executable, str(TOOLS / name), *map(str, args)], cwd=sample, env=env,
-                              capture_output=True, text=True, encoding="utf-8")
-    return run
+    return runner(sample)
+
+
+@pytest.fixture
+def sample_de(tmp_path):
+    """The German mechanical-engineer sample workspace (plain-paragraph German CV and letter)."""
+    return make_workspace(SAMPLE_DE, tmp_path / "workspace-de")
+
+
+@pytest.fixture
+def tool_de(sample_de):
+    return runner(sample_de)

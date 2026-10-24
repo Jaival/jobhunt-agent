@@ -7,6 +7,7 @@
 config.yaml
 !templates/workspace/config.yaml
 !examples/sample-workspace/config.yaml
+!examples/sample-workspace-de/config.yaml
 # Python and Office temp files
 __pycache__/
 .pytest_cache/

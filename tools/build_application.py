@@ -4,8 +4,10 @@ application.md = YAML frontmatter (CV choices, letter header) + the letter body 
 (one paragraph per block, blank line between paragraphs). See engine/templates/application_template.md.
 
 The master CV and master cover letter stay the templates (CLAUDE.md rule 5): the builder only
-changes the headline, reorders the items of the sections named in the CV map (cv/layout.yaml, see
-cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. It fails before writing anything if a check breaks.
+changes the headline (and a mapped "City, date" line), reorders the items of the sections named in the CV map
+(cv/layout.yaml, see cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. In the letter
+it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body.
+It fails before writing anything if a check breaks.
 Every CV keeps all projects; cv.omit_projects only works together with cv.omit_approved: <date>
 (the applicant's approval). After the PDF export (pdf_export.py, config pdf_engine) it fails if the CV is
 over 2 pages or the letter over 1.
@@ -156,6 +158,12 @@ def build_cv(meta, variants, layout, out):
             raise BuildError(str(e))
         summary.append(f"headline: {cvm['headline']}")
 
+    if lmap.get("date"):
+        try:
+            set_text(cv_map.find(paragraphs(d), lmap["date"], "CV date"), f"{CFG['letter_city']}, {letter_date(meta):%d.%m.%Y}")
+        except MapError as e:
+            raise BuildError(str(e))
+
     # Variants and bullet order use ids from cv/variants.yaml, located by their master text.
     by_id = {}
     paras = paragraphs(d)
@@ -222,6 +230,11 @@ def build_cv(meta, variants, layout, out):
     return d, summary
 
 
+def letter_date(meta):
+    date = meta.get("date") or dt.date.today()
+    return dt.date.fromisoformat(date) if isinstance(date, str) else date
+
+
 def norm(s):
     return re.sub(r"\s+", " ", s).strip().lower()
 
@@ -233,6 +246,31 @@ def key(s):
 
 # ---------- letter ----------
 
+def lines_of(value):
+    """Address lines from a frontmatter value: a list, or a string with one line per line."""
+    lines = [str(x) for x in value] if isinstance(value, list) else str(value).splitlines()
+    return [x.strip() for x in lines if x.strip()]
+
+
+def fill_recipient(block, value):
+    """Write the address into the master's address block: one paragraph per line, or line breaks inside a
+    one-paragraph block. Extra master lines are removed, missing ones added in the same format."""
+    lines = lines_of(value)
+    if len(block) == 1:
+        set_text(block[0], "\n".join(lines))
+        return
+    for p, text in zip(block, lines):
+        set_text(p, text)
+    anchor = block[-1]._p
+    for text in lines[len(block):]:
+        new = copy.deepcopy(anchor)
+        anchor.addnext(new)
+        anchor = new
+        set_text(docx.text.paragraph.Paragraph(new, block[-1]._parent), text)
+    for p in block[len(lines):]:
+        p._p.getparent().remove(p._p)
+
+
 def build_letter(meta, body, layout, out):
     d = docx.Document(MASTER_LETTER)
     if not layout.get("letter"):
@@ -241,20 +279,27 @@ def build_letter(meta, body, layout, out):
         parts = cv_map.letter_parts(d, layout["letter"])
     except MapError as e:
         raise BuildError(str(e))
-    date = meta.get("date") or dt.date.today()
-    if isinstance(date, str):
-        date = dt.date.fromisoformat(date)
-    for part, text in (("date", f"{CFG['letter_city']}, {date:%d.%m.%Y}"), ("recipient", meta["recipient"]),
+    for part, text in (("date", f"{CFG['letter_city']}, {letter_date(meta):%d.%m.%Y}"),
                        ("subject", meta["subject"]), ("greeting", meta["greeting"])):
         if part in parts:
             set_text(parts[part], text)
-    old = [p._p for p in parts["body"]]
-    proto, anchor = old[0], old[-1]
-    for text in body:
+    if "recipient" in parts:
+        fill_recipient(parts["recipient"], meta["recipient"])
+    # New body paragraphs copy the first master body paragraph; an empty line between master paragraphs is kept
+    # between the new ones too.
+    old = [p._p for p in parts["body_all"]]
+    proto, anchor = parts["body"][0]._p, old[-1]
+    spacer = parts["spacer"]._p if parts["spacer"] is not None else None
+    parent = parts["body"][0]._parent
+    for i, text in enumerate(body):
+        if i and spacer is not None:
+            gap = copy.deepcopy(spacer)
+            anchor.addnext(gap)
+            anchor = gap
         new = copy.deepcopy(proto)
         anchor.addnext(new)
         anchor = new
-        set_text(docx.text.paragraph.Paragraph(new, parts["body"][0]._parent), text)
+        set_text(docx.text.paragraph.Paragraph(new, parent), text)
     for e in old:
         e.getparent().remove(e)
     d.save(out)
