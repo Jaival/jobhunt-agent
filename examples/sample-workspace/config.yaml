@@ -1,4 +1,5 @@
 # Sample workspace for a fictional marketing student (see README.md). Not a real person.
+config_version: 2
 applicant: Lena Fischer
 file_prefix: Lena_Fischer
 master_cv: cv/Lena_Fischer_CV.docx

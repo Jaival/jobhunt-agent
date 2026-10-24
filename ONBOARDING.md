@@ -5,6 +5,8 @@ Don't search for jobs during setup. The goal is a workspace that passes the chec
 the candidate tells you or what is in their own CV.
 
 ## Ground rules
+- Never edit files in engine/ (local edits block updates). What the candidate wants that config.yaml, the CV map or
+  CLAUDE.md can't express goes in custom.md as a wish (engine/templates/workspace/custom.md shows the format).
 - Ask, don't guess. Every fact in CLAUDE.md and projects.md must come from the candidate's answers or their CV.
   If something is unclear, ask a follow-up instead of filling the gap.
 - Ask in short rounds (one topic at a time, at most 4 questions per round). Use the AskUserQuestion tool when

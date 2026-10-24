@@ -1,4 +1,5 @@
 # Personal settings for the jobhunt-agent tools (engine/tools/config.py). Keep this file in your private workspace.
+config_version: 2                               # set by the engine; "update the engine" migrates older files
 applicant: Your Name                            # document author / ATS name, first line of the CV
 file_prefix: Your_Name                          # <file_prefix>_CV_<short>.docx
 master_cv: cv/Your_Name_CV.docx                 # your own CV design; cv/layout.yaml maps it (cv/README.txt)

@@ -2,12 +2,13 @@ Run the job-application routine in the workspace folder (the folder that contain
 This file is the only copy of the routine; the scheduled task just points here. Personal settings (target roles, skills to score against, location, daily plan) live in the "Routine settings" section of CLAUDE.md.
 
 On request ("run the ATS review", "check my CV"): follow engine/ats-checklist.md instead of the routine.
+On request ("update the engine", "upgrade the engine"): follow "Steps for Claude" in engine/UPGRADING.md instead of the routine.
 On request ("remap my CV", after the candidate changed their master CV or letter): follow "Map the CV" in engine/ONBOARDING.md round 5 instead of the routine.
 
 Today = the current local date. Work in this order. All tools run from the workspace folder: `python engine/tools/<name>.py --help` shows usage.
 
 0. Guard and mode
-- **Setup first:** run `python engine/tools/setup_check.py`. If it prints NOT READY (exit code 1), or there is no config.yaml or CLAUDE.md yet, stop here and follow engine/ONBOARDING.md instead (the first-run interview). Warnings alone don't stop the routine; list them under "Your actions" in the brief.
+- **Setup first:** run `python engine/tools/setup_check.py`. If its "config version" check is TODO, config.yaml is from an older engine: don't start the interview. Write daily/<today>.md with only "Setup needed: config.yaml is from an older engine version. Open this folder in Claude Code and say 'update the engine'." and stop. Otherwise, if it prints NOT READY (exit code 1), or there is no config.yaml or CLAUDE.md yet, stop here and follow engine/ONBOARDING.md instead (the first-run interview). Warnings alone don't stop the routine; list them under "Your actions" in the brief.
 - If daily/<today>.md already exists (and isn't a "Setup needed" brief), this is a repeat or catch-up run: only add jobs that aren't in the ledger yet, append them to that brief, and skip step 6.
 - **Weekend mode (Saturday and Sunday):** run steps 1, 2, 3, 4, 7 and a short brief (step 8: summary, scored jobs, actions for the candidate, sources). No tailoring, no outreach, no follow-ups. Monday tailors from the weekend's scored list first.
 
