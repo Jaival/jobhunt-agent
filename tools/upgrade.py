@@ -136,7 +136,7 @@ def compare_titles(test, ws_old, old_tools):
 
 
 def state_path():
-    runs = sorted((ROOT / "backups").glob("pre-upgrade-*/upgrade.json"))
+    runs = sorted((ROOT / "backups").glob("pre-upgrade-*/upgrade.json"), key=lambda f: f.stat().st_mtime)
     if not runs:
         raise UpgradeError("no backups/pre-upgrade-*/upgrade.json: run 'upgrade.py prepare' first")
     return runs[-1]
