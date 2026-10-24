@@ -94,3 +94,11 @@ def test_ats_scan(tool, sample):
     findings = json.loads(r.stdout)
     assert isinstance(findings, (list, dict))
     assert "must-fix" not in r.stdout                               # a plain single-column CV
+
+
+def test_old_config_asks_for_engine_update(tool, sample):
+    cfg = sample / "config.yaml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("config_version: 2\n", ""), encoding="utf-8")
+    result = json.loads(tool("setup_check.py", "--init", "--json").stdout)
+    version = [c for c in result["checks"] if c["item"] == "config version"][0]
+    assert not result["ready"] and version["status"] == "todo" and "update the engine" in version["fix"]

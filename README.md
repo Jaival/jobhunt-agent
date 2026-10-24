@@ -21,20 +21,23 @@ workspace/                   your private folder (and private git repo)
 ├─ CLAUDE.md                 who you are, your decisions, routine settings → imports engine/RULES.md
 ├─ config.yaml               name, master CV paths, letter city, search area, profile (which titles to keep)
 ├─ sources.md companies.md   where to search; the routine updates their status columns
+├─ custom.md                 wishes for the engine (never edit engine/ itself: it blocks updates)
 ├─ projects.md cv/           your project facts, master CV and its map cv/layout.yaml (the builder only reorders
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
-   ├─ UPGRADING.md           a prompt to bring a workspace from the old engine up to date
+   ├─ UPGRADING.md           "update the engine": backup, migration, old-vs-new document check, rollback
+   ├─ CHANGELOG.md           what each update adds, with the setting to use
    ├─ ats-checklist.md       the CV and cover letter review (also on request: "run the ATS review")
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         ledger, add_applied, archive, tracker_to_md
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md
    ├─ docs/                  visual setup guide
-   ├─ examples/              a filled-in sample workspace (a fictional marketing student)
+   ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
+   │                         engineer with a plain-paragraph CV and German + English letters)
    ├─ tests/                 pytest suite
    └─ templates/             example workspace files
 ```

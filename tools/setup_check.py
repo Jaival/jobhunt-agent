@@ -11,6 +11,10 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
+
+It also looks after the engine itself: a config.yaml from an older engine version is "todo" (say "update the
+engine"), local edits in engine/ are a warning (they block updates), and so is a newer engine on GitHub (it runs
+`git fetch`, never pull; set JOBHUNT_OFFLINE=1 to skip that).
 """
 import argparse
 import importlib.util
@@ -18,6 +22,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,6 +32,7 @@ TEMPLATES = ENGINE / "templates" / "workspace"
 
 FOLDERS = ["applications", "daily", "data", "follow-ups", "interview-prep", "reviews", "backups", "cv", "tracker"]
 PACKAGES = {"docx": "python-docx", "openpyxl": "openpyxl", "pypdf": "pypdf", "yaml": "pyyaml", "requests": "requests"}
+CONFIG_VERSION = 2   # config.yaml layout this engine reads; engine/tools/upgrade.py migrates older ones
 CONFIG_KEYS = ("applicant", "file_prefix", "master_cv", "master_letter", "variants", "letter_city")
 # Values that only appear in the templates; a workspace that still has them isn't filled in.
 TEMPLATE_VALUES = {"applicant": "Your Name", "file_prefix": "Your_Name",
@@ -78,6 +84,32 @@ def unmatched_variants(cv_path, variants_path):
             if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
 
 
+def git(*args, timeout=30):
+    """Run git in engine/; None when git is missing, engine/ isn't a clone, or the command fails."""
+    if not shutil.which("git") or not (ENGINE / ".git").exists():
+        return None
+    try:
+        r = subprocess.run(["git", "-C", str(ENGINE), *args], capture_output=True, text=True, timeout=timeout,
+                           encoding="utf-8")
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def engine_edits():
+    """Files changed in engine/ since its last update (tracked edits and new files)."""
+    out = git("status", "--porcelain")
+    return [line[3:] for line in (out or "").splitlines() if line.strip()]
+
+
+def engine_behind():
+    """New commits on GitHub that engine/ doesn't have yet (0 when up to date or unknown)."""
+    if os.environ.get("JOBHUNT_OFFLINE") or git("fetch", "--quiet") is None:
+        return 0
+    n = (git("rev-list", "--count", "HEAD..@{u}") or "").strip()
+    return int(n) if n.isdigit() else 0
+
+
 def checks():
     """Every check as {area, item, status, fix}. Status: ok, todo (blocks the routine) or warn."""
     out = []
@@ -98,6 +130,10 @@ def checks():
         cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     add("config.yaml", "file", cfg_path.exists(), "python engine/tools/setup_check.py --init")
     if cfg_path.exists():
+        version = cfg.get("config_version") or 1
+        add("config.yaml", "config version", version >= CONFIG_VERSION,
+            f"config.yaml is from an older engine (version {version}, this engine reads {CONFIG_VERSION}): open "
+            "this folder in Claude Code and say 'update the engine'")
         for key in CONFIG_KEYS:
             value = cfg.get(key)
             add("config.yaml", key, bool(value) and value != TEMPLATE_VALUES.get(key),
@@ -139,6 +175,14 @@ def checks():
                 add("cv", "CV map matches the master CV and letter", not problems,
                     "; ".join(problems) + " (documents aren't built until this is fixed: say 'remap my CV')",
                     warn=True)
+            name = cfg.get("name_in_master")
+            if name and name != cfg.get("applicant"):
+                import docx
+                texts = [r.text for f in (p, letter) if f.is_file()
+                         for para in docx.Document(str(f)).paragraphs for r in para.runs]
+                add("cv", "name_in_master found in the master files", any(name in t for t in texts),
+                    f"'{name}' isn't in one piece in the master CV or letter: fix name_in_master in config.yaml, "
+                    "or retype the name in Word", warn=True)
             var_path = ROOT / str(cfg.get("variants") or "")
             if cfg.get("variants") and var_path.is_file():
                 left = unmatched_variants(p, var_path)
@@ -161,6 +205,15 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+
+    edits = engine_edits()
+    add("engine", "no local edits in engine/", not edits,
+        f"engine/ has local changes ({', '.join(edits[:4])}{', ...' if len(edits) > 4 else ''}): they block engine "
+        "updates. Say 'update the engine' to keep them safely; write wishes for the engine in custom.md instead",
+        warn=True)
+    behind = engine_behind()
+    add("engine", "engine is up to date", not behind,
+        f"an engine update is available ({behind} new change(s)): say 'update the engine'", warn=True)
 
     import pdf_export
     try:

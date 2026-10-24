@@ -1,0 +1,21 @@
+# CV map for the German sample CV (format: engine/tools/cv_map.py). Check: python engine/tools/cv_map.py check
+cv:
+  headline: {after: "Jonas Michael Becker"}   # the line under the name
+  date: {starts_with: "Regensburg,"}          # "Regensburg, 01.10.2026" at the end, set to the letter date
+  sections:
+    technical:
+      start: TECHNISCHE KOMPETENZEN
+      end: [BERUFSERFAHRUNG]
+      items: colon                            # "Simulation: ...", "CAD: ..."
+      name_split: ":"
+    projects:
+      start: PROJEKTE
+      end: [AUSBILDUNG]
+      items: not_list                         # a project starts at its title line; its bullets are Word list items
+      name_split: ["\t", ","]                 # "FEM-Analyse Radträger, Bachelorarbeit<TAB>dates" -> FEM-Analyse Radträger
+letter:
+  recipient: {text: "Beispiel Werke AG"}      # the three-line address block
+  date: {starts_with: "Regensburg,"}
+  subject: {starts_with: "Bewerbung"}
+  greeting: {starts_with: "Sehr geehrte"}
+  closing: {starts_with: "Mit freundlichen"}  # no empty line before it, so the body needs this end mark

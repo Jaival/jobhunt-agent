@@ -4,10 +4,12 @@ application and changes only the parts named in the CV map; your design stays as
 
 The CV map (cv/layout.yaml, path in config.yaml `layout`) tells the builder where those parts are, by their text:
 - headline: the line under your name that is rewritten per job.
+- date: a "City, DD.MM.YYYY" line on the CV (common on German CVs), set to the letter date.
 - sections: blocks whose items can be reordered per job (for example projects, skills), each found by its
   heading text and split into items by a simple rule (blank line, bold line, "Name:" line, ...).
-- letter: the date line, recipient, subject and greeting of the cover letter; the body is the text after the
-  greeting up to the first empty line.
+- letter: the date line, the address block (all its lines), subject, greeting and closing ("Kind regards",
+  "Mit freundlichen Grüßen") of the cover letter; the body is the text between greeting and closing (without
+  a mapped closing: up to the first empty line).
 Everything is optional: what isn't mapped simply isn't tailored. The format is described at the top of
 engine/tools/cv_map.py. Experience bullets you want to reword or reorder go in variants.yaml with their exact
 master text.

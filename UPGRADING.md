@@ -1,120 +1,89 @@
-# Upgrading a workspace set up with the old engine
+# Updating the engine
 
-Workspaces set up before the "any field" update (the version that hardcoded IT job titles and needed one fixed
-two-column CV layout) need three new things after `git pull`, or the routine stops:
+The engine (this folder, `engine/` in your workspace) gets new features and fixes. Your own files (config.yaml,
+CLAUDE.md, your CV, applications) stay yours, and an update never changes them without showing you first.
 
-- a `profile:` block in config.yaml: which job titles to keep (search_jobs.py exits without it);
-- `cv/layout.yaml`, a map of your master CV and letter (the builder stops without it);
-- optional new settings: `internship_duration`, `pdf_engine`.
+**How you hear about it:** when GitHub has a newer engine, the daily brief says "engine update available: say
+'update the engine'". Nothing is installed on its own.
 
-You don't have to do this by hand. Open Claude Code in your **workspace folder** (the one that contains
-`engine/`), paste the prompt below, and answer its questions. It keeps your current behaviour exactly,
-proves it by comparing old and new results, and changes nothing it can't undo.
+**How to update:** open your workspace folder in Claude Code (Claude Desktop's **Code** tab, the same place your
+scheduled task runs) and say **update the engine**. Claude:
 
-## The prompt
+1. backs up config.yaml, CLAUDE.md, custom.md and your cv/ folder to `backups/pre-upgrade-<date>/`;
+2. keeps any changes someone made inside `engine/` (saved as a patch, and set aside with git) and tells you which
+   of them the new engine now has a setting for;
+3. pulls the new engine and brings config.yaml up to date (`engine/tools/upgrade.py migrate`);
+4. builds a test application, plus up to 5 of your real ones, with the old and the new engine, compares the
+   documents and your job-title filter, and shows you every difference in plain words;
+5. only removes the temporary copies after you say yes. `upgrade.py rollback` puts everything back.
+
+Wishes the engine can't do yet go in `custom.md` in your workspace, never into `engine/` itself (edits there
+block updates). On each update Claude checks them against [CHANGELOG.md](CHANGELOG.md) and drafts a GitHub issue
+for the rest, which you can post if you like.
+
+## First update from an older engine
+
+Engines from before October 2026 don't know "update the engine" yet. Paste this into Claude Code, opened in your
+workspace folder (the one that contains `engine/` and `config.yaml`):
 
 ```text
-Upgrade my job-hunt workspace to the new jobhunt-agent engine, safely. Work in this folder (it contains
-engine/, config.yaml and CLAUDE.md). Don't change my CV, my letter, CLAUDE.md facts or any application
-folder; don't commit, push or delete anything without asking me. Stop and ask if anything below doesn't match
-what you find.
-
-1. Safety first
-   - Run `git -C engine status --short`. If engine/ has local changes, stop and show them to me.
-   - Note the current engine version: `git -C engine rev-parse HEAD` (call it OLD).
-   - Copy config.yaml, CLAUDE.md and cv/ to backups/pre-upgrade-<today>/ (create the folder).
-   - If this folder is a git repo with uncommitted changes, tell me and ask whether to continue.
-
-2. Update the engine
-   - `git -C engine pull --ff-only`. If that fails, stop and tell me why.
-   - Keep the old version next to it for comparison: `git -C engine worktree add ../engine-old OLD`
-     (engine-old/ sits in this folder, so its tools find my config and CV). Add `engine-old/` to .gitignore
-     if this folder is a git repo.
-   - Read engine/README.md, engine/UPGRADING.md and engine/templates/workspace/config.yaml for the new keys.
-
-3. Title filter (profile: in config.yaml)
-   - Add this block, which reproduces the old hardcoded filter exactly (with one bug fixed: "tga" had a stray
-     character and never matched):
-       profile:
-         role_types: [Werkstudent, HiWi, Internship, Thesis, Junior]
-         include_titles: [devops, cloud, platform, plattform, infrastru, '\bsre\b', reliabil, linux,
-                          'system ?admin', systemadmin, system engineer, systems engineer, kubernetes, network,
-                          netzwerk, it-admin, '\bit\b', informatik, security, sicherheit, software, backend,
-                          frontend, 'full.?stack', entwickl, developer, web, app, mobile, python, test, 'qa\b',
-                          quality, automation, automatisierung, engineer]
-         junior_include_titles: [devops, cloud, platform, plattform, infrastru, '\bsre\b', reliabil, linux,
-                                 'system ?admin', systemadmin, system engineer, systems engineer, kubernetes,
-                                 network, netzwerk, it-admin, '\bit\b', informatik, security, sicherheit]
-         junior_exclude_titles: [informatik]
-         exclude_titles: [senior, '\blead\b', principal, staff, architect, architekt, manager, leiter, head of,
-                          director, vertrieb, sales, marketing, recruit, buchhalt, accounting, finanz, einkauf,
-                          procurement, ausbildung, azubi, dozent, logopäd, lager, empfang, 'bar &', 'service \(',
-                          social media, design, elektro, mechan, maschinenbau, gebäude, '\btga\b', flight,
-                          unsolicited, initiativ, fachinformatiker, wirtschaftsinformatiker]
-         score_bonus: []
-   - Fill score_bonus from the skills my CLAUDE.md "Routine settings" say should add points (ask me if unclear).
-   - Prove it: run each version's in_scope over every title in data/seen_jobs.csv (column "title"), for
-     example with a small script in backups/ that imports search_jobs from engine-old/tools and then, in a
-     separate process, from engine/tools, and writes {title: kept} to two JSON files. Show me every title
-     whose result differs. Only "...tga..." titles may differ; anything else means the profile is wrong.
-   - Then ask me whether I want to change the profile (for example narrow it to my field). Change it only on
-     a yes, after showing the result.
-
-4. CV map (cv/layout.yaml)
-   - The old builder expected: the CV is one table; the headline is the 2nd paragraph of the header cell; a
-     PROJECTS section ends at EXPERIENCE, each project a title line ("Name, description") followed by a line
-     with "|"; a "Skills" block of ability headings with "- " bullets ending at "LEADERSHIP & INITIATIVE"; a
-     "Technical Proficiency" block of "Name: ..." lines. In the letter: paragraph 4 = date, 5 = recipient,
-     6 = subject, 8 = greeting (1-based), body until the first empty paragraph.
-   - Run `python engine/tools/cv_map.py outline <master_cv>` and the same for master_letter (paths in
-     config.yaml). Write cv/layout.yaml following the format at the top of engine/tools/cv_map.py. Name the
-     sections projects, abilities and technical, so my existing application.md files keep working. A
-     starting point (adjust anchors and skip to what the outline shows):
-       cv:
-         headline: {after: "<the line before the headline, usually my name>"}
-         sections:
-           projects:  {start: PROJECTS, end: [EXPERIENCE], items: blank_line, title_marker: "|", name_split: ","}
-           abilities: {start: Skills, end: [LEADERSHIP & INITIATIVE], items: no_dash}
-           technical: {start: Technical Proficiency, skip: <lines between heading and first "Name:" line>,
-                       items: colon, name_split: ":"}
-       letter:
-         date: {starts_with: "<letter_city>,"}
-         recipient: {text: "<paragraph 5 exactly>"}
-         subject: {starts_with: "<start of paragraph 6>"}
-         greeting: {starts_with: "<start of paragraph 8>"}
-   - Add `layout: cv/layout.yaml` to config.yaml. Run `python engine/tools/cv_map.py check` until it says OK
-     and the item names match the ones my application.md files use.
-
-5. Other settings in config.yaml
-   - internship_duration: the old builder required "12 months" in internship letters. Use the duration from my
-     CLAUDE.md (Rule 9 values / availability); if none is there, ask me.
-   - pdf_engine: word (what the old engine used; LibreOffice may not see my fonts). Mention that auto also
-     falls back to LibreOffice if I ever want that.
-   - The new onboarding records a kept CV layout as a decision. Ask me whether to add to CLAUDE.md "My
-     decisions on the rules": "CV layout (my decision, <today>): the two-column table layout stays; ATS checks
-     and CV reviews don't flag it again." Add it only on a yes.
-
-6. Prove the builder still makes the same documents
-   - Pick up to 5 folders in applications/ (or applications/_sent/) that have an application.md. For each,
-     copy only application.md to backups/upgrade-test/old/<folder>/ and backups/upgrade-test/new/<folder>/.
-   - Build each copy with `--no-pdf`: old ones with engine-old/tools/build_application.py, new ones with
-     engine/tools/build_application.py (pass the full path of the copy).
-   - Compare each pair of .docx files part by part (they are zip files), ignoring docProps/core.xml (it holds
-     the build time). Report: identical / different (which part) / failed in both the same way.
-   - If any differ, stop and show me; don't continue until we understand why.
-
-7. Finish
-   - `python engine/tools/setup_check.py` must say READY. Fix or explain every TODO and warning.
-   - Remove the old copy: `git -C engine worktree remove ../engine-old`, and delete backups/upgrade-test/
-     after asking me. Keep backups/pre-upgrade-<today>/.
-   - Summarise: engine version OLD -> new, what you added to config.yaml and cv/layout.yaml, the title and
-     builder comparison results, and anything I should decide. Optional next step to mention: say "run the ATS
-     review" to have my CV and letter checked with the new checklist.
-   - If this folder is a git repo, suggest a commit message, but don't commit until I say so.
+Update my job-hunt engine safely. Work in this folder (it contains engine/ and config.yaml). First check that you
+can run commands here (git --version, python --version); if you can't, stop and tell me to open this folder in
+Claude Code's Code tab. Then run `git -C engine fetch origin`, read the update instructions with
+`git -C engine show origin/main:UPGRADING.md`, and follow its "Steps for Claude". Don't commit, push or delete
+anything without asking me.
 ```
+
+## Steps for Claude
+
+Run everything from the workspace folder. Explain each result to the user in plain words; they may not be
+technical. Never edit files in engine/ yourself.
+
+0. **Can you run commands?** Run `git --version` and `python --version`. If this session can't run commands on
+   the user's computer, stop: tell them to open the workspace folder in Claude Desktop's Code tab and say "update
+   the engine" there. Don't work in a copy somewhere else.
+1. **Fetch the new engine next to the old one:** `git -C engine fetch origin`, then
+   `git -C engine worktree add ../engine-new origin/main` (engine-new/ sits in the workspace; remove a stale one
+   first with `git -C engine worktree remove --force ../engine-new`). Add `engine-new/` to .gitignore if the
+   workspace is a git repo.
+2. **Look:** `python engine-new/tools/upgrade.py status`. Summarise: engine version, how many new changes and what
+   they are (the commit titles), local edits in engine/, config version. If the workspace is a git repo with
+   uncommitted changes, say so and ask whether to continue.
+3. **Back up:** `python engine-new/tools/upgrade.py prepare`. If engine/ had local edits, read
+   `backups/pre-upgrade-<date>/engine-local-changes.patch`. For every change, say which new setting does the same
+   job (prepare lists the ones it recognises) or, if none does, draft a wish for custom.md (copy
+   engine/templates/workspace/custom.md if the file doesn't exist) and show it. Ask: "Update now? Your edits are
+   kept in the backup and in git, and 'rollback' brings them back." Continue only on a yes.
+4. **Update:** `python engine-new/tools/upgrade.py apply`.
+5. **Settings:** `python engine/tools/upgrade.py migrate`. It prints what it wrote and runs the CV map check.
+   - "CV map: PROBLEMS": fix cv/layout.yaml with `python engine/tools/cv_map.py outline <file>` (the format is at
+     the top of engine/tools/cv_map.py) until `python engine/tools/cv_map.py check` says OK.
+   - "not read by this engine": find out what the key did (the patch, the old engine's code in
+     backups/pre-upgrade-<date>/engine-old/). If a new setting covers it, use it; otherwise it's a custom.md wish.
+6. **Check:** `python engine/tools/setup_check.py --init` must say READY. Fix every TODO; explain the warnings.
+7. **Prove it:** `python engine/tools/upgrade.py compare`. "SAME DOCUMENTS" means the new engine builds exactly
+   what the old one did and keeps the same job titles. For each difference, look at the built files in
+   backups/pre-upgrade-<date>/test/ and explain it: a fix in the new engine (say what it fixes), a setting that
+   needs adjusting (adjust it and compare again), or a real problem (stop; offer `upgrade.py rollback`). Continue
+   only when the user accepts the result.
+8. **Offers (each only on a yes, after showing the change):**
+   - The migrated `profile:` keeps the old title filter exactly. If CLAUDE.md describes a narrower search (for
+     example junior roles only, or another field), propose the narrower profile and show which ledger titles it
+     would drop.
+   - Wishes in custom.md: read [CHANGELOG.md](CHANGELOG.md). Mark each wish the new engine covers
+     (`- Status: covered by <setting> (<date>)`) and offer to set it up. For each open wish, draft a GitHub issue
+     (title and a short body: what, why, an example) the user can paste at
+     https://github.com/Jaival/jobhunt-agent/issues/new. Never post it yourself.
+9. **Finish:** after the user's yes, `python engine/tools/upgrade.py finish` (removes engine-new/, the test
+   builds and the saved engine copy; keeps the backup). Summarise: engine version old -> new, what changed in
+   config.yaml and cv/layout.yaml, the compare result, and anything still to decide. If the workspace is a git
+   repo, suggest a commit message, but don't commit until the user says so.
 
 ## If something goes wrong
 
-- Put the old engine back: `git -C engine checkout <OLD>` (the prompt notes the version first), and restore
-  config.yaml from `backups/pre-upgrade-<date>/`.
-- "remap my CV": rebuilds cv/layout.yaml when an anchor no longer matches.
+- `python engine/tools/upgrade.py rollback` (or `python engine-new/tools/upgrade.py rollback` before step 4
+  finished): the old engine version, its local edits and the old config.yaml come back; a cv/layout.yaml the
+  update wrote is moved into the backup folder.
+- By hand: `git -C engine reset --hard <old commit>` (in backups/pre-upgrade-<date>/upgrade.json), then
+  `git -C engine stash pop` if the edits were set aside, and copy config.yaml back from the backup.
+- "remap my CV" rebuilds cv/layout.yaml when an anchor no longer matches.

@@ -66,3 +66,43 @@ class Scope:
         if self.junior_exclude and self.junior_exclude.search(title):
             return False
         return not self.junior_include or bool(self.junior_include.search(title))
+
+
+def search_areas(search):
+    """Arbeitsagentur location passes from config.yaml search: the home area, then search.areas (a list of
+    {wo, umkreis}); without search.areas, one nationwide pass."""
+    search = search or {}
+    areas = [search.get("home") or {}]
+    areas += search["areas"] if search.get("areas") is not None else [{}]
+    return [a for i, a in enumerate(areas) if a not in areas[:i]]
+
+
+class Region:
+    """config.yaml search.regions (federal states, e.g. [Bayern]): keep only jobs inside them.
+
+    Arbeitsagentur jobs are matched by the ad's region field, else by postcode prefix (search.region_plz); other
+    sources by place names in the location (search.region_places, plus the region names). A job without any
+    location is kept and marked location_check, so the routine checks it while scoring."""
+
+    def __init__(self, search):
+        search = search or {}
+        self.regions = [str(r).lower() for r in search.get("regions") or []]
+        self.plz = [str(p) for p in search.get("region_plz") or []]
+        self.places = [str(p).lower() for p in search.get("region_places") or []] + self.regions
+        if "bayern" in self.regions:
+            self.places.append("bavaria")
+
+    def keep(self, job):
+        if not self.regions:
+            return True
+        region = (job.get("region") or "").lower()
+        if region:
+            return region in self.regions
+        plz = str(job.get("plz") or "")
+        if plz and self.plz:
+            return any(plz.startswith(p) for p in self.plz)
+        loc = (job.get("location") or "").lower()
+        if not loc:
+            job["location_check"] = True
+            return True
+        return any(p in loc for p in self.places)

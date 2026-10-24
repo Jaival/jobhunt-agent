@@ -1,0 +1,25 @@
+# German sample workspace for a fictional mechanical engineer (see README.md). Not a real person.
+config_version: 2
+applicant: Jonas Becker
+file_prefix: Jonas_Becker
+master_cv: cv/Jonas_Becker_Lebenslauf.docx
+master_letter: cv/Jonas_Becker_Anschreiben.docx
+variants: cv/variants.yaml
+letter_city: Regensburg
+name_in_master: Jonas Michael Becker     # the master files say this; documents say Jonas Becker
+letter_languages: [de, en]               # a German and an English letter for every application
+university: ""
+font: Arial
+fallback_font: Arial
+search:
+  home: {wo: Regensburg, umkreis: 50}
+  areas: [{wo: München, umkreis: 50}, {wo: Nürnberg, umkreis: 50}]   # instead of a nationwide pass
+  regions: [Bayern]
+  region_plz: ['8', '90', '91', '92', '93', '94', '95', '96', '97']
+profile:
+  role_types: [Junior]
+  include_titles: [maschinenbau, konstruktion, simulation, berechnung, '\bcae\b', '\bfem\b', entwicklungsingenieur,
+                   mechanical]
+  score_bonus: [ANSYS, Abaqus, CATIA]
+layout: cv/layout.yaml
+pdf_engine: auto

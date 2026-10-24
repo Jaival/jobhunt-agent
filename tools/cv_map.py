@@ -6,19 +6,24 @@ candidate keeps their own design. Every part is optional: what isn't mapped simp
     cv:
       headline: {after: "Jane Doe"}          # the line to replace per job: the first non-empty line after the
                                              # line that is exactly "Jane Doe" (or {starts_with: "..."})
+      date: {starts_with: "Berlin,"}         # optional: a "City, DD.MM.YYYY" line, set to the letter date
       sections:                              # blocks whose items the builder may reorder per job
         projects:                            # cv.projects in application.md; cv.omit_projects works on this one
           start: PROJECTS                    # the heading line, exact text (upper/lower case ignored)
           end: [EXPERIENCE]                  # optional: heading(s) after the section; default: end of its column/cell
           skip: 0                            # optional: lines after the heading that aren't items (default 0)
-          items: blank_line                  # where an item starts: blank_line | bold | colon | no_dash | style:<Name>
+          items: blank_line                  # where an item starts: blank_line | bold | colon | no_dash | not_list |
+                                             # style:<Name>  (not_list: a line that isn't a Word list bullet)
           title_marker: "|"                  # optional: also starts an item at a line followed by a line containing this
-          name_split: ","                    # optional: the item's name is the text before this; default: the whole line
+          name_split: ","                    # optional: the item's name is the text before this (or before the first of
+                                             # a list, e.g. ["\t", ","]); default: the whole line
     letter:
       date: {starts_with: "Berlin,"}         # replaced by "<letter_city>, DD.MM.YYYY"
-      recipient: {starts_with: "Acme GmbH"}
+      recipient: {starts_with: "Acme GmbH"}  # the address block: this line and the lines after it, up to an empty
+                                             # line or the next mapped part (company, street, postcode, ...)
       subject: {starts_with: "Application"}
-      greeting: {starts_with: "Dear"}        # the body runs from the line after it to the first empty line
+      greeting: {starts_with: "Dear"}        # the body starts after it
+      closing: {starts_with: "Kind regards"} # optional: the body ends before it; without it, at the first empty line
 
 A section's lines are the paragraphs that follow its heading inside the same container (page body, table cell
 or text box), so a section never runs across columns. Experience bullets are found through cv/variants.yaml.
@@ -40,7 +45,8 @@ import yaml
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
-ITEM_RULES = ("blank_line", "bold", "colon", "no_dash")
+ITEM_RULES = ("blank_line", "bold", "colon", "no_dash", "not_list")
+LETTER_PARTS = ("date", "recipient", "subject", "greeting", "closing")
 
 
 class MapError(Exception):
@@ -79,6 +85,28 @@ def container(p):
 def is_bold(p):
     runs = [r for r in p.runs if r.text.strip()]
     return bool(runs) and all(r.bold or (r.style is not None and r.style.font.bold) for r in runs)
+
+
+def is_list(p):
+    """A Word list paragraph (bullet or numbering), set on the paragraph or by its style."""
+    ppr = p._p.pPr
+    if ppr is not None and ppr.numPr is not None:
+        return True
+    style = p.style
+    while style is not None:
+        spr = style.element.pPr
+        if spr is not None and spr.numPr is not None:
+            return True
+        style = style.base_style
+    return False
+
+
+def item_name(text, split):
+    """The text before the first of the split marks (a string or a list), or the whole line."""
+    if not split:
+        return text.strip()
+    cut = [text.find(s) for s in ([split] if isinstance(split, str) else split) if s and s in text]
+    return (text[:min(cut)] if cut else text).strip()
 
 
 def find(paras, anchor, what):
@@ -142,13 +170,15 @@ def section(d, name, spec):
             return ":" in t
         if rule == "no_dash":
             return not t.startswith(("-", "•", "–", "·"))
+        if rule == "not_list":
+            return not is_list(p)
         return p.style is not None and p.style.name == rule[len("style:"):]
 
     split = spec.get("name_split")
     blocks, names, current = {}, [], None
     for i, p in enumerate(sibs):
         if starts(i):
-            current = p.text.split(split)[0].strip() if split else p.text.strip()
+            current = item_name(p.text, split)
             if current in blocks:
                 raise MapError(f"section {name}: two items named '{current}'")
             names.append(current)
@@ -177,26 +207,52 @@ def load(path):
     return m
 
 
+def siblings(p):
+    """The paragraphs after p in the same container."""
+    for el in p._p.itersiblings():
+        if el.tag == f"{W}p":
+            yield docx.text.paragraph.Paragraph(el, p._parent)
+
+
 def letter_parts(d, lmap):
-    """{part: paragraph} for date, recipient, subject, greeting, plus 'body' = list of body paragraphs."""
+    """{part: paragraph} for date, subject, greeting and closing, plus
+    'recipient' = the address block (a list of one or more paragraphs),
+    'body' = the body paragraphs and 'body_all' = every paragraph from the first to the last of them,
+    'spacer' = an empty paragraph between body paragraphs in the master, if there is one."""
     paras = paragraphs(d)
-    parts = {k: find(paras, lmap[k], f"letter {k}") for k in ("date", "recipient", "subject", "greeting")
-             if lmap.get(k)}
+    unknown = [k for k in lmap if k not in LETTER_PARTS]
+    if unknown:
+        raise MapError(f"letter: unknown part {unknown} (use {', '.join(LETTER_PARTS)})")
+    parts = {k: find(paras, lmap[k], f"letter {k}") for k in LETTER_PARTS if lmap.get(k)}
     if "greeting" not in parts:
         raise MapError("letter: greeting anchor is required (the body starts after it)")
-    body = []
-    for el in parts["greeting"]._p.itersiblings():
-        if el.tag != f"{W}p":
-            continue
-        p = docx.text.paragraph.Paragraph(el, parts["greeting"]._parent)
-        if not p.text.strip():
-            if body:
+    if "recipient" in parts:
+        others = {parts[k]._p for k in parts if k != "recipient"}
+        block = [parts["recipient"]]
+        for p in siblings(parts["recipient"]):
+            if not p.text.strip() or p._p in others:
                 break
-            continue
-        body.append(p)
-    if not body:
+            block.append(p)
+        parts["recipient"] = block
+    body_all = []
+    closing = parts.get("closing")
+    for p in siblings(parts["greeting"]):
+        if closing is not None:
+            if p._p is closing._p:
+                break
+        elif not p.text.strip() and any(q.text.strip() for q in body_all):
+            break
+        body_all.append(p)
+    else:
+        if closing is not None:
+            raise MapError("letter: the closing line isn't after the greeting in the same part of the page")
+    filled = [i for i, p in enumerate(body_all) if p.text.strip()]
+    if not filled:
         raise MapError("letter: no body paragraphs after the greeting")
-    parts["body"] = body
+    body_all = body_all[filled[0]:filled[-1] + 1]
+    parts["body"] = [p for p in body_all if p.text.strip()]
+    parts["body_all"] = body_all
+    parts["spacer"] = next((p for p in body_all if not p.text.strip()), None)
     return parts
 
 
@@ -209,11 +265,12 @@ def check(layout_path, cv_path, letter_path, out=print):
         return [str(e)]
     cvm = m.get("cv") or {}
     d = docx.Document(str(cv_path))
-    if cvm.get("headline"):
-        try:
-            out(f"headline: {find(paragraphs(d), cvm['headline'], 'headline').text.strip()}")
-        except MapError as e:
-            problems.append(str(e))
+    for part in ("headline", "date"):
+        if cvm.get(part):
+            try:
+                out(f"{part}: {find(paragraphs(d), cvm[part], part).text.strip()}")
+            except MapError as e:
+                problems.append(str(e))
     for name, spec in (cvm.get("sections") or {}).items():
         try:
             names, _ = section(d, name, spec or {})
@@ -224,7 +281,12 @@ def check(layout_path, cv_path, letter_path, out=print):
         try:
             parts = letter_parts(docx.Document(str(letter_path)), m["letter"])
             for k, p in parts.items():
-                out(f"letter {k}: " + (f"{len(p)} paragraphs" if k == "body" else p.text.strip()[:70]))
+                if k == "body":
+                    out(f"letter body: {len(p)} paragraphs")
+                elif k == "recipient":
+                    out(f"letter recipient: {len(p)} line(s): " + " / ".join(q.text.strip() for q in p)[:90])
+                elif k in LETTER_PARTS:
+                    out(f"letter {k}: {p.text.strip()[:70]}")
         except MapError as e:
             problems.append(str(e))
     return problems

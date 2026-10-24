@@ -5,6 +5,8 @@ Don't search for jobs during setup. The goal is a workspace that passes the chec
 the candidate tells you or what is in their own CV.
 
 ## Ground rules
+- Never edit files in engine/ (local edits block updates). What the candidate wants that config.yaml, the CV map or
+  CLAUDE.md can't express goes in custom.md as a wish (engine/templates/workspace/custom.md shows the format).
 - Ask, don't guess. Every fact in CLAUDE.md and projects.md must come from the candidate's answers or their CV.
   If something is unclear, ask a follow-up instead of filling the gap.
 - Ask in short rounds (one topic at a time, at most 4 questions per round). Use the AskUserQuestion tool when
@@ -79,9 +81,9 @@ Write each answer into the file named in brackets right after the round.
    that as a decision in CLAUDE.md "My decisions on the rules" so later reviews don't flag it again.
    **Map the CV** (also the "remap my CV" request; the format is at the top of engine/tools/cv_map.py): run
    `python engine/tools/cv_map.py outline <master_cv>` and the same for the letter. Write cv/layout.yaml: the
-   headline line under the name, the sections whose items may be reordered per job (projects, skill groups,
-   ... with the rule that splits them into items) and the letter's date, recipient, subject and greeting
-   lines. Use anchor text that appears only once and won't change per job. Run `python engine/tools/cv_map.py
+   headline line under the name, a "City, date" line if the CV has one, the sections whose items may be
+   reordered per job (projects, skill groups, ... with the rule that splits them into items) and the letter's
+   date, recipient (the first line of the address block), subject, greeting and closing lines. Use anchor text that appears only once and won't change per job. Run `python engine/tools/cv_map.py
    check` until it says OK, then show the candidate in plain words what will change per job (the headline, the
    order of those items, the letter text) and that everything else stays exactly as they designed it.
    If the CV can't be mapped (no .docx, text boxes the scan flagged and they want to keep), set `layout: none`
@@ -106,7 +108,9 @@ Write each answer into the file named in brackets right after the round.
    Propose 5-8 search terms from rounds 3 and 3b (mix English and German titles, e.g. "Werkstudent Marketing",
    "Working Student Content") and let them edit the list. Replace the example terms in sources.md, and mark
    field-specific platforms they don't need (e.g. tech-only boards) as "no".
-   Set search.home (city and radius in km). Ask for their university's job board URL (row "University job
+   Set search.home (city and radius in km). If they only want jobs in some places, set search.areas (cities to
+   search instead of the whole country) and, for a whole federal state, search.regions (for example [Bayern],
+   with region_plz postcode starts for ads that don't name the state). Ask for their university's job board URL (row "University job
    board") and for companies they'd like to watch (add them to companies.md with empty ATS/Endpoint).
 10. **Connectors (optional)** [nothing to write; mention in the summary]
     Check which tools this session has: Gmail (job alerts, confirmations, rejections), Indeed, the obscura

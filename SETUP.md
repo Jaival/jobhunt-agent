@@ -19,7 +19,7 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
 3. Open Claude Desktop, go to the Code tab, click **Scheduled** in the sidebar (or under **More**), then
    **New task** (choose **Set up manually** if a menu opens).
    - Name: job-hunt-daily
-   - Instructions (the box under the name): "Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly. On the first run it checks the setup and asks me for what it needs. Finish by replying with a 3-line summary and the path of today's brief."
+   - Instructions (the box under the name): "Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly. It checks the setup at the start of every run and only asks me questions if something is missing. Finish by replying with a 3-line summary and the path of today's brief."
    - Advanced settings > General: turn on **Only on this computer** (the routine needs your local files). If
      that switch is at the top of the dialog instead, turn it on before filling in anything else.
    - Local folder: the workspace folder (trust it when asked)
@@ -41,8 +41,10 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
 8. Connectors: if you connected Indeed or Gmail in Claude, the routine uses them. Browsing uses the obscura MCP; make sure it is configured in Claude Desktop, and on the first "Run now" choose "always allow" for each obscura tool.
 9. Recommended: set up daily email job alerts on StepStone, XING and LinkedIn. Alert emails are the most reliable way to get jobs from those sites, since they often block automated access.
 
-Updating: `git pull` inside `engine/`. Your workspace files are never touched by an update. Set up before the
-"any field" update (job titles hardcoded to IT, one fixed CV layout)? Follow [UPGRADING.md](UPGRADING.md) instead:
-it has a prompt that lets Claude update your workspace and prove nothing changed.
+Updating: when the daily brief says an engine update is available, open your workspace in Claude Code and say
+"update the engine" ([UPGRADING.md](UPGRADING.md)). Claude backs up your settings, keeps any edits made inside
+engine/, updates config.yaml, and builds documents with the old and the new engine to show you they still come
+out the same. Engines from before October 2026 need a one-time prompt; it's in UPGRADING.md. Never edit files in
+engine/ yourself: put wishes in custom.md.
 
 Each morning, open daily/<date>.md and follow the plan.

@@ -22,7 +22,8 @@ CLAUDE.md. **Decisions recorded in CLAUDE.md override these defaults.**
 10. Attitude to convey (sincerely, no cliches): the candidate wants to start soon, is eager to learn the tools they don't know yet, and wants to take real work off the team's plate from early on.
 
 ## Folder layout (workspace)
-- `engine/` this public repo: ROUTINE.md (the daily routine; the scheduled task points here), RULES.md, career-ops-playbook.md, tools/, templates/
+- `engine/` this public repo: ROUTINE.md (the daily routine; the scheduled task points here), RULES.md, career-ops-playbook.md, tools/, templates/. **Never edit files in engine/**: local edits block engine updates. Personal behaviour goes in CLAUDE.md (decisions) or config.yaml (settings); wishes the engine can't do yet go in `custom.md`.
+- `custom.md` wish list for the engine (never acted on by the routine); "update the engine" marks the wishes a new version covers and drafts an issue for the rest
 - `config.yaml` personal settings for the tools (name, file prefix, master CV paths, letter city, university, fonts, search home area)
 - `CLAUDE.md` the candidate's profile, decisions and routine settings; imports this file
 - `sources.md` platforms, search terms and methods (Claude may update the Status column)
