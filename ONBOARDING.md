@@ -106,7 +106,9 @@ Write each answer into the file named in brackets right after the round.
    Propose 5-8 search terms from rounds 3 and 3b (mix English and German titles, e.g. "Werkstudent Marketing",
    "Working Student Content") and let them edit the list. Replace the example terms in sources.md, and mark
    field-specific platforms they don't need (e.g. tech-only boards) as "no".
-   Set search.home (city and radius in km). Ask for their university's job board URL (row "University job
+   Set search.home (city and radius in km). If they only want jobs in some places, set search.areas (cities to
+   search instead of the whole country) and, for a whole federal state, search.regions (for example [Bayern],
+   with region_plz postcode starts for ads that don't name the state). Ask for their university's job board URL (row "University job
    board") and for companies they'd like to watch (add them to companies.md with empty ATS/Endpoint).
 10. **Connectors (optional)** [nothing to write; mention in the summary]
     Check which tools this session has: Gmail (job alerts, confirmations, rejections), Indeed, the obscura

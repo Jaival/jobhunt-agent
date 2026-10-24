@@ -33,7 +33,7 @@ Today = the current local date. Work in this order. All tools run from the works
 
 4. Score each remaining job 0-100
 - Criteria: tech overlap with the candidate's real strengths, seniority fit, German requirement, location, enrolment conditions.
-- Location: follow the location preferences in CLAUDE.md "Routine settings". Letters for far-away roles say the candidate is willing to relocate only if CLAUDE.md says so, and never imply the candidate lives there.
+- Location: follow the location preferences in CLAUDE.md "Routine settings". Jobs marked `location_check` in candidates.json have no location in the ad (config.yaml search.regions couldn't place them): check the location while scoring. Letters for far-away roles say the candidate is willing to relocate only if CLAUDE.md says so, and never imply the candidate lives there.
 - Student checks, noted under gaps: required hours vs. availability; start date and duration; "Pflichtpraktikum" only -> "check eligibility", not a hard mismatch; enrolment needed for the whole contract.
 - Student roles: score against the skills listed in CLAUDE.md "Routine settings" and the master CV. Tools or methods the candidate doesn't have yet are gaps, never a hard mismatch for student roles. Add points for the skills in `profile.score_bonus` (config.yaml).
 - Research-assistant (HiWi) roles at the institutes listed in CLAUDE.md "Routine settings" (if any) are strong fits: score generously.

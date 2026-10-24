@@ -1,10 +1,12 @@
 """Search the API sources, filter titles, mark what is new against the seen-jobs ledger.
 
-Sources: Arbeitsagentur API (search terms from sources.md, home area from config.yaml + nationwide),
+Sources: Arbeitsagentur API (search terms from sources.md; the home area from config.yaml, then search.areas or
+one nationwide pass),
 Arbeitnow API (German site only), and the Personio / Ashby / Greenhouse / Lever endpoints listed in
 companies.md. Indeed (connector) and Gmail alerts stay manual tool calls in the routine.
 
-Titles are filtered by the profile: block in config.yaml (role types, include / exclude words; scope.py).
+Titles are filtered by the profile: block in config.yaml (role types, include / exclude words; scope.py), and
+locations by search.regions when it is set (for example [Bayern]; scope.Region).
 Writes data/candidates.json (all in-scope jobs, each marked new / seen) and prints the new ones.
 It does not change the ledger: after scoring, run `python engine/tools/ledger.py record`.
 
@@ -29,7 +31,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import ledger  # noqa: E402
 from config import CFG  # noqa: E402
-from scope import Scope, role_type  # noqa: E402
+from scope import Region, Scope, role_type, search_areas  # noqa: E402
 
 ROOT = ledger.ROOT
 OUT = ROOT / "data" / "candidates.json"
@@ -44,6 +46,7 @@ try:
 except ValueError as e:
     sys.exit(str(e))
 in_scope = SCOPE.in_scope
+REGION = Region(CFG.get("search"))
 
 
 def search_terms():
@@ -57,7 +60,7 @@ def search_terms():
 def arbeitsagentur(since, days, status):
     jobs = {}
     for term in search_terms():
-        for where in (CFG.get("search", {}).get("home") or {}, {}):
+        for where in search_areas(CFG.get("search")):
             try:
                 r = requests.get(BA_SEARCH, headers=BA_HEADERS, timeout=30,
                                  params={"was": term, "size": 100, "veroeffentlichtseit": days, **where})
@@ -77,9 +80,10 @@ def arbeitsagentur(since, days, status):
         posted = x.get("datumErsteVeroeffentlichung", "")
         if posted < since:
             continue
-        loc = (x.get("stellenlokationen") or [{}])[0].get("adresse", {})
+        loc = (x.get("stellenlokationen") or [{}])[0].get("adresse", {}) or x.get("arbeitsort") or {}
         out.append(dict(id=f"ba-{ref}", source="Arbeitsagentur", title=x.get("stellenangebotsTitel", ""),
                         company=x.get("firma", ""), location=loc.get("ort", ""), posted=posted,
+                        region=loc.get("region", ""), plz=str(loc.get("plz") or ""),
                         url=f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{ref}", ref=ref))
     return out
 
@@ -172,7 +176,7 @@ def main():
     idx = ledger.Index(ledger.load())
     seen_keys, jobs = set(), []
     for j in found:
-        if not in_scope(j["title"]):
+        if not in_scope(j["title"]) or not REGION.keep(j):
             continue
         key = ledger.make_key(j["company"], j["title"])
         if key in seen_keys:  # same job on several sources this run

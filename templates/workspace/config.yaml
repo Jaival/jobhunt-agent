@@ -13,6 +13,10 @@ font: Open Sans                                 # font for CV and letter
 fallback_font: Open Sans                        # substitute named in the font table
 search:
   home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)
+  # areas: [{wo: München, umkreis: 50}, {wo: Nürnberg, umkreis: 50}]   # optional: these passes instead of nationwide
+  # regions: [Bayern]                           # optional: keep only jobs in these federal states
+  # region_plz: ['8', '90', '91', '92', '93', '94', '95', '96', '97']  # postcode starts, for ads without a region
+  # region_places: [München, Nürnberg, Augsburg, Regensburg]          # place names, for other job sites
 profile:                                        # which job titles search_jobs.py keeps (engine/tools/scope.py)
   # Each entry is a word (or regular-expression fragment) matched anywhere in the title, upper/lower case ignored.
   # Onboarding fills this in from your answers; the examples below are for a marketing student.

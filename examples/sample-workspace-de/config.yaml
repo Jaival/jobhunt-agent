@@ -12,6 +12,9 @@ font: Arial
 fallback_font: Arial
 search:
   home: {wo: Regensburg, umkreis: 50}
+  areas: [{wo: München, umkreis: 50}, {wo: Nürnberg, umkreis: 50}]   # instead of a nationwide pass
+  regions: [Bayern]
+  region_plz: ['8', '90', '91', '92', '93', '94', '95', '96', '97']
 profile:
   role_types: [Junior]
   include_titles: [maschinenbau, konstruktion, simulation, berechnung, '\bcae\b', '\bfem\b', entwicklungsingenieur,
