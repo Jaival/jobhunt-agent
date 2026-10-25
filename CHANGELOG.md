@@ -31,7 +31,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   email, phone or a long encoded value, IP addresses and odd ports, and page scripts that make network calls.
   Every block prints a reason. `guard.py --status` says whether the guard ran this session and also lists the
   calls the permission rules refused (they never reach the hook; read from the session transcript); the brief
-  shows it under Sources and lists what was blocked or refused. `setup_check.py` starts the hook once to prove it blocks.
+  shows it under Sources and lists what was blocked or refused. `setup_check.py` starts the hook once to prove it
+  blocks.
 - Eval seed: 33 real public ads in `tests/evals/ads/` with the labels the routine should give them for the sample
   workspace (in scope, role type, hard mismatch, score range, German level), contact data removed. Sprint 2
   records a scoring baseline against them; a test keeps the labels well-formed and the title-filter label in step
