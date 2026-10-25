@@ -55,11 +55,13 @@ effect, not the function.
 1. Tests pass on `next` (CI on Windows, Ubuntu and macOS).
 2. `upgrade.py compare` on both sample workspaces (`examples/`): documents identical, or the differences
    explained in the CHANGELOG.
-3. Branch `release-X.Y.Z` from `next`: set `VERSION` to `X.Y.Z`; rename `## [Unreleased]` to
+3. The guard test in [tests/evals/guard-test.md](../tests/evals/guard-test.md): every forced attempt is stopped
+   and the brief lists it.
+4. Branch `release-X.Y.Z` from `next`: set `VERSION` to `X.Y.Z`; rename `## [Unreleased]` to
    `## [X.Y.Z] - YYYY-MM-DD: <short title>`, add a new empty `## [Unreleased]` above it, and update the
    compare links at the bottom.
-4. PR `release-X.Y.Z` → `main`, merge. (`next` never gets a release `VERSION`: it keeps `-dev`.)
-5. Tag the merged commit and push the tag:
+5. PR `release-X.Y.Z` → `main`, merge. (`next` never gets a release `VERSION`: it keeps `-dev`.)
+6. Tag the merged commit and push the tag:
    ```
    git fetch origin
    git show origin/main:VERSION          # must print X.Y.Z; if not, the merge isn't there yet
@@ -67,9 +69,9 @@ effect, not the function.
    git push origin vX.Y.Z
    ```
    Create the GitHub Release from the CHANGELOG section (by hand until the release workflow exists).
-6. PR `main` → `next` to bring the CHANGELOG section back, and in it set `VERSION` to the next `-dev` version
+7. PR `main` → `next` to bring the CHANGELOG section back, and in it set `VERSION` to the next `-dev` version
    (e.g. `0.4.0-dev`), so `next` never claims a release number.
-7. Update the maintainer's own workspace with "update the engine" and watch the next daily run.
+8. Update the maintainer's own workspace with "update the engine" and watch the next daily run.
 
 ## Tags so far
 | Tag | Commit | Date | What |
