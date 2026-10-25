@@ -25,11 +25,17 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 ### Behaviour changes
 - When an Arbeitsagentur ad text can't be fetched, the routine tries again or opens the job page, and the brief
   says which ads couldn't be read (before, the whole search was lost).
+- Which jobs count as already seen: a job at the same company now matches an earlier one only with the same
+  title words (in any order, ignoring gender forms, punctuation and filler words). Jobs the old similarity check
+  hid ("SAP CO" behind "SAP FI", "Senior" behind "Junior") show up as new once; reposts with reordered words or
+  the other gender form (Kauffrau / Kaufmann) now count as seen.
 
 ### Fixed
 - `search_jobs.py --details` no longer crashes when an Arbeitsagentur ad can't be fetched: candidates.json is
   written before the details (atomically), a job without its text gets `detail_error`, the status line counts
   the failures, and after 3 failures in a row the remaining ads are skipped instead of each waiting 30 s.
+- The seen-jobs ledger no longer treats different jobs at one company as the same job, so they're screened
+  instead of skipped as already seen. No migration: existing rows are matched by their titles.
 - The seen-jobs ledger is saved through a temp file, so a run stopped while saving keeps the old ledger instead
   of a half-written one.
 
