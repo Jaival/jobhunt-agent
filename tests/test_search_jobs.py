@@ -77,3 +77,71 @@ def test_gives_up_when_the_endpoint_is_down(sample):
     assert jobs["1"]["detail_error"].startswith("ConnectionError")  # named even though the message is empty
     assert all(jobs[r]["detail_error"].startswith("skipped") for r in ("4", "5"))
     assert status["details"] == "0 ok, 5 failed"
+
+
+# Paging (S1-7): a fake Arbeitsagentur search. argv: tools dir, JSON {term: total results, or "fail2" for 150 results
+# whose second page errors}.
+PAGING = r"""
+import json, sys
+sys.path.insert(0, sys.argv[1])
+plan = json.loads(sys.argv[2])
+sys.argv = ["search_jobs.py"]
+import requests, search_jobs as s
+
+s.search_terms = lambda: list(plan)
+s.search_areas = lambda search: [{"wo": "Mannheim", "umkreis": 50}]
+s.arbeitnow = lambda since, status: []
+s.watchlist = lambda since, status: []
+s.time.sleep = lambda _: None
+
+class Resp:
+    def __init__(self, data): self.data = data
+    def raise_for_status(self): pass
+    def json(self): return self.data
+
+def fake_get(url, params, **kw):
+    term, page, size = params["was"], params["page"], params["size"]
+    print("GET", term, page)
+    total = 150 if plan[term] == "fail2" else plan[term]
+    if plan[term] == "fail2" and page == 2:
+        raise requests.ConnectionError("reset")
+    n = range((page - 1) * size, min(page * size, total))
+    return Resp({"maxErgebnisse": total, "page": page, "size": size, "ergebnisliste": [
+        dict(referenznummer=f"{term}-{i}", stellenangebotsTitel=f"Werkstudent Marketing {term} {i}", firma=f"Firma {i}",
+             datumErsteVeroeffentlichung="2099-01-01",
+             stellenlokationen=[{"adresse": {"ort": "Mannheim", "plz": "68159", "region": "BADEN_WUERTTEMBERG"}}])
+        for i in n]})
+s.requests.get = fake_get
+sys.exit(s.main())
+"""
+
+
+def run_paging(sample, plan):
+    env = {**os.environ, "JOBHUNT_ROOT": str(sample), "PYTHONIOENCODING": "utf-8", "JOBHUNT_OFFLINE": "1"}
+    r = subprocess.run([sys.executable, "-c", PAGING, str(TOOLS), json.dumps(plan)], cwd=sample, env=env,
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    status = json.loads((sample / "data" / "candidates.json").read_text(encoding="utf-8"))["status"]["Arbeitsagentur"]
+    return r.stdout, status
+
+
+def test_paging_follows_pages_until_done(sample):
+    out, status = run_paging(sample, {"a": 50, "b": 100, "c": 250})
+    assert [l for l in out.splitlines() if l.startswith("GET")] == [
+        "GET a 1", "GET b 1", "GET c 1", "GET c 2", "GET c 3"]  # b: exactly one full page, no empty second call
+    assert status["fetched"] == 400 and "page_limit" not in status and "WARNING" not in out
+
+
+def test_paging_warns_at_the_limit(sample):
+    out, status = run_paging(sample, {"broad": 450})
+    assert out.count("GET broad") == 3 and status["fetched"] == 300
+    assert status["page_limit"] == ["broad (Mannheim): 300 of 450"]
+    line = next(l for l in out.splitlines() if l.startswith("Arbeitsagentur:"))
+    assert line.endswith("page limit hit in 1 searches")  # in the status line
+    assert "WARNING page limit: broad (Mannheim): 300 of 450" in out
+
+
+def test_paging_error_keeps_earlier_pages(sample):
+    out, status = run_paging(sample, {"flaky": "fail2", "ok": 10})
+    assert status["fetched"] == 110  # page 1 of flaky kept, then the next term
+    assert status["errors"] == ["flaky page 2: reset"] and "page_limit" not in status
