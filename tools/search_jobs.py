@@ -30,6 +30,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import atomic  # noqa: E402
 import ledger  # noqa: E402
 from config import CFG  # noqa: E402
 from scope import Region, Scope, role_type, search_areas  # noqa: E402
@@ -40,6 +41,7 @@ BA_SEARCH = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v6/job
 BA_DETAIL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobdetails/"
 BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", "User-Agent": "Mozilla/5.0"}
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
+GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
 
 # Title filter (routine step 3): built from the profile: block in config.yaml, see scope.py.
 try:
@@ -97,26 +99,34 @@ def ba_detail(ref):
 
 
 def fetch_details(jobs, status):
-    """Full ad text for the Arbeitsagentur jobs; a failure marks that job (detail_error) and the status line."""
-    ok = failed = 0
-    for j in jobs:
-        if not j.get("ref"):
+    """Full ad text for the Arbeitsagentur jobs. A job whose text couldn't be read gets detail_error and stays in
+    candidates.json; after GIVE_UP failures in a row (endpoint down) the rest are skipped, not each timed out."""
+    ok = failed = in_a_row = 0
+    todo = [j for j in jobs if j.get("ref")]
+    for i, j in enumerate(todo):
+        if in_a_row >= GIVE_UP:
+            j["detail_error"] = f"skipped: the detail endpoint failed {GIVE_UP} times in a row"
+            failed += 1
             continue
+        if i:
+            time.sleep(0.3)
         try:
             j["text"], j["external_url"] = ba_detail(j["ref"])
+            if not j["text"].strip():
+                raise ValueError("no ad text in the response" + (" (the ad is on external_url)" if j["external_url"] else ""))
             ok += 1
+            in_a_row = 0
         except Exception as e:  # keep going; the job stays in candidates.json without its text
-            j["detail_error"] = str(e)
+            j["detail_error"] = f"{type(e).__name__}: {e}"
             failed += 1
-        time.sleep(0.3)
-    if ok or failed:
+            in_a_row += 1
+    if todo:
         status["details"] = f"{ok} ok" + (f", {failed} failed" if failed else "")
 
 
 def write(jobs, status, since):
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"generated": dt.datetime.now().isoformat(timespec="minutes"), "since": since,
-                               "status": status, "jobs": jobs}, ensure_ascii=False, indent=1), encoding="utf-8")
+    atomic.write_text(OUT, json.dumps({"generated": dt.datetime.now().isoformat(timespec="minutes"), "since": since,
+                                       "status": status, "jobs": jobs}, ensure_ascii=False, indent=1))
 
 
 def arbeitnow(since, status):
@@ -224,7 +234,7 @@ def main():
     print(f"\nIn scope: {len(jobs)} ({len(new)} new, {len(jobs) - len(new)} already seen). Written to {OUT.relative_to(ROOT)}\n")
     for j in sorted(new, key=lambda j: (j["role_type"], j["posted"])):
         print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}"
-              + (" | no ad text (detail_error)" if j.get("detail_error") else ""))
+              + (" | no ad text (detail_error)" if "detail_error" in j else ""))
     return 0
 
 
