@@ -35,7 +35,7 @@ workspace/                   your private folder (and private git repo)
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
    │                         upgrade, ledger, add_applied, archive, tracker_to_md
-   ├─ docs/                  visual setup guide
+   ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
    ├─ tests/                 pytest suite
@@ -67,6 +67,10 @@ needed: it explains terms like Werkstudent or ATS as it goes and asks before ins
 ## Development
 `python -m pip install pytest` once, then `python -m pytest tests` in this folder. The tests build the sample
 workspace in [examples/sample-workspace](examples/sample-workspace) end to end (no PDFs).
+
+Work in a separate clone, not in a workspace's `engine/`. `main` only moves with releases (that's what users
+update to); changes go through feature branches and PRs into `next`. The plan to v1.0 is in
+[docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Credits
 `career-ops-playbook.md` adapts rules from [career-ops](https://github.com/career-ops-hq/career-ops) (MIT licence).
