@@ -21,6 +21,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
+- `search_jobs.py` identifies itself to the job sources as `jobhunt-agent/<version> (+repo URL)` instead of
+  posing as a browser (`Mozilla/5.0`). The Arbeitsagentur and Arbeitnow APIs accept it.
 
 ### Behaviour changes
 - When an Arbeitsagentur ad text can't be fetched, the routine tries again or opens the job page, and the brief
