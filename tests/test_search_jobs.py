@@ -35,7 +35,7 @@ class Resp:
 
 def fake_get(url, **kw):
     ref = base64.b64decode(url.rsplit("/", 1)[1]).decode()
-    print("GET", ref)
+    print("GET", ref, kw["headers"]["User-Agent"])
     if plan[ref] == "down": raise requests.ConnectionError()
     return Resp(plan[ref])
 s.requests.get = fake_get
@@ -62,6 +62,13 @@ def test_details_failure_keeps_candidates(sample):
     assert status["details"] == "1 ok, 2 failed"
     assert "details 1 ok, 2 failed" in out and out.count("no ad text (detail_error)") == 2
     assert not list((sample / "data").glob("*.tmp"))
+
+
+def test_names_itself_in_the_user_agent(sample):
+    out, _, _ = run(sample, {"1": "ok"})
+    version = (TOOLS.parent / "VERSION").read_text(encoding="utf-8").strip()
+    assert f"jobhunt-agent/{version} (+https://github.com/Jaival/jobhunt-agent)" in out  # S1-10
+    assert "Mozilla" not in out
 
 
 def test_gives_up_when_the_endpoint_is_down(sample):
