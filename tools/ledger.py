@@ -1,6 +1,10 @@
 """Seen-jobs ledger (data/seen_jobs.csv): every job the routine has screened, so nothing is processed twice.
 
-A job matches the ledger by URL, by job id, or by normalised company + title (reposts count as seen).
+A job matches the ledger by URL, by job id, or by normalised company + title (reposts count as seen). Two titles
+at the same company are the same job when they have the same words in any order, after removing gender suffixes
+((m/w/d), Werkstudent:in, Praktikantin, Kauffrau), punctuation and filler words (und, im, for, ...); a word split
+by a hyphen matches the joined word (E-Commerce / eCommerce). Every other word must match exactly, so
+"SAP FI" and "SAP CO", or Projektmanagement and Produktmanagement, stay different jobs.
 
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
@@ -13,17 +17,20 @@ Usage (from the JobHunt folder):
 import argparse
 import csv
 import datetime as dt
-import difflib
+import itertools
+import io
 import json
 import re
 import sys
 from pathlib import Path
 
+import atomic
 from config import ROOT
 LEDGER = ROOT / "data" / "seen_jobs.csv"
 CANDIDATES = ROOT / "data" / "candidates.json"
 FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note"]
-SIMILAR = 0.88  # title similarity for the same company that still counts as the same job
+FILLER = {"und", "and", "für", "fur", "for", "im", "in", "the", "der", "die", "das", "des", "mit", "with", "of",
+          "zur", "zum", "am", "bei", "at", "a", "an", "to"}
 
 LEGAL = r"\b(gmbh|mbh|ag|se|kg|kgaa|co|ohg|ug|e\.?\s?v|inc|ltd|llc|bv|b\.v|sa|gruppe|group|holding|deutschland|germany)\b"
 GENDER = r"\((?:[mwfdxnb*/:|,\s.]|all genders?|alle|gn|mensch\*?|div\.?)+\)|\b(?:m/w/d|w/m/d|m/f/d|f/m/d|d/m/w|all genders)\b"
@@ -49,6 +56,33 @@ def make_key(company, title):
     return f"{norm_company(company)}|{norm_title(title)}"
 
 
+# Feminine job-title endings: Praktikantin, Managerin, Ingenieurinnen -> the masculine form, so both match.
+FEMININE = re.compile(r"(ent|ant|er|or|eur|ist|log|ekt|at)(in|innen)$")
+FEMININE_WORDS = ((r"kauffrau|kaufleute", "kaufmann"), (r"fachfrau|fachleute", "fachmann"))
+
+
+def title_words(title):
+    """The words of a title that decide whether two titles are the same job."""
+    words = set()
+    for w in norm_title(title).split():
+        if w in FILLER:
+            continue
+        for pattern, repl in FEMININE_WORDS:
+            w = re.sub(pattern, repl, w)
+        words.add(FEMININE.sub(lambda m: m.group(1), w))
+    return frozenset(words)
+
+
+def same_words(wa, wb):
+    """Two title_words sets name the same job: equal, or equal once hyphen-split words are joined."""
+    if wa == wb:
+        return True
+    a, b = sorted(wa - wb), sorted(wb - wa)
+    if not a or not b or len(a) > 3 or len(b) > 3:
+        return False
+    return bool({"".join(p) for p in itertools.permutations(a)} & {"".join(p) for p in itertools.permutations(b)})
+
+
 def load():
     if not LEDGER.exists():
         return []
@@ -57,11 +91,12 @@ def load():
 
 
 def save(rows):
-    LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    with LEDGER.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
-        w.writeheader()
-        w.writerows(rows)
+    """Write the whole ledger at once (atomic.py): a run stopped mid-save keeps the old ledger."""
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=FIELDS)
+    w.writeheader()
+    w.writerows(rows)
+    atomic.write_text(LEDGER, buf.getvalue(), newline="")
 
 
 class Index:
@@ -70,9 +105,9 @@ class Index:
         self.by_key = {r["key"]: r for r in rows}
         self.by_url = {r["url"]: r for r in rows if r["url"]}
         self.by_id = {r["job_id"]: r for r in rows if r["job_id"]}
-        self.by_company = {}
+        self.by_company = {}  # company key -> [(title_words, row)]
         for r in rows:
-            self.by_company.setdefault(r["key"].split("|")[0], []).append(r)
+            self.by_company.setdefault(r["key"].split("|")[0], []).append((title_words(r["title"]), r))
 
     def find(self, company="", title="", url="", job_id=""):
         if url and url in self.by_url:
@@ -82,9 +117,10 @@ class Index:
         key = make_key(company, title)
         if key in self.by_key:
             return self.by_key[key]
-        comp, t = key.split("|")
-        for r in self.by_company.get(comp, []) if comp else []:
-            if difflib.SequenceMatcher(None, t, r["key"].split("|")[1]).ratio() >= SIMILAR:
+        comp = key.split("|")[0]
+        words = title_words(title)
+        for w, r in self.by_company.get(comp, []) if comp else []:
+            if same_words(words, w):
                 return r
         return None
 
@@ -99,7 +135,7 @@ class Index:
             self.by_url[row["url"]] = row
         if row["job_id"]:
             self.by_id[row["job_id"]] = row
-        self.by_company.setdefault(row["key"].split("|")[0], []).append(row)
+        self.by_company.setdefault(row["key"].split("|")[0], []).append((title_words(row["title"]), row))
         return row
 
 

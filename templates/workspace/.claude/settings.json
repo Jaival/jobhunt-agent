@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python engine/tools/*)"
+    ],
+    "deny": [
+      "mcp__*__send_message",
+      "mcp__*__reply",
+      "mcp__*__forward",
+      "mcp__*__create_draft",
+      "mcp__*__update_draft",
+      "mcp__*__trash_*",
+      "mcp__*__*spam*",
+      "mcp__*__share_file",
+      "mcp__*__browser_type",
+      "mcp__*__browser_fill*",
+      "mcp__*__browser_select_option",
+      "mcp__*__browser_press_key",
+      "mcp__*__browser_set_*",
+      "mcp__*__browser_upload*",
+      "mcp__*__form_input",
+      "Edit(/engine/**)",
+      "Edit(/.claude/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit|WebFetch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jobhunt_guard.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

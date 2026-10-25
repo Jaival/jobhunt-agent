@@ -6,12 +6,14 @@ doesn't import config.py, because config.py stops when config.yaml is missing.
 
 Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py            list every check: ok / todo / warn
-    python engine/tools/setup_check.py --init     first copy the templates and create the folders
-                                                  (never overwrites an existing file)
+    python engine/tools/setup_check.py --init     first copy the templates, create the folders and add the
+                                                  permission rules to .claude/settings.json (never overwrites
+                                                  an existing file; settings are merged)
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
 
+It prints the engine version first (engine/VERSION and the commit; the routine copies it into the daily brief).
 It also looks after the engine itself: a config.yaml from an older engine version is "todo" (say "update the
 engine"), local edits in engine/ are a warning (they block updates), and so is a newer engine on GitHub (it runs
 `git fetch`, never pull; set JOBHUNT_OFFLINE=1 to skip that).
@@ -25,6 +27,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import permissions
+import version
+from version import git
 
 ENGINE = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("JOBHUNT_ROOT") or ENGINE.parent)
@@ -45,12 +51,21 @@ PLACEHOLDER = re.compile(r"<(?:Your Name|Name|city|Degree|university|focus|field
 GITIGNORE = "# Public engine repo, cloned here\nengine/\n# Build temp files and search output\n~build_*\n~$*\ndata/candidates.json\n"
 
 
+def read_config():
+    """config.yaml as a dict ({} when it's missing or pyyaml isn't installed yet)."""
+    path = ROOT / "config.yaml"
+    if not path.exists() or importlib.util.find_spec("yaml") is None:
+        return {}
+    import yaml
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
 def init():
-    """Copy the workspace templates and create the folders. Prints what it did."""
+    """Copy the workspace templates, create the folders and install the permission rules. Returns what it did."""
     done = []
     for src in sorted(TEMPLATES.rglob("*")):
         dst = ROOT / src.relative_to(TEMPLATES)
-        if src.is_dir():
+        if src.is_dir() or src.relative_to(TEMPLATES).parts[0] == ".claude":  # merged by permissions.install
             continue
         if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -63,6 +78,12 @@ def init():
     if not (ROOT / ".gitignore").exists():
         (ROOT / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
         done.append("wrote .gitignore (keeps engine/ out of your private repo)")
+    try:
+        added = permissions.install(ROOT, read_config())
+        if added:
+            done.append(f"added {len(added)} permission rule(s) to .claude/settings.json")
+    except permissions.SettingsError as e:
+        done.append(f"permission rules not installed: {e}")
     return done
 
 
@@ -84,18 +105,6 @@ def unmatched_variants(cv_path, variants_path):
             if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
 
 
-def git(*args, timeout=30):
-    """Run git in engine/; None when git is missing, engine/ isn't a clone, or the command fails."""
-    if not shutil.which("git") or not (ENGINE / ".git").exists():
-        return None
-    try:
-        r = subprocess.run(["git", "-C", str(ENGINE), *args], capture_output=True, text=True, timeout=timeout,
-                           encoding="utf-8")
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    return r.stdout if r.returncode == 0 else None
-
-
 def engine_edits():
     """Files changed in engine/ since its last update (tracked edits and new files)."""
     out = git("status", "--porcelain")
@@ -108,6 +117,29 @@ def engine_behind():
         return 0
     n = (git("rev-list", "--count", "HEAD..@{u}") or "").strip()
     return int(n) if n.isdigit() else 0
+
+
+def guard_starts(launcher):
+    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call: it must exit 2.
+
+    A hook that can't start doesn't block anything (docs/spike-scheduled-tasks.md), so this is the only proof.
+    Returns (ok, fix)."""
+    python = shutil.which("python")
+    if not python:
+        return False, ("the guard hook runs `python`, which isn't on PATH (macOS often only has python3): "
+                       "install Python from python.org or add a `python` command")
+    call = json.dumps({"session_id": "setup-check", "cwd": str(ROOT), "tool_name": "mcp__x__send_message",
+                       "tool_input": {}})
+    try:
+        r = subprocess.run([python, str(launcher)], input=call, capture_output=True, text=True, timeout=30,
+                           env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"the guard hook didn't run ({e})"
+    if r.returncode == 2 and "guard:" in r.stderr:
+        return True, ""
+    return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
+                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
+                   "there? say 'update the engine'")
 
 
 def checks():
@@ -124,10 +156,7 @@ def checks():
         add("folders", f"{name}/", (ROOT / name).is_dir(), "python engine/tools/setup_check.py --init")
 
     cfg_path = ROOT / "config.yaml"
-    cfg = {}
-    if cfg_path.exists() and "yaml" not in missing:
-        import yaml
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    cfg = read_config()
     add("config.yaml", "file", cfg_path.exists(), "python engine/tools/setup_check.py --init")
     if cfg_path.exists():
         version = cfg.get("config_version") or 1
@@ -206,6 +235,18 @@ def checks():
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
 
+    try:
+        left = permissions.missing(ROOT, cfg)
+        add("safety", "permission rules (.claude/settings.json)", not left,
+            f"{len(left)} rule(s) missing ({', '.join(left[:3])}{', ...' if len(left) > 3 else ''}): "
+            "python engine/tools/setup_check.py --init", warn=True)
+    except permissions.SettingsError as e:
+        add("safety", "permission rules (.claude/settings.json)", False, str(e), warn=True)
+    launcher = ROOT / ".claude" / "hooks" / "jobhunt_guard.py"
+    if launcher.is_file():
+        ok, fix = guard_starts(launcher)
+        add("safety", "guard hook starts and blocks", ok, fix, warn=True)
+
     edits = engine_edits()
     add("engine", "no local edits in engine/", not edits,
         f"engine/ has local changes ({', '.join(edits[:4])}{', ...' if len(edits) > 4 else ''}): they block engine "
@@ -238,8 +279,10 @@ def main():
     result = checks()
     todo = [c for c in result if c["status"] == "todo"]
     if args.json:
-        print(json.dumps({"root": str(ROOT), "ready": not todo, "init": done, "checks": result}, indent=2))
+        print(json.dumps({"root": str(ROOT), "engine_version": version.version(), "engine_commit": version.commit(),
+                          "ready": not todo, "init": done, "checks": result}, indent=2))
     else:
+        print(f"engine {version.describe()}")
         for line in done:
             print(f"init  {line}")
         for c in result:
