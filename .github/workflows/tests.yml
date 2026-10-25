@@ -1,10 +1,12 @@
 name: tests
 
 on:
-  pull_request:
-    branches: [next, main]
+  pull_request:          # every PR, including PRs stacked on another feature branch
   push:
     branches: [next, main]
+
+permissions:
+  contents: read
 
 jobs:
   pytest:
@@ -12,8 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python: ["3.11", "3.12", "3.14"]
+        python: ["3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: macos-latest   # the docx2pdf / Word path in pdf_export.py
+            python: "3.14"
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     env:
       JOBHUNT_OFFLINE: "1"
       PYTHONIOENCODING: utf-8

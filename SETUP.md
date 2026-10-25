@@ -2,11 +2,10 @@
 
 A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.html).
 
-1. Install Claude Desktop (Code tab), Python 3 and Git. For PDFs you need Microsoft Word (Windows or macOS) or
+1. Install Claude Desktop (Code tab), Python 3.11 or newer and Git. For PDFs you need Microsoft Word (Windows or macOS) or
    the free LibreOffice (libreoffice.org); without either you still get .docx files. Then the Python packages
    (the first run offers to install them for you):
    `pip install python-docx openpyxl pypdf pyyaml requests` (on macOS with Word, also `docx2pdf`)
-   (after step 2, `pip install -r engine/requirements.txt` installs the exact versions the engine is tested with)
 2. Create a workspace folder somewhere permanent (e.g. Documents/JobHunt), clone this repo into it as `engine`
    and let the check script copy the templates and create the folders (it never overwrites a file):
    ```

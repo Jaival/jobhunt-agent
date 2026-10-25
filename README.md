@@ -56,7 +56,7 @@ every claim must come from the master CV or `CLAUDE.md`, and the routine never s
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)
 - Your CV and a cover letter as Word .docx files (Word, Google Docs and LibreOffice can all export one)
 - For PDFs: Microsoft Word (Windows or macOS) or the free LibreOffice; without either you still get .docx files
-- Python 3 with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
+- Python 3.11 or newer with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
 - Optional MCP connectors: Gmail, Indeed, a headless browser (obscura)
 
 See [SETUP.md](SETUP.md), or the visual guide in [docs/setup-guide.html](docs/setup-guide.html). Setup is mostly
