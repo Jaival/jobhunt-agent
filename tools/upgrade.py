@@ -11,6 +11,7 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/upgrade.py apply             put local edits aside (git stash) and pull the new engine
     python engine/tools/upgrade.py migrate [--dry-run]  bring config.yaml to this engine's version; writes
                                                      cv/layout.yaml from the old CV settings when it's missing
+                                                     and adds missing permission rules to .claude/settings.json
     python engine/tools/upgrade.py compare [--max 5] build a test application (and up to 5 real ones) with the
                                                      saved old engine and the new one, and compare the documents
     python engine/tools/upgrade.py rollback          back to the old engine and config (local edits restored)
@@ -37,6 +38,7 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = Path(os.environ.get("JOBHUNT_ROOT") or TOOLS.parents[1])
 ENGINE = ROOT / "engine"
 sys.path.insert(0, str(TOOLS))
+import permissions  # noqa: E402
 from setup_check import CONFIG_VERSION  # noqa: E402
 
 # The stock title filter of engines before config_version 2 (search_jobs.py INFRA / SOFTWARE / DROP, with the
@@ -479,6 +481,15 @@ def cmd_migrate(a):
         problems = cv_map.check(ROOT / "cv" / "layout.yaml", ROOT / cfg["master_cv"], ROOT / cfg["master_letter"],
                                 out=lambda s: print(f"  map {s}"))
         print("  CV map: " + ("OK" if not problems else "PROBLEMS: " + "; ".join(problems)))
+    try:
+        added = permissions.install(ROOT, cfg, dry_run=a.dry_run)
+        verb = "would add" if a.dry_run else "added"
+        print(f"  permission rules: {verb} {len(added)} to .claude/settings.json" if added
+              else "  permission rules: all in place")
+        for rule in added:
+            print(f"    {rule}")
+    except permissions.SettingsError as e:
+        print(f"  permission rules: NOT INSTALLED: {e}")
     try:
         p, state = load_state()
         state["steps"].append("migrate")

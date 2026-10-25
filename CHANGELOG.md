@@ -18,6 +18,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   it under Sources (weekend briefs too) and `upgrade.py status` shows the installed version and the one on GitHub.
 - Releases are git tags `vX.Y.Z` on `main`; [docs/RELEASING.md](docs/RELEASING.md) explains the branches, what
   each number means and the release checklist. Earlier releases are tagged retroactively (`v0.1.0`, `v0.2.0`).
+- Permission rules for the unattended run: `templates/workspace/.claude/settings.json` denies the tools that send
+  or type data (Gmail send / reply / forward / drafts / trash / spam, under every connector name; browser typing,
+  form filling and cookies; Drive sharing) and edits of `engine/` and `.claude/`. `setup_check.py --init` merges it
+  into the workspace's `.claude/settings.json` and also makes the master CV and letter from config.yaml read-only;
+  `setup_check.py` warns while rules are missing. Deny rules hold in every permission mode, auto included. They
+  apply to a local Code-tab task only, not to cloud or Cowork tasks ([spike](docs/spike-scheduled-tasks.md)).
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
@@ -31,6 +37,14 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   title words (in any order, ignoring gender forms, punctuation and filler words). Jobs the old similarity check
   hid ("SAP CO" behind "SAP FI", "Senior" behind "Junior") show up as new once; reposts with reordered words or
   the other gender form (Kauffrau / Kaufmann) now count as seen.
+
+- The daily run can no longer send or draft email, type into web pages, or change engine/, .claude/ or the master
+  CV and letter: those tool calls are refused with "denied by your permission settings". Nothing in the routine
+  needs them.
+
+### Migration
+- `upgrade.py migrate` adds the missing permission rules to `.claude/settings.json`, keeping every rule and hook
+  already there (`--dry-run` lists them). `settings.local.json` isn't touched. Config version stays 2.
 
 ### Fixed
 - `search_jobs.py --details` no longer crashes when an Arbeitsagentur ad can't be fetched: candidates.json is
