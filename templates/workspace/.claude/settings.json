@@ -22,5 +22,19 @@
       "Edit(/engine/**)",
       "Edit(/.claude/**)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit|WebFetch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jobhunt_guard.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
   }
 }

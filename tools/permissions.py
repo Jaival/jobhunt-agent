@@ -10,7 +10,9 @@ The rules only apply to a local Claude Code session whose project folder is the 
 task with "Only on this computer"); cloud and Cowork tasks ignore .claude/.
 
 install() merges, never overwrites: rules and hooks already in .claude/settings.json stay, missing ones are added.
-setup_check.py --init and upgrade.py migrate call it; setup_check.py warns while something is missing.
+The other template files (.claude/hooks/jobhunt_guard.py, which starts engine/tools/hooks/guard.py) belong to the
+engine and are copied when missing or changed. setup_check.py --init and upgrade.py migrate call it;
+setup_check.py warns while something is missing.
 """
 import copy
 import json
@@ -19,6 +21,7 @@ from pathlib import Path
 import atomic
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "workspace" / ".claude" / "settings.json"
+FILES = [p for p in sorted(TEMPLATE.parent.rglob("*")) if p.is_file() and p != TEMPLATE and "__pycache__" not in p.parts]
 # config.yaml values that only appear in the template: no real master file to protect yet.
 TEMPLATE_MASTERS = {"cv/Your_Name_CV.docx", "cv/Your_Name_CoverLetter.docx"}
 
@@ -74,14 +77,34 @@ def merge(have, want):
     return out, added
 
 
+def stale_files(root):
+    """Template files that the workspace's .claude/ lacks or has in another version."""
+    out = []
+    for src in FILES:
+        dst = Path(root) / ".claude" / src.relative_to(TEMPLATE.parent)
+        if not dst.is_file() or dst.read_text(encoding="utf-8") != src.read_text(encoding="utf-8"):
+            out.append(src)
+    return out
+
+
+def file_label(src):
+    return f"file .claude/{src.relative_to(TEMPLATE.parent).as_posix()}"
+
+
 def missing(root, cfg=None):
-    """What install() would add (empty when the workspace has every rule). Raises SettingsError."""
-    return merge(load(root), wanted(cfg))[1]
+    """What install() would add (empty when the workspace has everything). Raises SettingsError."""
+    return merge(load(root), wanted(cfg))[1] + [file_label(src) for src in stale_files(root)]
 
 
 def install(root, cfg=None, dry_run=False):
-    """Add the missing rules to <root>/.claude/settings.json. Returns what was added. Raises SettingsError."""
+    """Add the missing rules to <root>/.claude/settings.json and copy the hook files. Returns what was added.
+    Raises SettingsError."""
     merged, added = merge(load(root), wanted(cfg))
-    if added and not dry_run:
-        atomic.write_text(settings_path(root), json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
-    return added
+    files = stale_files(root)
+    if not dry_run:
+        for src in files:  # the launcher first, so the hook entry never points at a missing file
+            atomic.write_text(Path(root) / ".claude" / src.relative_to(TEMPLATE.parent),
+                              src.read_text(encoding="utf-8"))
+        if added:
+            atomic.write_text(settings_path(root), json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+    return added + [file_label(src) for src in files]
