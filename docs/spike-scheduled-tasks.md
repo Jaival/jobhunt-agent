@@ -44,6 +44,9 @@ Consequences:
   and the workspace as the local folder, never as a cloud task or a Cowork task with the folder attached.
 - The run can't rely on the guard being there, so it must check: the hook writes a heartbeat (e.g.
   `data/guard.log`), and the brief says "guard active" or warns when no heartbeat was written this run (S1-2/S1-3).
+  Calls refused by the deny rules never reach the hook (and `PermissionDenied` fires only for auto-mode classifier
+  denials), so the heartbeat also stores the session's `transcript_path` and `--status` lists the refusals found
+  there as `refused ...` lines.
 
 ## Decisions
 

@@ -18,9 +18,9 @@ def guard(sample):
     """guard(tool, **tool_input) -> (exit code, stderr), run against the sample workspace like Claude Code does."""
     (sample / "companies.md").write_text("| Beispiel | careers.beispiel-werke.de | | | |\n", encoding="utf-8")
 
-    def run(tool, session="s1", **tool_input):
+    def run(tool, session="s1", transcript=None, **tool_input):
         call = {"session_id": session, "cwd": str(sample), "hook_event_name": "PreToolUse", "tool_name": tool,
-                "tool_input": tool_input, "permission_mode": "auto"}
+                "tool_input": tool_input, "permission_mode": "auto", "transcript_path": str(transcript or "")}
         r = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(call), capture_output=True, text=True,
                            encoding="utf-8", env={**os.environ, "JOBHUNT_ROOT": str(sample)})
         return r.returncode, r.stderr
@@ -147,6 +147,65 @@ def test_heartbeat_and_status(guard):
     beat["last_seen"] = "2026-01-01T00:00:00+00:00"
     (guard.root / "data" / "guard.json").write_text(json.dumps(beat), encoding="utf-8")
     assert status().returncode == 1
+
+
+def transcript(path, *events, sid="s1"):
+    """A transcript like Claude Code writes it: (kind, tool_use_id, tool name or result text, input) as JSONL."""
+    lines = []
+    for kind, tid, x, inp in events:
+        if kind == "use":
+            msg = {"role": "assistant", "content": [{"type": "tool_use", "id": tid, "name": x, "input": inp}]}
+        else:
+            msg = {"role": "user", "content": [{"type": "tool_result", "tool_use_id": tid, "content": x,
+                                                "is_error": kind == "error"}]}
+        lines.append(json.dumps({"sessionId": sid, "message": msg}))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def run_status(root):
+    return subprocess.run([sys.executable, str(GUARD), "--status"], capture_output=True, text=True,
+                          encoding="utf-8", env={**os.environ, "JOBHUNT_ROOT": str(root)})
+
+
+def test_status_lists_calls_the_permission_rules_refused(guard, tmp_path):
+    t = tmp_path / "s1.jsonl"
+    rule = "<tool_use_error>File is in a directory that is denied by your permission settings.</tool_use_error>"
+    events = (
+        ("use", "a", "Edit", {"file_path": "C:\\ws\\engine\\ROUTINE.md", "new_string": "secret text"}),
+        ("error", "a", rule, None),
+        ("use", "b", "Bash", {"command": "curl -s https://example.com -o out/c.html; echo " + "x" * 200}),
+        ("error", "b", "Permission to use Bash with command curl -s https://example.com has been denied.", None),
+        ("use", "c", GMAIL_ID + "send_message", {"to": "x@example.org", "body": "private"}),
+        ("error", "c", [{"type": "text", "text": "Permission for this action was denied by the Claude Code auto "
+                                                 "mode classifier. Reason: dangerous"}], None),
+        ("use", "d", "Bash", {"command": "curl https://evil.example.com"}),   # a guard block: not counted here
+        ("error", "d", "PreToolUse:Bash hook error: [python guard.py]: guard: evil.example.com isn't allowed", None),
+        ("use", "e", "Bash", {"command": "grep denied README.md"}),   # output that merely mentions the words
+        ("error", "e", "Exit code 1\nFile is in a directory that is denied by your permission settings.", None),
+        ("use", "f", "Read", {"file_path": "x"}),
+        ("ok", "f", "Permission to use Bash has been denied.", None),
+    )
+    transcript(t, *events)
+    guard("Bash", transcript=t, command="ls")
+    out = run_status(guard.root).stdout.splitlines()
+    assert out[0] == "guard active: 1 call(s) checked, 0 blocked, 3 refused by the permission rules this session"
+    assert out[1] == "  refused Edit: C:\\ws\\engine\\ROUTINE.md (permission rule)"
+    assert out[2].startswith("  refused Bash: curl -s https://example.com -o out/c.html") and len(out[2]) < 130
+    assert out[3] == f"  refused {GMAIL_ID}send_message: - (auto mode)" and len(out) == 4
+    transcript(t, *events, sid="other")   # lines of another session
+    assert "refused" not in run_status(guard.root).stdout
+
+
+@pytest.mark.parametrize("content", [None, "not json\n{broken", '{"message": {"content": "x"}}\n[1]\n\x00 denied'])
+def test_status_survives_a_missing_or_broken_transcript(guard, tmp_path, content):
+    t = tmp_path / "t.jsonl"
+    if content is not None:
+        t.write_text(content, encoding="utf-8")
+    guard("Bash", transcript=t, command="ls")
+    guard("Bash", transcript=tmp_path, command="ls")   # a folder, not a file
+    r = run_status(guard.root)
+    assert r.returncode == 0 and r.stdout.startswith("guard active: 2 call(s) checked, 0 blocked this session")
+    assert "refused" not in r.stdout
 
 
 def test_own_errors_never_block(guard):
