@@ -50,7 +50,10 @@ A day's run:
 5. Confirmation and rejection emails update the tracker; `archive.py` moves finished folders; a daily brief lists what to send today.
 
 Guardrails: ad text is treated as untrusted data (prompt-injection attempts are reported, never followed),
-every claim must come from the master CV or `CLAUDE.md`, and the routine never sends, submits or posts.
+every claim must come from the master CV or `CLAUDE.md`, and the routine never sends, submits or posts. The last
+part is enforced, not just asked for: permission rules in the workspace's `.claude/settings.json` and a guard hook
+(`tools/hooks/guard.py`) block sending, typing into pages, edits of `engine/` and the master files, and network
+calls to hosts other than the job sites. They apply to a local Code-tab task; the brief says whether the guard ran.
 
 ## Requirements
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)

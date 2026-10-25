@@ -14,15 +14,19 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
    git clone https://github.com/Jaival/jobhunt-agent engine
    python engine/tools/setup_check.py --init
    ```
-   It lists what is still TODO. You can fill in `config.yaml`, `CLAUDE.md`, `projects.md`, `sources.md` and
+   It also installs the safety rules in `.claude/settings.json`: the run can't send email, type into web pages,
+   change engine/ or your master CV, or reach hosts other than the job sites (details in
+   [docs/spike-scheduled-tasks.md](docs/spike-scheduled-tasks.md)). It lists what is still TODO. You can fill in `config.yaml`, `CLAUDE.md`, `projects.md`, `sources.md` and
    `cv/` by hand, or leave them: the first run asks you for everything (step 4).
-3. Open Claude Desktop, go to the Code tab, click **Scheduled** in the sidebar (or under **More**), then
+3. Open Claude Desktop, go to the **Code** tab (not Cowork or Chat), click **Scheduled** in the sidebar (or under **More**), then
    **New task** (choose **Set up manually** if a menu opens).
    - Name: job-hunt-daily
    - Instructions (the box under the name): "Run my job-application routine in this folder. Read engine/ROUTINE.md and follow it exactly. It checks the setup at the start of every run and only asks me questions if something is missing. Finish by replying with a 3-line summary and the path of today's brief."
    - Advanced settings > General: turn on **Only on this computer** (the routine needs your local files). If
      that switch is at the top of the dialog instead, turn it on before filling in anything else.
-   - Local folder: the workspace folder (trust it when asked)
+   - Local folder: the workspace folder (trust it when asked). The safety rules only work this way: a cloud
+     task, or a Cowork task with the folder attached, ignores `.claude/` and runs without them.
+   - Permission mode: **Auto**. Deny rules and the guard still apply in Auto mode.
    - Trigger: Daily, 07:30 (weekends run a short search-only mode)
    - Model (menu in the instructions box): a strong model
    - Description, if the form asks: Find, score and tailor jobs; update tracker; write daily brief
@@ -35,10 +39,14 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
    (cv/layout.yaml) so the builder can tailor your own design. If you change your CV later, say "remap my CV".
    If a scheduled run finds the setup unfinished while you're away, it writes a "Setup needed" brief with the
    next questions; open that run from the task's **History** list and reply there, or say "continue the job-hunt setup" in Claude Code in the folder.
-5. During that first run, when it asks for permissions (bash, curl, python, writing files), choose "always allow". Future runs then go through without stalling.
+5. Permissions are already set up: `setup_check.py --init` installed the rules and a guard hook, and Auto mode
+   handles the rest without stalling. If the first run still asks about a tool, "always allow" is fine: an allow
+   never overrides the deny rules. Each brief says `guard active` under Sources; if it says `guard NOT active`
+   or `setup_check.py` warns under "safety", run `python engine/tools/setup_check.py --init` and check that the
+   task is a local Code-tab task on this folder (step 3).
 6. Settings > This computer > System: turn on **Keep computer awake**. Scheduled tasks only run while the app is open and the computer is awake. After sleep, one run catches up for the most recent missed time (within seven days).
 7. Close the tracker in Excel before the routine runs; an open file can't be saved. If it was open, rows go to tracker/pending_rows.csv.
-8. Connectors: if you connected Indeed or Gmail in Claude, the routine uses them. Browsing uses the obscura MCP; make sure it is configured in Claude Desktop, and on the first "Run now" choose "always allow" for each obscura tool.
+8. Connectors: if you connected Indeed or Gmail in Claude, the routine uses them. Browsing uses the obscura MCP; make sure it is configured in Claude Desktop, and on the first "Run now" choose "always allow" for each obscura tool (typing and form filling stay blocked).
 9. Recommended: set up daily email job alerts on StepStone, XING and LinkedIn. Alert emails are the most reliable way to get jobs from those sites, since they often block automated access.
 
 Updating: when the daily brief says an engine update is available, open your workspace in Claude Code and say
