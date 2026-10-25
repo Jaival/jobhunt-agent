@@ -15,8 +15,10 @@ import csv
 import datetime as dt
 import difflib
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 from config import ROOT
@@ -57,11 +59,20 @@ def load():
 
 
 def save(rows):
+    """Write the whole ledger to a temp file next to it, then swap it in: a crash mid-write keeps the old ledger."""
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    with LEDGER.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
-        w.writeheader()
-        w.writerows(rows)
+    fd, tmp = tempfile.mkstemp(prefix=".seen_jobs.", suffix=".tmp", dir=LEDGER.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS)
+            w.writeheader()
+            w.writerows(rows)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, LEDGER)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 class Index:

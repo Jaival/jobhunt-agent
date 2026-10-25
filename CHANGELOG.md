@@ -22,6 +22,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
 
+### Fixed
+- The seen-jobs ledger is saved through a temp file, so a run stopped while saving keeps the old ledger instead
+  of a half-written one.
+
 ## [0.2.0] - 2026-10-24: smoother updates, German letters
 
 Config version 2.
