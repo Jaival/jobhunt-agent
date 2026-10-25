@@ -12,6 +12,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-25: safe & lossless
+
 ### Added
 - `VERSION` file and `engine/tools/version.py`: the engine has a version number (`0.3.0-dev` until the 0.3.0
   release). `setup_check.py` prints it on its first line (`engine_version` in `--json`), the daily brief shows
@@ -129,6 +131,7 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...next
+[0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Jaival/jobhunt-agent/releases/tag/v0.1.0
