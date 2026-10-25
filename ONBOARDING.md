@@ -118,7 +118,8 @@ Write each answer into the file named in brackets right after the round.
     XING and LinkedIn.
 
 ## 3. Finish
-- Run `python engine/tools/setup_check.py` until it says READY. Fix what you can, ask about the rest.
+- Run `python engine/tools/setup_check.py --init` until it says READY. Fix what you can, ask about the rest.
+  `--init` also makes the master CV and letter you just set read-only for later runs.
 - Show a short summary: target roles, the title words from 3b, location, languages, strengths, projects, search terms, and anything
   they should still check (for example a CV that couldn't be mapped or a missing connector).
 - Ask them to read CLAUDE.md once: it's what every letter will be based on.

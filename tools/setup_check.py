@@ -6,8 +6,9 @@ doesn't import config.py, because config.py stops when config.yaml is missing.
 
 Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py            list every check: ok / todo / warn
-    python engine/tools/setup_check.py --init     first copy the templates and create the folders
-                                                  (never overwrites an existing file)
+    python engine/tools/setup_check.py --init     first copy the templates, create the folders and add the
+                                                  permission rules to .claude/settings.json (never overwrites
+                                                  an existing file; settings are merged)
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
@@ -27,6 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import permissions
 import version
 from version import git
 
@@ -49,12 +51,21 @@ PLACEHOLDER = re.compile(r"<(?:Your Name|Name|city|Degree|university|focus|field
 GITIGNORE = "# Public engine repo, cloned here\nengine/\n# Build temp files and search output\n~build_*\n~$*\ndata/candidates.json\n"
 
 
+def read_config():
+    """config.yaml as a dict ({} when it's missing or pyyaml isn't installed yet)."""
+    path = ROOT / "config.yaml"
+    if not path.exists() or importlib.util.find_spec("yaml") is None:
+        return {}
+    import yaml
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
 def init():
-    """Copy the workspace templates and create the folders. Prints what it did."""
+    """Copy the workspace templates, create the folders and install the permission rules. Returns what it did."""
     done = []
     for src in sorted(TEMPLATES.rglob("*")):
         dst = ROOT / src.relative_to(TEMPLATES)
-        if src.is_dir():
+        if src.is_dir() or src.relative_to(TEMPLATES).parts[0] == ".claude":  # merged by permissions.install
             continue
         if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -67,6 +78,12 @@ def init():
     if not (ROOT / ".gitignore").exists():
         (ROOT / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
         done.append("wrote .gitignore (keeps engine/ out of your private repo)")
+    try:
+        added = permissions.install(ROOT, read_config())
+        if added:
+            done.append(f"added {len(added)} permission rule(s) to .claude/settings.json")
+    except permissions.SettingsError as e:
+        done.append(f"permission rules not installed: {e}")
     return done
 
 
@@ -116,10 +133,7 @@ def checks():
         add("folders", f"{name}/", (ROOT / name).is_dir(), "python engine/tools/setup_check.py --init")
 
     cfg_path = ROOT / "config.yaml"
-    cfg = {}
-    if cfg_path.exists() and "yaml" not in missing:
-        import yaml
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    cfg = read_config()
     add("config.yaml", "file", cfg_path.exists(), "python engine/tools/setup_check.py --init")
     if cfg_path.exists():
         version = cfg.get("config_version") or 1
@@ -197,6 +211,14 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+
+    try:
+        left = permissions.missing(ROOT, cfg)
+        add("safety", "permission rules (.claude/settings.json)", not left,
+            f"{len(left)} rule(s) missing ({', '.join(left[:3])}{', ...' if len(left) > 3 else ''}): "
+            "python engine/tools/setup_check.py --init", warn=True)
+    except permissions.SettingsError as e:
+        add("safety", "permission rules (.claude/settings.json)", False, str(e), warn=True)
 
     edits = engine_edits()
     add("engine", "no local edits in engine/", not edits,

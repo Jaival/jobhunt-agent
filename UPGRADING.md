@@ -55,7 +55,10 @@ technical. Never edit files in engine/ yourself.
    engine/templates/workspace/custom.md if the file doesn't exist) and show it. Ask: "Update now? Your edits are
    kept in the backup and in git, and 'rollback' brings them back." Continue only on a yes.
 4. **Update:** `python engine-new/tools/upgrade.py apply`.
-5. **Settings:** `python engine/tools/upgrade.py migrate`. It prints what it wrote and runs the CV map check.
+5. **Settings:** `python engine/tools/upgrade.py migrate`. It prints what it wrote, runs the CV map check and adds
+   missing permission rules to `.claude/settings.json` (existing rules stay).
+   - "permission rules: NOT INSTALLED": the file isn't valid JSON. Show the user the error, fix the file with
+     their OK, and run `python engine/tools/setup_check.py --init`.
    - "CV map: PROBLEMS": fix cv/layout.yaml with `python engine/tools/cv_map.py outline <file>` (the format is at
      the top of engine/tools/cv_map.py) until `python engine/tools/cv_map.py check` says OK.
    - "not read by this engine": find out what the key did (the patch, the old engine's code in
