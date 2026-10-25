@@ -5,7 +5,7 @@ the next branch between releases; docs/RELEASING.md says when each number goes u
 doesn't import config.py, so it works before config.yaml exists.
 
 Usage (from the workspace folder):
-    python engine/tools/version.py        prints e.g. "0.3.0 (a1b2c3d)"
+    python engine/tools/version.py        prints e.g. "0.3.0 (a1b2c3d)"; "a1b2c3d-dirty" when engine/ has local edits
 """
 import shutil
 import subprocess
@@ -19,21 +19,29 @@ VERSION_FILE = ENGINE / "VERSION"
 def version():
     """The version in VERSION, or "unknown" when the file is missing."""
     try:
-        return VERSION_FILE.read_text(encoding="utf-8").strip() or "unknown"
+        return VERSION_FILE.read_text(encoding="utf-8-sig").strip() or "unknown"  # -sig: Windows editors add a BOM
     except OSError:
         return "unknown"
 
 
-def commit():
-    """Short commit hash of engine/, or "" when git is missing or engine/ isn't a clone."""
+def git(*args, timeout=30):
+    """Run git in engine/; None when git is missing, engine/ isn't a clone, or the command fails."""
     if not shutil.which("git") or not (ENGINE / ".git").exists():
-        return ""
+        return None
     try:
-        r = subprocess.run(["git", "-C", str(ENGINE), "rev-parse", "--short", "HEAD"], capture_output=True,
-                           text=True, timeout=10, encoding="utf-8")
+        r = subprocess.run(["git", "-C", str(ENGINE), *args], capture_output=True, text=True, timeout=timeout,
+                           encoding="utf-8")
     except (OSError, subprocess.TimeoutExpired):
-        return ""
-    return r.stdout.strip() if r.returncode == 0 else ""
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def commit():
+    """Short commit hash of engine/, with "-dirty" when engine/ has local edits; "" outside a clone."""
+    c = (git("rev-parse", "--short", "HEAD", timeout=10) or "").strip()
+    if c and (git("status", "--porcelain", timeout=10) or "").strip():
+        c += "-dirty"
+    return c
 
 
 def describe():

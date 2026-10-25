@@ -27,8 +27,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import version  # noqa: E402
+import version
+from version import git
 
 ENGINE = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("JOBHUNT_ROOT") or ENGINE.parent)
@@ -86,18 +86,6 @@ def unmatched_variants(cv_path, variants_path):
     variants = yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {}
     return [vid for vid, v in variants.items()
             if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
-
-
-def git(*args, timeout=30):
-    """Run git in engine/; None when git is missing, engine/ isn't a clone, or the command fails."""
-    if not shutil.which("git") or not (ENGINE / ".git").exists():
-        return None
-    try:
-        r = subprocess.run(["git", "-C", str(ENGINE), *args], capture_output=True, text=True, timeout=timeout,
-                           encoding="utf-8")
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    return r.stdout if r.returncode == 0 else None
 
 
 def engine_edits():

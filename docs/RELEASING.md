@@ -8,8 +8,10 @@ How the engine is branched, versioned and released. Users get the engine through
   available" check in `setup_check.py` follow it.
 - **`next`** collects the work for the next release. Every change is a feature branch named after its issue
   (`s1-4-details-crash`) and a PR into `next` that closes the issue.
-- **Release:** PR `next` → `main`, merge, then tag `vX.Y.Z` on `main`.
-- **Hotfix:** branch from `main`, PR into `main`, tag a PATCH release, then merge `main` back into `next`.
+- **Release:** a release branch from `next` sets `VERSION` and the CHANGELOG heading, PR into `main`, merge,
+  then tag `vX.Y.Z` on `main` and merge `main` back into `next` (see the checklist).
+- **Hotfix:** branch from `main`, fix, set `VERSION` to the PATCH version and add its CHANGELOG section, PR into
+  `main`, tag it, then merge `main` back into `next` (keeping `next`'s `-dev` VERSION).
 - **Develop in a separate clone**, never in a workspace's `engine/`: that copy runs the daily routine and
   `setup_check.py` warns about edits in it. The maintainer's own workspace is the first user of each release.
 
@@ -40,8 +42,8 @@ release.
 - On `main` it holds the released version (`0.3.0`), equal to the tag without the `v`.
 - On `next` it holds the coming version with `-dev` (`0.4.0-dev`), so a development engine never claims to be a
   release.
-- `python engine/tools/version.py` prints it with the commit; `setup_check.py` prints it on its first line and
-  the daily brief copies it.
+- `python engine/tools/version.py` prints it with the commit (`-dirty` when engine/ has local edits);
+  `setup_check.py` prints it on its first line, the daily brief copies it and `upgrade.py status` shows it.
 
 ## Changelog
 [CHANGELOG.md](../CHANGELOG.md) follows Keep a Changelog. Every PR into `next` adds its lines under
@@ -50,16 +52,23 @@ the changelog to match the user's wishes in custom.md, so write entries for user
 effect, not the function.
 
 ## Release checklist
-1. Tests pass on `next` (`python -m pytest tests`; CI on Windows and Ubuntu once it exists).
+1. Tests pass on `next` (CI on Windows, Ubuntu and macOS).
 2. `upgrade.py compare` on both sample workspaces (`examples/`): documents identical, or the differences
    explained in the CHANGELOG.
-3. On a release branch from `next`: set `VERSION` to `X.Y.Z`; rename `## [Unreleased]` to
+3. Branch `release-X.Y.Z` from `next`: set `VERSION` to `X.Y.Z`; rename `## [Unreleased]` to
    `## [X.Y.Z] - YYYY-MM-DD: <short title>`, add a new empty `## [Unreleased]` above it, and update the
    compare links at the bottom.
-4. PR into `next`, merge; then PR `next` → `main`, merge.
-5. Tag and push: `git tag -a vX.Y.Z -m "vX.Y.Z" origin/main && git push origin vX.Y.Z`. Create the GitHub
-   Release from the CHANGELOG section (by hand until the release workflow exists).
-6. On `next`: merge `main` back if it has hotfixes, and set `VERSION` to the next `-dev` version.
+4. PR `release-X.Y.Z` → `main`, merge. (`next` never gets a release `VERSION`: it keeps `-dev`.)
+5. Tag the merged commit and push the tag:
+   ```
+   git fetch origin
+   git show origin/main:VERSION          # must print X.Y.Z; if not, the merge isn't there yet
+   git tag -a vX.Y.Z -m "vX.Y.Z" origin/main
+   git push origin vX.Y.Z
+   ```
+   Create the GitHub Release from the CHANGELOG section (by hand until the release workflow exists).
+6. PR `main` → `next` to bring the CHANGELOG section back, and in it set `VERSION` to the next `-dev` version
+   (e.g. `0.4.0-dev`), so `next` never claims a release number.
 7. Update the maintainer's own workspace with "update the engine" and watch the next daily run.
 
 ## Tags so far

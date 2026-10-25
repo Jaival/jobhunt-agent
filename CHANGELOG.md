@@ -14,8 +14,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Added
 - `VERSION` file and `engine/tools/version.py`: the engine has a version number (`0.3.0-dev` until the 0.3.0
-  release). `setup_check.py` prints it on its first line (`engine_version` in `--json`) and the daily brief shows
-  it under Sources.
+  release). `setup_check.py` prints it on its first line (`engine_version` in `--json`), the daily brief shows
+  it under Sources (weekend briefs too) and `upgrade.py status` shows the installed version and the one on GitHub.
 - Releases are git tags `vX.Y.Z` on `main`; [docs/RELEASING.md](docs/RELEASING.md) explains the branches, what
   each number means and the release checklist. Earlier releases are tagged retroactively (`v0.1.0`, `v0.2.0`).
 

@@ -25,3 +25,10 @@ def test_changelog_has_this_version():
     v = version.version()
     if not v.endswith("-dev"):  # a release: its section must exist
         assert f"## [{v}] - " in text
+
+
+def test_version_file_with_bom(tmp_path, monkeypatch):
+    f = tmp_path / "VERSION"
+    f.write_bytes("\ufeff0.4.0-dev\r\n".encode("utf-8"))  # as PowerShell's Set-Content -Encoding utf8 writes it
+    monkeypatch.setattr(version, "VERSION_FILE", f)
+    assert version.version() == "0.4.0-dev"
