@@ -28,11 +28,13 @@ what the unattended daily run can do, and can Sprint 2 rely on subagents with re
 | obscura tool names | `mcp__obscura__browser_*` | Daily runs call `browser_navigate` (243), `browser_evaluate` (241), `browser_markdown` (63), `browser_close`, `browser_links`. |
 | Does an `Edit` deny on `engine/**` stop all writes there? | **No** | CLI test: `python -c "open('engine/b.txt','w')..."` wrote the file. Edit/Read rules cover the file tools, recognised Bash file commands and redirects, not arbitrary programs. |
 | Are project allow rules always applied? | **Only in a trusted folder** | CLI in an untrusted folder: "Ignoring 2 permissions.allow entries … not trusted". Deny rules and hooks still applied. Desktop asks to trust the folder when the task is created. |
-| Do subagents with restricted tools work? | **Yes in the CLI**; not yet seen in Desktop | The `reader` subagent (`tools: Read, Glob`) had no Write tool. The project hook fired for its calls with `agent_type: "reader"`. No daily run has used a subagent yet. |
+| Do subagents with restricted tools work? | **Yes**, also with Desktop's bundled Claude Code | The `reader` subagent (`tools: Read, Glob`) had no Write tool. The project hook fired for subagent calls (`agent_type: "reader"` in the CLI, `"general-purpose"` with the Desktop build) and deny rules applied inside them. No daily run has used a subagent yet. |
 
 ### Where the task runs matters (Desktop test, 2026-10-25)
-The first attempt at the Desktop check ran twice: once as a **cloud** task (the files went to `/home/claude` in a
-container) and once from a session outside the folder that reached it through `device_bash`. In both runs **none
+The first attempts at the Desktop check ran as **Cowork** tasks with the folder attached, not as Code-tab tasks:
+twice in a cloud container (the files went to `/home/claude`) and once from a session outside the folder that
+reached it through `device_bash`. Desktop recorded the folder under `localAgentModeTrustedFolders` (Cowork) and
+the Code tab's `scheduled-tasks.json` only lists `job-hunt-daily`. In all three runs **none
 of the folder's `.claude/` config applied**: the writes went through, `guard.py` never ran, the `send_message`
 tools were still listed (as `mcp__Gmail__send_message`, a third naming scheme) and the `reader` agent was unknown.
 So the guards only exist in a **local Claude Code session whose project folder is the workspace**, which is what
@@ -85,19 +87,29 @@ A host allowlist for the browser would break the routine, which reads career pag
 - Documented limit: a page can still be told something by *which* URL the agent opens. The leak check catches
   personal data in the URL, not a deliberately encoded message.
 
-## Still to confirm in Claude Desktop (10 minutes, before S1-1 merges)
+## Local check with Desktop's Claude Code (2026-10-25)
 
-The first attempt didn't run locally (see above); this has to be repeated as a local Code-tab task.
-The docs say Desktop reads the same files, and the transcripts show hooks firing. But no run has used a
-*project* hook or a subagent yet. In a throwaway folder (not the JobHunt workspace):
-1. Create `.claude/settings.json` with `"deny": ["Edit(/engine/**)", "mcp__*__send_message"]` and a PreToolUse
-   hook `python "${CLAUDE_PROJECT_DIR}/guard.py"` that logs its input to a file and exits 2 when the input contains
-   `forbidden`. Add `.claude/agents/reader.md` with `tools: Read, Glob`.
-2. Create a local scheduled task on that folder, schedule **Manual**, permission mode **Auto** (as the daily run),
-   prompt: "Write engine/a.txt; write forbidden.txt; list your tools whose names end in send_message; ask the reader
-   subagent to write sub.txt; report what was blocked, quoting the errors." Click **Run now**.
-3. Expected: engine/a.txt and forbidden.txt blocked, no `send_message` tool, the log has entries including one with
-   `agent_type: reader`, and no sub.txt.
+Run with the Claude Code build that Desktop bundles and launches for Code-tab sessions
+(`Claude-Data/…/claude-code/2.1.308/claude.exe`, `CLAUDE_CODE_ENTRYPOINT=claude-desktop`), `-p` in the throwaway
+folder, permission mode **auto**, the same five-step prompt:
 
-If the project file is ignored in scheduled runs, fall back to the same rules in `~/.claude/settings.json` (user
-level, which the docs confirm for allow rules), installed and checked by `setup_check.py`.
+| Step | Result |
+|---|---|
+| Write `engine/a.txt` | **Blocked** by the deny rule: `File is in a directory that is denied by your permission settings.` |
+| Write `forbidden.txt` | **Blocked** by the hook: `PreToolUse:Write hook error: [python "${CLAUDE_PROJECT_DIR}/guard.py"]: guard: 'forbidden' is blocked by the spike guard` |
+| Tools ending in `send_message` / `create_draft` | **None.** `mcp__claude_ai_Gmail__send_message` and `create_draft` were removed; `delete_draft`, `get_draft` etc. stayed. |
+| `reader` subagent: read `input.txt`, write `sub.txt` | Read `hello`; **no Write tool**, so no `sub.txt`. |
+| `hooklog.jsonl` | Entries with `permission_mode: "auto"`. |
+
+A second run (bypass mode, a `general-purpose` subagent) logged the subagent's Write with
+`agent_type: "general-purpose"`, and the subagent's Write to `engine/b.txt` was denied with the same message.
+
+Notes for S1-2:
+- A call stopped by a deny rule never reaches the hook (the `engine/a.txt` Write isn't in the log). The heartbeat
+  must therefore come from any allowed call, which every run has plenty of.
+- The hook sees the Agent tool's prompt as `tool_input`, so a word-match block also fires on a subagent launch
+  that merely mentions the pattern. Match on the fields that matter (paths, commands, URLs), not the whole input.
+
+What is left untested is only the Desktop **scheduler** starting such a session. It launches the same binary with
+the task's folder as `cwd` (see the `job-hunt-daily` sessions), and the S1-2 heartbeat line in the brief checks it
+on every real run. The user-level fallback (`~/.claude/settings.json`) is not needed.
