@@ -78,3 +78,4 @@ effect, not the function.
 |---|---|---|---|
 | `v0.1.0` | `2db97fa` | 2026-10-23 | Any field (PR #1), tagged retroactively |
 | `v0.2.0` | `62eca7d` | 2026-10-24 | Smoother updates, German letters (PR #2), tagged retroactively |
+| `v0.3.0` | `b566657` | 2026-10-25 | Safe & lossless (PR #53) |
