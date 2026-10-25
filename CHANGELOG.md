@@ -34,6 +34,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
+- SETUP.md and the setup guide: the task must be a **Code**-tab task with "Only on this computer" and permission
+  mode Auto (cloud and Cowork tasks run without the safety rules); step 5 no longer says to "always allow"
+  bash, curl and python, since the rules are installed by `setup_check.py --init`.
 
 ### Behaviour changes
 - When an Arbeitsagentur ad text can't be fetched, the routine tries again or opens the job page, and the brief

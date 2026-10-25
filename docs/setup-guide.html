@@ -147,6 +147,7 @@ footer { margin-top: 48px; font-size: 0.85rem; color: var(--muted); }
 cd JobHunt
 git clone https://github.com/Jaival/jobhunt-agent engine
 python engine/tools/setup_check.py --init</pre></div>
+      <p>It also installs the safety rules in <code>.claude/settings.json</code>: the run can't send email, type into web pages, change <code>engine/</code> or your master CV, or reach hosts other than the job sites.</p>
       <p>The last line ends with a list like this. You don't have to fill it in by hand; the first run asks you for it.</p>
       <div class="code"><pre><span class="ok">ok  </span>  config.yaml: file
 <span class="todo">TODO</span>  config.yaml: applicant  <span class="c">-> set applicant (onboarding asks for it)</span>
@@ -160,12 +161,13 @@ python engine/tools/setup_check.py --init</pre></div>
     <li><div class="step">
       <span class="who you">You</span>
       <h2>Add the scheduled task</h2>
-      <p>In Claude Desktop open the Code tab, click <b>Scheduled</b> in the sidebar (or under <b>More</b>), then <b>New task</b> (choose <b>Set up manually</b> if asked), and fill in:</p>
+      <p>In Claude Desktop open the <b>Code</b> tab (not Cowork or Chat), click <b>Scheduled</b> in the sidebar (or under <b>More</b>), then <b>New task</b> (choose <b>Set up manually</b> if asked), and fill in:</p>
       <dl class="fields">
         <div><dt>Name</dt><dd>job-hunt-daily</dd></div>
         <div><dt>Instructions</dt><dd>copy the text below into the box under the name</dd></div>
         <div><dt>Where it runs</dt><dd><b>Advanced settings → General</b>: turn on <b>Only on this computer</b> (it needs your local files). If that switch is at the top of the dialog instead, turn it on first.</dd></div>
-        <div><dt>Local folder</dt><dd>your <code>JobHunt</code> folder (trust it when asked)</dd></div>
+        <div><dt>Local folder</dt><dd>your <code>JobHunt</code> folder (trust it when asked). The safety rules only work this way: a cloud task, or a Cowork task with the folder attached, runs without them.</dd></div>
+        <div><dt>Permission mode</dt><dd><b>Auto</b>. The safety rules still apply.</dd></div>
         <div><dt>Trigger</dt><dd><b>Daily</b>, e.g. 07:30. Weekends run a short search-only mode.</dd></div>
         <div><dt>Model</dt><dd>the strongest one you have (menu in the instructions box)</dd></div>
         <div><dt>Description</dt><dd>if asked: Find, score and tailor jobs; update tracker; write daily brief</dd></div>
@@ -200,9 +202,10 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
 
     <li><div class="step">
       <span class="who you">You</span>
-      <h2>Allow permissions and keep the computer awake</h2>
+      <h2>Check the safety guard and keep the computer awake</h2>
       <ul>
-        <li>During the first run, choose <b>Always allow</b> for Python, curl and file writes so later runs don't stall.</li>
+        <li>Permissions are already set up by <code>setup_check.py --init</code>. If the first run asks about a tool, <b>Always allow</b> is fine: it never overrides the safety rules.</li>
+        <li>Each brief says <code>guard active</code> under Sources. If it says <code>guard NOT active</code>, run <code>python engine/tools/setup_check.py --init</code> and check that the task is a local Code-tab task on your folder.</li>
         <li><b>Settings → This computer → System</b>: turn on <b>Keep computer awake</b>. Scheduled tasks only run while the app is open and the computer is awake; after sleep, one missed run from the last seven days catches up.</li>
         <li>Optional: connect Gmail and Indeed in Claude, and set up email job alerts on StepStone, XING and LinkedIn. Those sites often block automated searches, and alert emails get through.</li>
       </ul>
@@ -242,6 +245,7 @@ Finish by replying with a 3-line summary and the path of today's brief.</pre></d
     <dl class="faq">
       <div><dt>It keeps asking setup questions</dt><dd>Run <code>python engine/tools/setup_check.py</code> in the folder. Every TODO line says what is missing.</dd></div>
       <div><dt>"CV map" warning</dt><dd>The builder finds the parts it may change (headline, item order, letter text) through <code>cv/layout.yaml</code>, a map of your own CV. If you edited your master CV since it was mapped, say "remap my CV". Until the map works you get the letter text and CV choices, but no finished documents.</dd></div>
+      <div><dt>"Blocked by the guard" in the brief</dt><dd>The run tried something the safety rules don't allow, such as fetching a site that isn't a job API. The brief says what it did instead. To let it read a company's job API, add the endpoint to <code>companies.md</code>.</dd></div>
       <div><dt>The tracker didn't update</dt><dd>Close it in Excel before the run. Rows that couldn't be saved wait in <code>tracker/pending_rows.csv</code>.</dd></div>
       <div><dt>Updating the engine</dt><dd>When the daily brief says an update is available, open your folder in Claude Code and say <em>update the engine</em>. Claude backs up your settings, updates them, and builds a test application with the old and the new engine to show you nothing changed; <code>rollback</code> undoes it. Set up before October 2026? Paste the one-time prompt from <code>engine/UPGRADING.md</code> instead. Don't edit files inside <code>engine/</code>: write wishes in <code>custom.md</code>.</dd></div>
     </dl>
