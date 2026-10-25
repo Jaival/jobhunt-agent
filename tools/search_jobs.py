@@ -43,6 +43,7 @@ BA_DETAIL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/job
 # Say who we are instead of posing as a browser, so a source can see the traffic and contact the project.
 UA = {"User-Agent": f"jobhunt-agent/{version.version()} (+https://github.com/Jaival/jobhunt-agent)"}
 BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", **UA}
+BA_SIZE, BA_PAGES = 100, 3  # results per page, pages per search (a search hitting the limit is warned about)
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
 GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
 
@@ -63,23 +64,38 @@ def search_terms():
 
 # ---------- sources ----------
 
+def ba_search(term, where, days, status):
+    """One Arbeitsagentur search, following `page` up to BA_PAGES. A search with more results than that is listed
+    under status["page_limit"]; an error keeps the pages already read."""
+    out = []
+    for page in range(1, BA_PAGES + 1):
+        try:
+            r = requests.get(BA_SEARCH, headers=BA_HEADERS, timeout=30,
+                             params={"was": term, "size": BA_SIZE, "page": page, "veroeffentlichtseit": days, **where})
+            r.raise_for_status()
+            data = r.json()
+        except Exception as e:  # keep going; report in the status line
+            status.setdefault("errors", []).append(f"{term} page {page}: {e}")
+            return out
+        items = data.get("ergebnisliste") or data.get("stellenangebote") or []
+        out += items
+        total = int(data.get("maxErgebnisse") or 0)
+        time.sleep(0.3)
+        if len(items) < BA_SIZE or page * BA_SIZE >= total:
+            return out
+    area = where.get("wo") or "nationwide"
+    status.setdefault("page_limit", []).append(f"{term} ({area}): {BA_PAGES * BA_SIZE} of {total}")
+    return out
+
+
 def arbeitsagentur(since, days, status):
     jobs = {}
     for term in search_terms():
         for where in search_areas(CFG.get("search")):
-            try:
-                r = requests.get(BA_SEARCH, headers=BA_HEADERS, timeout=30,
-                                 params={"was": term, "size": 100, "veroeffentlichtseit": days, **where})
-                r.raise_for_status()
-                data = r.json()
-            except Exception as e:  # keep going; report in the status line
-                status.setdefault("errors", []).append(f"{term}: {e}")
-                continue
-            for x in data.get("ergebnisliste") or data.get("stellenangebote") or []:
+            for x in ba_search(term, where, days, status):
                 ref = x.get("referenznummer") or x.get("refnr")
                 if ref:
                     jobs[ref] = x
-            time.sleep(0.3)
     status["fetched"] = len(jobs)
     out = []
     for ref, x in jobs.items():
@@ -232,8 +248,11 @@ def main():
         write(jobs, status, since)
 
     for name, s in status.items():
-        print(f"{name}: " + ", ".join(f"{k} {v}" for k, v in s.items() if k != "errors")
-              + (f", {len(s['errors'])} errors" if s.get("errors") else ""))
+        print(f"{name}: " + ", ".join(f"{k} {v}" for k, v in s.items() if k not in ("errors", "page_limit"))
+              + (f", {len(s['errors'])} errors" if s.get("errors") else "")
+              + (f", page limit hit in {len(s['page_limit'])} searches" if s.get("page_limit") else ""))
+        for hit in s.get("page_limit", []):
+            print(f"  WARNING page limit: {hit} results fetched; narrow the term or the radius, or run more often")
     print(f"\nIn scope: {len(jobs)} ({len(new)} new, {len(jobs) - len(new)} already seen). Written to {OUT.relative_to(ROOT)}\n")
     for j in sorted(new, key=lambda j: (j["role_type"], j["posted"])):
         print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}"

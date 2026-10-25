@@ -52,6 +52,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   needs them.
 - curl and WebFetch only reach the job APIs and the hosts in companies.md and sources.md; other web pages are
   read with the browser. The brief gets a "guard active" line and a "Blocked by the guard" list.
+- Arbeitsagentur searches follow the result pages (up to 3 of 100) instead of stopping after the first 100, so a
+  broad term can bring in more jobs. A search with even more results is named in a "page limit" warning, and the
+  brief suggests narrowing it.
 
 ### Migration
 - `upgrade.py migrate` adds the missing permission rules and the guard hook to `.claude/settings.json`, keeping
