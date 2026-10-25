@@ -10,19 +10,25 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
   by the permission rules;
 - curl, wget, Invoke-WebRequest, WebFetch and inline Python HTTP calls to hosts outside the allowlist (the job
   APIs, plus every host in companies.md and sources.md); to.indeed.com only as the redirect lookup;
-- URLs that leak: the candidate's name, email or phone, a long encoded value, an IP address, a port or a
-  scheme other than http(s). Browser navigation may go to any host but gets this check;
+- URLs that leak: the candidate's name, email, phone, address, birth date or a distinctive last name (also hidden
+  in base64, base32, hex or double URL-encoding in any path segment or query value), a long encoded value, an IP
+  address, a port or a scheme other than http(s). Browser navigation may go to any host but gets this check, and on
+  a host outside companies.md and sources.md also a shorter value that decodes to text or looks random;
 - browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...).
 
 Every call it sees refreshes data/guard.json (the heartbeat); blocks are appended to data/guard.log.
 `python engine/tools/hooks/guard.py --status` prints whether the guard is active in this session: run through
 Bash, the hook itself sees that call first, so a fresh heartbeat proves it ran.
 
-Limits: it reads Bash as text, not as a shell would. `cd engine && ...`, generated code or an encoded command
+Limits: plain words in a URL (`?cv=SAP+FI+5+years`) can't be told from a search query, so CV facts that aren't
+personal markers pass, as does text encoded in a way it doesn't try (reversed, ciphered, split over several
+parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would. `cd engine && ...`, generated code or an encoded command
 get past it, and so can a page told something by which URL is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
 logged.
 """
+import base64
+import binascii
 import datetime as dt
 import ipaddress
 import json
@@ -31,7 +37,7 @@ import re
 import shlex
 import sys
 from pathlib import Path
-from urllib.parse import unquote_plus, urlsplit
+from urllib.parse import unquote, urlsplit
 
 TOOLS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS))
@@ -77,6 +83,19 @@ WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|d
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
 ENCODED = re.compile(r"^(?:[0-9a-f]{64,}|[A-Za-z0-9+/_=-]{64,})$")
+SLUG = re.compile(r"[A-Za-z0-9]{1,30}(?:[-_]+[A-Za-z0-9]{1,30})+")   # words and ids joined by hyphens
+UUID = re.compile(r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I)
+LABELED = re.compile(r"(?im)^[-*\s]*(?:address|adresse|anschrift|born|birth\w*|date of birth|dob|geboren\w*|"
+                     r"geburt\w*)\s*[:=]\s*(.+)$")
+STREET = re.compile(r"\b[^\W\d_][\w.-]*(?:stra(?:ß|ss)e|str\.|weg|platz|allee|gasse|damm)\s*\d+\s*[a-z]?\b", re.I)
+PROFILE = re.compile(r"(?:linkedin\.com/in|xing\.com/profile)/([\w.%-]{4,})", re.I)
+# Not markers on their own: mailbox names, and surnames that are everyday words (a job search may use them).
+GENERIC_LOCAL = {"info", "kontakt", "contact", "bewerbung", "bewerbungen", "jobs", "karriere", "career", "careers",
+                 "hello", "office", "mail", "post", "service", "support", "recruiting", "personal", "hallo"}
+COMMON_NAMES = {"koch", "bauer", "schneider", "schmied", "schmid", "maurer", "richter", "lehrer", "jaeger", "jäger",
+                "meister", "fuchs", "wolf", "klein", "gross", "groß", "lang", "krueger", "krüger", "vogel", "hahn",
+                "stein", "berg", "wald", "winter", "sommer", "frank", "ernst", "kaiser", "koenig", "könig", "braun",
+                "weiss", "weiß", "schwarz", "roth", "fisher", "baker", "smith", "miller", "young", "king", "hall"}
 
 
 class Block(Exception):
@@ -102,23 +121,47 @@ def protected(cfg):
     return [p.resolve() for p in paths]
 
 
+class Pii(list):
+    """Regexes that must not appear anywhere in a URL; .weak (a distinctive last name) only in query values."""
+    weak = ()
+
+
+def marker(words):
+    return re.compile(r"[\W_]*".join(re.escape(w.lower()) for w in words))
+
+
 def personal(cfg):
-    """Regexes for the candidate's name, emails and phone numbers (from config.yaml and CLAUDE.md)."""
-    out = []
+    """Regexes for the candidate's name, emails, phone numbers, address and birth date (config.yaml, CLAUDE.md)."""
+    out, out.weak = Pii(), []
+    titles = set(re.findall(r"[a-zäöüß]{3,}", str((cfg.get("profile") or {}).get("include_titles")).lower()))
     for key in ("applicant", "name_in_master"):
         words = re.findall(r"\w+", str(cfg.get(key) or ""))
         if len(words) >= 2 and str(cfg.get(key)) != "Your Name":
-            out.append(re.compile(r"[\W_]*".join(map(re.escape, (w.lower() for w in words)))))
+            out.append(marker(words))
+            last = words[-1].lower()
+            if len(last) >= 4 and last.isalpha() and last not in COMMON_NAMES | titles:
+                out.weak.append(re.compile(rf"(?<![^\W\d_]){last}(?![^\W\d_])"))
     try:
         text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     except OSError:
         text = ""
     for email in set(re.findall(r"[\w.+-]+@[\w-]+\.[\w.-]+", text)):
         out.append(re.compile(re.escape(email.lower())))
+        local = email.lower().split("@")[0]
+        if len(local) >= 6 and local not in GENERIC_LOCAL:
+            out.append(re.compile(re.escape(local)))
     for phone in set(re.findall(r"\+?\d[\d ()/.-]{7,}\d", text)):
         digits = re.sub(r"\D", "", phone)
         if len(digits) >= 8:
             out.append(re.compile(r"\D*".join(digits[-8:])))
+    for value in LABELED.findall(text):
+        words = re.findall(r"\w+", value)
+        if len(words) >= 2 and len("".join(words)) >= 8:
+            out.append(marker(words))
+    for street in STREET.findall(text):
+        out.append(marker(re.findall(r"\w+", street)))
+    for slug in PROFILE.findall(text):
+        out.append(re.compile(re.escape(unquote(slug).lower())))
     return out
 
 
@@ -138,8 +181,92 @@ def host_ok(host, hosts):
 
 # ---------- checks ----------
 
-def check_url(url, pii, hosts=None):
-    """Raise Block when url leaks data, or (with hosts) when its host isn't allowed."""
+def unquoted(text):
+    """URL-decoded until nothing changes (a double-encoded %2540 is still found)."""
+    for _ in range(4):
+        new = unquote(text)
+        if new == text:
+            break
+        text = new
+    return text
+
+
+def chunks(parts):
+    """(text, kind) for each path segment, query key and value and fragment part, URL-decoded but not split further;
+    kind is "path", "query" or "joined" (the segments run together, for base64 that contains slashes)."""
+    segs = [s for s in parts.path.split("/") if s]
+    out = [(unquoted(s), "path") for s in segs] + [(unquoted("".join(segs)), "joined")] * (len(segs) > 1)
+    for q in (parts.query, parts.fragment):
+        for pair in re.split(r"[&;]", q):
+            out += [(unquoted(x), "query") for x in pair.split("=", 1) if x]
+    return out
+
+
+def tokens(v):
+    return [v] + [t for t in re.split(r"[\s.,;:|~]+", v) if t and t != v]
+
+
+def decodings(v):
+    """What a value may encode: hex, base64 / base64url (with or without padding, hyphens dropped) and base32."""
+    out = []
+    hexed = re.sub(r"(?i)0x|\\x|[\s:,._-]", "", v)
+    if re.fullmatch(r"(?:[0-9a-f]{2}){4,}", hexed, re.I):
+        out.append(bytes.fromhex(hexed))
+    for w in {v, v.replace("-", "")}:
+        if re.fullmatch(r"[A-Za-z0-9+/_=-]{8,}", w):
+            b64 = w.replace("-", "+").replace("_", "/").rstrip("=")
+            b64 = b64[:-1] if len(b64) % 4 == 1 else b64
+            try:
+                out.append(base64.b64decode(b64 + "=" * (-len(b64) % 4)))
+            except (binascii.Error, ValueError):
+                pass
+    if re.fullmatch(r"[A-Za-z2-7]{8,}=*", v):
+        try:
+            out.append(base64.b32decode(v.rstrip("=").upper() + "=" * (-len(v.rstrip("=")) % 8)))
+        except (binascii.Error, ValueError):
+            pass
+    return out
+
+
+def expansions(v, depth=2):
+    """v and the text hidden in it by up to `depth` layers of encoding."""
+    seen, level = [v], [v]
+    for _ in range(depth):
+        level = [d.decode("utf-8", "ignore") for x in level for t in tokens(x) for d in decodings(t)]
+        seen += level
+    return seen
+
+
+def is_text(data):
+    """Bytes that read as words: mostly printable ASCII with some letters (random bytes and ids don't)."""
+    s = data.decode("latin-1")
+    return (len(s) >= 8 and sum(32 <= ord(c) < 127 or c in "\n\t" for c in s) >= 0.9 * len(s)
+            and sum(c.isalpha() for c in s) >= max(6, 0.5 * len(s)))
+
+
+def looks_random(t):
+    """A mixed-case letters-and-digits run of 16+ characters that switches case like base64, not like CamelCase."""
+    if len(t) < 16 or not re.fullmatch(r"[A-Za-z0-9+/_=]+", t) or UUID.fullmatch(t):
+        return False
+    letters = [c for c in t if c.isalpha()]
+    switches = sum(a.isupper() != b.isupper() for a, b in zip(letters, letters[1:]))
+    return len(letters) >= 4 and any(c.isdigit() for c in t) and switches >= 0.3 * len(letters)
+
+
+def opaque(v):
+    """True when v hides text (base64 / hex that decodes to words) or looks random, outside slugs, UUIDs and ids."""
+    for t in tokens(v):
+        if len(t) < 12 or UUID.fullmatch(t):
+            continue
+        if looks_random(t) or any(is_text(d) for d in decodings(t)):
+            return True
+    return False
+
+
+def check_url(url, pii, hosts=None, known=None):
+    """Raise Block when url leaks data, or (with hosts) when its host isn't allowed. Outside the hosts in
+    `hosts` or `known` (which only widens the leak check, e.g. for browser navigation) a short encoded value
+    that decodes to text or looks random is refused too."""
     if url in ("about:blank",):
         return
     parts = urlsplit(url if "://" in url else "https://" + url)
@@ -153,13 +280,26 @@ def check_url(url, pii, hosts=None):
         pass
     if parts.port not in (None, 80, 443):
         raise Block(f"port {parts.port} isn't allowed; only the default web ports")
-    text = unquote_plus(url).lower()
+    text = unquoted(url).lower()
+    leak = ("the URL contains the candidate's name, email or phone number (or other personal data); never put personal data in "
+            "a URL (for the candidate's own pages use projects.md and CLAUDE.md)")
     if any(p.search(text) for p in pii):
-        raise Block("the URL contains the candidate's name, email or phone number; never put personal data in "
-                    "a URL (for the candidate's own pages use projects.md and CLAUDE.md)")
-    for value in re.split(r"[/?&=#;,]", unquote_plus(parts.path + "?" + parts.query)):
-        if ENCODED.match(value) and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)+", value):
-            raise Block("the URL carries a long encoded value; open the page without it")
+        raise Block(leak)
+    trusted = hosts if hosts is not None else known
+    unknown = trusted is not None and not host_ok(host, trusted)
+    for value, kind in chunks(parts):
+        for t in expansions(value):
+            t = t.lower()
+            if any(p.search(t) for p in pii) or (kind == "query" and any(p.search(t) for p in getattr(pii, "weak", ()))):
+                raise Block(leak)
+        if kind == "joined":
+            continue
+        for t in tokens(value):
+            if ENCODED.match(t) and not SLUG.fullmatch(t):
+                raise Block("the URL carries a long encoded value; open the page without it")
+        if unknown and opaque(value):
+            raise Block(f"the URL carries an encoded or random-looking value to {host}, which isn't in companies.md "
+                        "or sources.md; open the page without it")
     if hosts is not None and not host_ok(host, hosts):
         raise Block(f"{host} isn't an allowed API host for curl/WebFetch: read web pages with the obscura "
                     "browser, or add the company's API endpoint to companies.md")
@@ -276,7 +416,7 @@ def check(call):
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
     elif NAVIGATE.match(tool):
-        check_url(inp.get("url") or "", personal(cfg))
+        check_url(inp.get("url") or "", personal(cfg), known=allowed_hosts())
     elif SCRIPT_TOOLS.match(tool):
         script = inp.get("expression") or inp.get("script") or inp.get("text") or json.dumps(inp)
         if NETWORK_JS.search(script):
@@ -287,8 +427,9 @@ def check(call):
         if re.search(r'"action":\s*"(type|key)"', text):
             raise Block("typing into a page isn't allowed; the routine only reads pages")
         pii = personal(cfg)
+        hosts = allowed_hosts()
         for u in re.findall(r'"url":\s*"([^"]+)"', text):
-            check_url(u, pii)
+            check_url(u, pii, known=hosts)
 
 
 # ---------- heartbeat, log, status ----------

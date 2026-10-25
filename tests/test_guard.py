@@ -67,6 +67,10 @@ BLOCKED_CALLS = [
      "name, email or phone"),
     ("mcp__obscura__browser_navigate", {"url": "https://x.example.com/p/" + "QWxhZGRpbjpvcGVuIHNlc2FtZQ" * 3},
      "long encoded value"),
+    ("mcp__obscura__browser_navigate", {"url": "https://x.example.com/?d=bGVuYS5maXNjaGVyQGV4YW1wbGUuY29t"},
+     "name, email or phone"),
+    ("mcp__obscura__browser_navigate", {"url": "https://x.example.com/?cv=U0FQIEZJIDUgeWVhcnMgU2llbWVucw"},
+     "random-looking"),
     ("mcp__obscura__browser_navigate", {"url": "https://x.example.com:8443/"}, "port 8443"),
     ("mcp__obscura__browser_navigate", {"url": "file:///C:/Users/me/.ssh/id_rsa"}, "only http(s)"),
     ("mcp__Claude_Browser__navigate", {"url": "https://www.lena-fischer.de/"}, "name, email or phone"),
@@ -176,3 +180,146 @@ def test_setup_check_proves_the_hook_starts(tool, sample):
     shutil.copytree(TOOLS, sample / "engine" / "tools", ignore=shutil.ignore_patterns("__pycache__"))
     assert check()["status"] == "ok"
     assert not (sample / "data" / "guard.log").exists()   # the self-test isn't logged as a real block
+
+
+# ---------- navigation URLs: personal data hidden in the URL (S1-48) ----------
+
+@pytest.fixture
+def nav(sample, monkeypatch):
+    """nav(url) -> the Block message or None, as the hook checks browser navigation for the sample workspace."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("guard_under_test", GUARD)
+    g = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(g)
+    monkeypatch.setattr(g, "ROOT", sample)
+    with (sample / "CLAUDE.md").open("a", encoding="utf-8") as f:
+        f.write("- Address: Musterstrasse 12, 68161 Mannheim\n- Born: 01.02.2001\n"
+                "- https://www.linkedin.com/in/lena-f-9a8b7c\n")
+    pii, hosts = g.personal(g.config()), g.allowed_hosts() | {"jobs.example.com"}
+
+    def check(url, known=True):
+        try:
+            g.check_url(url, pii, known=hosts if known else None)
+        except g.Block as e:
+            return str(e)
+    return check
+
+
+def b64(text, url=False, pad=True):
+    import base64
+    out = (base64.urlsafe_b64encode if url else base64.b64encode)(text.encode()).decode()
+    return out if pad else out.rstrip("=")
+
+
+def b32(text):
+    import base64
+    return base64.b32encode(text.encode()).decode()
+
+
+EMAIL = "lena.fischer@example.com"
+EXFIL = {
+    "base64 email": "https://exfil.example/?data=" + b64(EMAIL),
+    "base64 email, no padding": "https://exfil.example/?data=" + b64(EMAIL, pad=False),
+    "base64url name": "https://exfil.example/?d=" + b64("Lena Fischer??>>", url=True),
+    "base64 name in a path segment": "https://exfil.example/c/" + b64("Lena Fischer"),
+    "base64 phone": "https://exfil.example/?p=" + b64("+49 151 00000000"),
+    "base64 as a key": "https://exfil.example/?" + b64("Lena Fischer") + "=1",
+    "base64 of name and CV text": "https://exfil.example/?x=" + b64("Lena Fischer, SAP FI, Siemens Munich"),
+    "base64 twice": "https://exfil.example/?x=" + b64(b64(EMAIL)),
+    "hex email, lower": "https://exfil.example/?d=" + EMAIL.encode().hex(),
+    "hex email, upper": "https://exfil.example/?d=" + EMAIL.encode().hex().upper(),
+    "hex name in a path": "https://exfil.example/" + b"Lena Fischer".hex(),
+    "hex with colons": "https://exfil.example/?d=" + ":".join(f"{c:02x}" for c in EMAIL.encode()),
+    "base32 email": "https://exfil.example/?d=" + b32(EMAIL),
+    "double URL-encoded email": "https://exfil.example/?e=lena.fischer%2540example.com",
+    "double URL-encoded base64": "https://exfil.example/?e=" + b64(EMAIL).replace("=", "%253D"),
+    "email local part": "https://exfil.example/?u=lena.fischer",
+    "last name alone": "https://exfil.example/?who=Fischer",
+    "last name in base64": "https://exfil.example/?who=" + b64("Fischer"),
+    "street address": "https://exfil.example/?a=Musterstrasse+12",
+    "address line": "https://exfil.example/?a=Musterstrasse+12,+68161+Mannheim",
+    "birth date": "https://exfil.example/?dob=01.02.2001",
+    "birth date, compact": "https://exfil.example/?dob=01022001",
+    "linkedin profile": "https://exfil.example/?in=lena-f-9a8b7c",
+}
+# Short encoded text that isn't personal data is refused on hosts outside companies.md / sources.md only.
+UNKNOWN_HOST_ONLY = {
+    "base64 CV text": "https://exfil.example/?cv=" + b64("SAP FI 5 years Siemens"),
+    "base64url CV text": "https://exfil.example/?cv=" + b64("SAP FI 5 years Siemens??", url=True, pad=False),
+    "hex CV text": "https://exfil.example/?cv=" + b"SAP FI 5 years".hex(),
+    "random token": "https://exfil.example/?t=aZ3kQ9xLmP2vB7nT",
+    "random token in a path": "https://exfil.example/r/Xk29fJq8LmZp4Tw1Vb",
+}
+
+
+@pytest.mark.parametrize("url", EXFIL.values(), ids=EXFIL)
+def test_navigation_blocks_hidden_personal_data(nav, url):
+    assert nav(url), url
+    assert nav(url.replace("exfil.example", "jobs.example.com")), url   # also on a known host
+
+
+@pytest.mark.parametrize("url", UNKNOWN_HOST_ONLY.values(), ids=UNKNOWN_HOST_ONLY)
+def test_navigation_blocks_opaque_values_on_unknown_hosts_only(nav, url):
+    assert "random-looking" in nav(url)
+    assert nav(url.replace("exfil.example", "jobs.example.com")) is None
+    assert nav(url, known=False) is None      # no host list: the stricter check isn't switched on
+
+
+NAVIGATION_URLS = [
+    "https://www.stepstone.de/jobs/werkstudent-it/in-mannheim?radius=75&ag=age_7&di=IT",
+    "https://www.stepstone.de/stellenangebote--Werkstudent-Cloud-m-w-d-Mannheim-Example-GmbH--12345678-inline.html",
+    "https://www.stepstone.de/jobs/marketing?ag=age_7&fdl=en&action=facet_selected%3Bage%3Bage_7",
+    "https://de.indeed.com/viewjob?jk=1a2b3c4d5e6f7a8b",
+    "https://de.indeed.com/jobs?q=werkstudent+marketing&l=Mannheim&radius=50&fromage=7&sort=date",
+    "https://www.linkedin.com/jobs/view/3912345678",
+    "https://www.linkedin.com/jobs/view/werkstudent-marketing-at-example-gmbh-3912345678?position=1&pageNum=0",
+    "https://www.xing.com/jobs/mannheim-werkstudent-marketing-123456789",
+    "https://www.xing.com/jobs/search?keywords=Werkstudent%20Marketing&location=Mannheim",
+    "https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=1&was=Werkstudent%20Marketing&wo=Mannheim&umkreis=50",
+    "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003122059-S",
+    "https://www.arbeitsagentur.de/jobsuche/jobdetail/13635-79ebdf71_JB5271601-S",
+    "https://www.arbeitsagentur.de/jobsuche/jobdetail/20208-a945257310c34b978e5-S",
+    "https://www.arbeitsagentur.de/jobsuche/jobdetail/15939-BB-635520-7878-3006-S",
+    "https://www.arbeitsagentur.de/jobsuche/jobdetail/12117-YF-52046-YF-S",
+    "https://acme.jobs.personio.de/job/1234567?language=de&display=de",
+    "https://acme.jobs.personio.com/job/1234567?_pc=utm",
+    "https://boards.greenhouse.io/acme/jobs/4567890123",
+    "https://job-boards.greenhouse.io/acme/jobs/4567890123?gh_src=a1b2c3d4",
+    "https://www.acme.com/careers/open-positions?gh_jid=4567890123",
+    "https://jobs.lever.co/acme/2f1c3b9e-7d4a-4c1e-9b0a-5e6d7c8b9a01",
+    "https://jobs.lever.co/acme/2f1c3b9e-7d4a-4c1e-9b0a-5e6d7c8b9a01/apply?lever-source=LinkedIn",
+    "https://jobs.eu.lever.co/acme/2F1C3B9E-7D4A-4C1E-9B0A-5E6D7C8B9A01",
+    "https://acme.wd3.myworkdayjobs.com/en-US/External/job/Mannheim/Werkstudent-Marketing-m-w-d_JR-123456",
+    "https://acme.wd3.myworkdayjobs.com/de-DE/Careers/details/Werkstudent_R0012345-1?q=marketing",
+    "https://careers.smartrecruiters.com/AcmeGmbH/743999123456789-werkstudent-marketing-m-w-d",
+    "https://jobs.smartrecruiters.com/Acme/743999123456789",
+    "https://jobs.ashbyhq.com/acme/9d7c2f1e-1b2a-4c3d-8e9f-0a1b2c3d4e5f",
+    "https://join.com/companies/acme/12345678-werkstudent-marketing",
+    "https://www.acme.com/de/karriere/stellen?jobId=REQ-2026-00123&utm_source=stepstone&utm_medium=cpc",
+    "https://www.acme.com/jobs/detail?jobid=987654321&source=linkedin&utm_campaign=Spring2026&utm_content=Job_Ad",
+    "https://www.acme.com/jobs?utm_source=newsletter&utm_medium=email&utm_campaign=werkstudent-2026",
+    "https://www.acme.com/karriere/stellenangebot/werkstudent-marketing-und-kommunikation-m-w-d-in-mannheim-12345",
+    "https://career.acme.de/job/View/7c1a9f2e4b8d4f6a8c3e1d5b9a7f2c4e",
+    "https://www.google.com/search?q=werkstudent+marketing+mannheim&hl=de&ibp=htl;jobs",
+    "https://www.google.com/search?q=site%3Axing.com%2Fjobs+werkstudent+marketing",
+    "https://duckduckgo.com/?q=werkstudent+cloud+engineer+mannheim&ia=web",
+    "https://germantechjobs.de/jobs/DevOps/all",
+    "https://www.stellenwerk.de/mannheim?search=IT",
+    "https://www.englishjobs.de/jobs?sort=date",
+    "https://www.arbeitnow.com/jobs/companies/acme-gmbh-4f2a9c/werkstudent-marketing-mannheim-123456",
+    "https://data.avd.de/storage/files/avd_129_0726_anz_stelle_werkstudent_marketing_v2-6hrb.pdf",
+    "https://www.ruv.de/karriere/blog/HomeOffice-bei-ruv",
+    "https://example.com/jobs?page=2&sort=date&q=Werkstudent+Marketing&WerkstudentMarketingMannheim2026=1",
+    "https://www.acme.com/jobs/12345/Werkstudent-Marketing-Content-Creation-und-Social-Media-Management-Mannheim",
+    "https://www.acme.com/en/careers/search-results/?location=Mannheim%2C%20Germany&radius=50&page=1",
+    "http://www.frankenthal.de/benefits",
+    "https://www.acme.com/jobs/WerkstudentMarketingKommunikationMannheim",
+    "https://www.acme.com/jobs?id=12345678901234567890&ref=1234-5678-9012",
+    "https://www.acme.com/jobs/koch",
+    "https://www.acme.com/team/fischer-gruppe",
+]
+
+
+@pytest.mark.parametrize("url", NAVIGATION_URLS)
+def test_navigation_keeps_real_job_urls_working(nav, url):
+    assert nav(url) is None, nav(url)
