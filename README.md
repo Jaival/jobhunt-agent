@@ -65,7 +65,8 @@ anything is missing, asks you for it ([ONBOARDING.md](ONBOARDING.md)) instead of
 needed: it explains terms like Werkstudent or ATS as it goes and asks before installing anything.
 
 ## Development
-`python -m pip install pytest` once, then `python -m pytest tests` in this folder. The tests build the sample
+`python -m pip install -r requirements-dev.txt` once (the pinned versions CI tests with), then
+`python -m pytest tests` in this folder. The tests build the sample
 workspace in [examples/sample-workspace](examples/sample-workspace) end to end (no PDFs).
 
 Work in a separate clone, not in a workspace's `engine/`. `main` only moves with releases (that's what users
