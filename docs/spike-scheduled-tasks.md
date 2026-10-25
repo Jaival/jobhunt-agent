@@ -70,7 +70,7 @@ Consequences:
 - Match tools by suffix (`^mcp__.*__(send_message|reply|forward|create_draft|update_draft)$`), as in the template.
 - It runs inside subagents too, so S2-2 and S3-2 get the same guard.
 
-### Browser and network policy (S1-2, recommendation)
+### Browser and network policy (S1-2, agreed 2026-10-25)
 A host allowlist for the browser would break the routine, which reads career pages on any company site. Instead:
 - **curl and WebFetch** (JSON APIs only, per ROUTINE.md): an allowlist of hosts, namely `rest.arbeitsagentur.de`,
   `www.arbeitnow.com`, the Personio, Ashby, Greenhouse and Lever API hosts, the hosts in `companies.md`, and `curl` to
