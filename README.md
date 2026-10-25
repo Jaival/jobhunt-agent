@@ -29,13 +29,13 @@ workspace/                   your private folder (and private git repo)
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
    ├─ UPGRADING.md           "update the engine": backup, migration, old-vs-new document check, rollback
-   ├─ CHANGELOG.md           what each update adds, with the setting to use
+   ├─ CHANGELOG.md VERSION   what each release adds, with the setting to use; the engine version
    ├─ ats-checklist.md       the CV and cover letter review (also on request: "run the ATS review")
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md
-   ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md)
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version
+   ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
    ├─ tests/                 pytest suite
@@ -70,8 +70,8 @@ needed: it explains terms like Werkstudent or ATS as it goes and asks before ins
 workspace in [examples/sample-workspace](examples/sample-workspace) end to end (no PDFs).
 
 Work in a separate clone, not in a workspace's `engine/`. `main` only moves with releases (that's what users
-update to); changes go through feature branches and PRs into `next`. The plan to v1.0 is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+update to); changes go through feature branches and PRs into `next`. Versions and releases are described in
+[docs/RELEASING.md](docs/RELEASING.md), the plan to v1.0 in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Credits
 `career-ops-playbook.md` adapts rules from [career-ops](https://github.com/career-ops-hq/career-ops) (MIT licence).

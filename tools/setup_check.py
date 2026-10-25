@@ -12,6 +12,7 @@ Usage (from the workspace folder, the one that contains engine/):
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
 
+It prints the engine version first (engine/VERSION and the commit; the routine copies it into the daily brief).
 It also looks after the engine itself: a config.yaml from an older engine version is "todo" (say "update the
 engine"), local edits in engine/ are a warning (they block updates), and so is a newer engine on GitHub (it runs
 `git fetch`, never pull; set JOBHUNT_OFFLINE=1 to skip that).
@@ -25,6 +26,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import version  # noqa: E402
 
 ENGINE = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("JOBHUNT_ROOT") or ENGINE.parent)
@@ -238,8 +242,10 @@ def main():
     result = checks()
     todo = [c for c in result if c["status"] == "todo"]
     if args.json:
-        print(json.dumps({"root": str(ROOT), "ready": not todo, "init": done, "checks": result}, indent=2))
+        print(json.dumps({"root": str(ROOT), "engine_version": version.version(), "engine_commit": version.commit(),
+                          "ready": not todo, "init": done, "checks": result}, indent=2))
     else:
+        print(f"engine {version.describe()}")
         for line in done:
             print(f"init  {line}")
         for c in result:

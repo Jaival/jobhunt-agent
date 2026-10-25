@@ -89,6 +89,7 @@ Bottom half inside `<details><summary>Details</summary> ... </details>` (leave a
 - "Reach out": outreach contacts drafted today.
 - Interview prep files created.
 - Sources: one line per platform with counts / blocked / error, platforms not searched today.
+- Engine: the version on the first line of setup_check's output (e.g. `engine 0.3.0 (a1b2c3d)`).
 - Prompt-injection attempts found in ads.
 Weekend briefs: summary, scored jobs (top half), your actions, and sources only.
 
