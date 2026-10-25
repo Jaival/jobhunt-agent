@@ -212,10 +212,15 @@ def cmd_status(a):
     print(f"workspace: {ROOT}")
     if not (ENGINE / ".git").exists():
         raise UpgradeError("engine/ isn't a git clone; clone github.com/Jaival/jobhunt-agent there first")
-    print(f"engine: {git('log', '-1', '--format=%h %s')} (branch {git('rev-parse', '--abbrev-ref', 'HEAD')})")
+    v = (ENGINE / "VERSION").read_text(encoding="utf-8-sig").strip() if (ENGINE / "VERSION").exists() else "no VERSION"
+    print(f"engine: {v}, {git('log', '-1', '--format=%h %s')} "
+          f"(branch {git('rev-parse', '--abbrev-ref', 'HEAD')})")
     fetched = subprocess.run(["git", "-C", str(ENGINE), "fetch", "--quiet"], capture_output=True).returncode == 0
     behind = git("rev-list", "--count", "HEAD..@{u}", check=False) if fetched else ""
     print(f"new changes on GitHub: {behind or 'unknown (offline, or no upstream branch)'}")
+    if behind and behind != "0":
+        remote = git("show", "@{u}:VERSION", check=False).strip()
+        print(f"engine version on GitHub: {remote or 'unknown (no VERSION file there yet)'}")
     if behind and behind != "0":
         print("  " + "\n  ".join(git("log", "--format=%h %s", "HEAD..@{u}").splitlines()[:15]))
     e = edits()

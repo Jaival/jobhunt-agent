@@ -2,7 +2,7 @@
 
 A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.html).
 
-1. Install Claude Desktop (Code tab), Python 3 and Git. For PDFs you need Microsoft Word (Windows or macOS) or
+1. Install Claude Desktop (Code tab), Python 3.11 or newer and Git. For PDFs you need Microsoft Word (Windows or macOS) or
    the free LibreOffice (libreoffice.org); without either you still get .docx files. Then the Python packages
    (the first run offers to install them for you):
    `pip install python-docx openpyxl pypdf pyyaml requests` (on macOS with Word, also `docx2pdf`)

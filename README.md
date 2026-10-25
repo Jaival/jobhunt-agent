@@ -29,13 +29,13 @@ workspace/                   your private folder (and private git repo)
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
    ├─ UPGRADING.md           "update the engine": backup, migration, old-vs-new document check, rollback
-   ├─ CHANGELOG.md           what each update adds, with the setting to use
+   ├─ CHANGELOG.md VERSION   what each release adds, with the setting to use; the engine version
    ├─ ats-checklist.md       the CV and cover letter review (also on request: "run the ATS review")
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md
-   ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md)
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version
+   ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
    ├─ tests/                 pytest suite
@@ -56,7 +56,7 @@ every claim must come from the master CV or `CLAUDE.md`, and the routine never s
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)
 - Your CV and a cover letter as Word .docx files (Word, Google Docs and LibreOffice can all export one)
 - For PDFs: Microsoft Word (Windows or macOS) or the free LibreOffice; without either you still get .docx files
-- Python 3 with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
+- Python 3.11 or newer with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
 - Optional MCP connectors: Gmail, Indeed, a headless browser (obscura)
 
 See [SETUP.md](SETUP.md), or the visual guide in [docs/setup-guide.html](docs/setup-guide.html). Setup is mostly
@@ -65,12 +65,13 @@ anything is missing, asks you for it ([ONBOARDING.md](ONBOARDING.md)) instead of
 needed: it explains terms like Werkstudent or ATS as it goes and asks before installing anything.
 
 ## Development
-`python -m pip install pytest` once, then `python -m pytest tests` in this folder. The tests build the sample
+`python -m pip install -r requirements-dev.txt` once (the pinned versions CI tests with), then
+`python -m pytest tests` in this folder. The tests build the sample
 workspace in [examples/sample-workspace](examples/sample-workspace) end to end (no PDFs).
 
 Work in a separate clone, not in a workspace's `engine/`. `main` only moves with releases (that's what users
-update to); changes go through feature branches and PRs into `next`. The plan to v1.0 is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+update to); changes go through feature branches and PRs into `next`. Versions and releases are described in
+[docs/RELEASING.md](docs/RELEASING.md), the plan to v1.0 in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Credits
 `career-ops-playbook.md` adapts rules from [career-ops](https://github.com/career-ops-hq/career-ops) (MIT licence).

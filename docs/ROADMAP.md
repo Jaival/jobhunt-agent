@@ -115,7 +115,7 @@ no longer silently drop jobs, and the engine has a version number.
 | P0 | S1-5 | **Stop the ledger merging different jobs** (`tools/ledger.py` `Index.find`): fuzzy matching only when both titles share the same set of meaningful words (ignoring order and gender suffixes), or a stricter threshold for short titles. Regression tests: "SAP FI" ≠ "SAP CO", "HR" ≠ "IT"; reposts with gender or punctuation changes still match. | 2 h | — |
 | P0 | S1-11 | **Versioning baseline:** `VERSION` file and `tools/version.py`; retroactive tags `v0.1.0`, `v0.2.0`; CHANGELOG in Keep a Changelog layout with "Behaviour changes"; `docs/RELEASING.md` (branches, versions, checklist from this file); `setup_check.py` and the brief print the engine version. | 1.5 h | — |
 | P1 | S1-6 | **Atomic ledger save:** write to a temp file, then `os.replace`. | 0.5 h | — |
-| P1 | S1-8 | **CI and dependencies:** pinned `requirements.txt` and `requirements-dev.txt`; GitHub Actions running `pytest tests` on Ubuntu and Windows, Python 3.11/3.12, on PRs into `next` and `main`. | 1.5 h | — |
+| P1 | S1-8 | **CI and dependencies:** pinned `requirements.txt` and `requirements-dev.txt`; GitHub Actions running `pytest tests` on Ubuntu and Windows with Python 3.11–3.14 (plus macOS on 3.14), on every PR and on pushes to `next` and `main`. | 1.5 h | — |
 | P2 | S1-12 | **Eval seed:** collect about 30 real public ads (no personal data) into `tests/evals/ads/` with expected labels for the sample profile (in scope, role type, hard mismatch, score range). No code; it lets Sprint 2 record a baseline before scoring changes. | 1 h | — |
 | P2 | S1-10 | **Honest User-Agent:** `jobhunt-agent/<VERSION> (+repo URL)` instead of `Mozilla/5.0`; revert if the Arbeitsagentur API rejects it. | 0.25 h | S1-11 |
 
