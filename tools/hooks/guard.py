@@ -22,8 +22,9 @@ Bash, the hook itself sees that call first, so a fresh heartbeat proves it ran.
 
 Limits: plain words in a URL (`?cv=SAP+FI+5+years`) can't be told from a search query, so CV facts that aren't
 personal markers pass, as does text encoded in a way it doesn't try (reversed, ciphered, split over several
-parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would. `cd engine && ...`, generated code or an encoded command
-get past it, and so can a page told something by which URL is opened. The permission rules are the main
+parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would.
+`cd engine && ...`, generated code or an encoded command get past it, and so can a page told something by which URL
+is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
 logged.
 """
@@ -281,8 +282,8 @@ def check_url(url, pii, hosts=None, known=None):
     if parts.port not in (None, 80, 443):
         raise Block(f"port {parts.port} isn't allowed; only the default web ports")
     text = unquoted(url).lower()
-    leak = ("the URL contains the candidate's name, email or phone number (or other personal data); never put personal data in "
-            "a URL (for the candidate's own pages use projects.md and CLAUDE.md)")
+    leak = ("the URL contains the candidate's name, email or phone number, or other personal data; never put "
+            "personal data in a URL (for the candidate's own pages use projects.md and CLAUDE.md)")
     if any(p.search(text) for p in pii):
         raise Block(leak)
     trusted = hosts if hosts is not None else known
@@ -290,7 +291,8 @@ def check_url(url, pii, hosts=None, known=None):
     for value, kind in chunks(parts):
         for t in expansions(value):
             t = t.lower()
-            if any(p.search(t) for p in pii) or (kind == "query" and any(p.search(t) for p in getattr(pii, "weak", ()))):
+            weak = getattr(pii, "weak", ()) if kind == "query" else ()
+            if any(p.search(t) for p in pii) or any(p.search(t) for p in weak):
                 raise Block(leak)
         if kind == "joined":
             continue
@@ -299,7 +301,7 @@ def check_url(url, pii, hosts=None, known=None):
                 raise Block("the URL carries a long encoded value; open the page without it")
         if unknown and opaque(value):
             raise Block(f"the URL carries an encoded or random-looking value to {host}, which isn't in companies.md "
-                        "or sources.md; open the page without it")
+                        "or sources.md; open the page without that parameter (job pages work without tracking values)")
     if hosts is not None and not host_ok(host, hosts):
         raise Block(f"{host} isn't an allowed API host for curl/WebFetch: read web pages with the obscura "
                     "browser, or add the company's API endpoint to companies.md")
