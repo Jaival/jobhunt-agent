@@ -12,7 +12,8 @@ It does not change the ledger: after scoring, run `python engine/tools/ledger.py
 
 Usage (from the JobHunt folder):
     python engine/tools/search_jobs.py [--days 3] [--details]
-      --details  also fetch the full ad text of new Arbeitsagentur jobs into candidates.json
+      --details  also fetch the full ad text of new Arbeitsagentur jobs into candidates.json (candidates.json is
+                 written first, so a failed fetch loses no jobs; jobs whose text couldn't be fetched get detail_error)
 """
 import argparse
 import base64
@@ -90,8 +91,32 @@ def arbeitsagentur(since, days, status):
 
 def ba_detail(ref):
     r = requests.get(BA_DETAIL + base64.b64encode(ref.encode()).decode(), headers=BA_HEADERS, timeout=30)
+    r.raise_for_status()
     j = r.json()
     return j.get("stellenangebotsBeschreibung") or "", j.get("externeURL") or ""
+
+
+def fetch_details(jobs, status):
+    """Full ad text for the Arbeitsagentur jobs; a failure marks that job (detail_error) and the status line."""
+    ok = failed = 0
+    for j in jobs:
+        if not j.get("ref"):
+            continue
+        try:
+            j["text"], j["external_url"] = ba_detail(j["ref"])
+            ok += 1
+        except Exception as e:  # keep going; the job stays in candidates.json without its text
+            j["detail_error"] = str(e)
+            failed += 1
+        time.sleep(0.3)
+    if ok or failed:
+        status["details"] = f"{ok} ok" + (f", {failed} failed" if failed else "")
+
+
+def write(jobs, status, since):
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps({"generated": dt.datetime.now().isoformat(timespec="minutes"), "since": since,
+                               "status": status, "jobs": jobs}, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def arbeitnow(since, status):
@@ -188,20 +213,18 @@ def main():
         jobs.append(j)
 
     new = [j for j in jobs if not j["seen"]]
+    write(jobs, status, since)  # before the details, so a crash there can't lose the search
     if a.details:
-        for j in new:
-            if j.get("ref"):
-                j["text"], j["external_url"] = ba_detail(j["ref"])
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"generated": dt.datetime.now().isoformat(timespec="minutes"), "since": since,
-                               "status": status, "jobs": jobs}, ensure_ascii=False, indent=1), encoding="utf-8")
+        fetch_details(new, status["Arbeitsagentur"])
+        write(jobs, status, since)
 
     for name, s in status.items():
         print(f"{name}: " + ", ".join(f"{k} {v}" for k, v in s.items() if k != "errors")
               + (f", {len(s['errors'])} errors" if s.get("errors") else ""))
     print(f"\nIn scope: {len(jobs)} ({len(new)} new, {len(jobs) - len(new)} already seen). Written to {OUT.relative_to(ROOT)}\n")
     for j in sorted(new, key=lambda j: (j["role_type"], j["posted"])):
-        print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}")
+        print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}"
+              + (" | no ad text (detail_error)" if j.get("detail_error") else ""))
     return 0
 
 
