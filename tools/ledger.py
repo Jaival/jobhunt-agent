@@ -1,6 +1,9 @@
 """Seen-jobs ledger (data/seen_jobs.csv): every job the routine has screened, so nothing is processed twice.
 
-A job matches the ledger by URL, by job id, or by normalised company + title (reposts count as seen).
+A job matches the ledger by URL, by job id, or by normalised company + title (reposts count as seen). Two titles
+at the same company are the same job when they have the same words in any order, ignoring gender suffixes,
+punctuation and filler words; words of 6+ letters may differ slightly (Werkstudentin / Werkstudent). Short words
+must match exactly, so "SAP FI" and "SAP CO" stay different jobs.
 
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
@@ -25,7 +28,9 @@ from config import ROOT
 LEDGER = ROOT / "data" / "seen_jobs.csv"
 CANDIDATES = ROOT / "data" / "candidates.json"
 FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note"]
-SIMILAR = 0.88  # title similarity for the same company that still counts as the same job
+SIMILAR_WORD = 0.85  # two title words this similar (both 6+ letters) count as the same word
+FILLER = {"und", "and", "für", "fur", "for", "im", "in", "the", "der", "die", "das", "des", "mit", "with", "of",
+          "zur", "zum", "am", "bei", "at", "a", "an", "to"}
 
 LEGAL = r"\b(gmbh|mbh|ag|se|kg|kgaa|co|ohg|ug|e\.?\s?v|inc|ltd|llc|bv|b\.v|sa|gruppe|group|holding|deutschland|germany)\b"
 GENDER = r"\((?:[mwfdxnb*/:|,\s.]|all genders?|alle|gn|mensch\*?|div\.?)+\)|\b(?:m/w/d|w/m/d|m/f/d|f/m/d|d/m/w|all genders)\b"
@@ -49,6 +54,22 @@ def norm_title(s):
 
 def make_key(company, title):
     return f"{norm_company(company)}|{norm_title(title)}"
+
+
+def same_title(a, b):
+    """Two normalised titles (norm_title) name the same job: see the module docstring."""
+    if a == b or a.replace(" ", "") == b.replace(" ", ""):  # "e commerce" = "ecommerce"
+        return True
+    wa, wb = set(a.split()) - FILLER, set(b.split()) - FILLER
+    if not wa or len(wa) != len(wb):
+        return wa == wb
+    rest = wb - wa
+    for w in wa - wb:
+        near = [v for v in rest if min(len(w), len(v)) >= 6 and difflib.SequenceMatcher(None, w, v).ratio() >= SIMILAR_WORD]
+        if not near:
+            return False
+        rest.discard(max(near, key=lambda v: difflib.SequenceMatcher(None, w, v).ratio()))
+    return True
 
 
 def load():
@@ -87,7 +108,7 @@ class Index:
             return self.by_key[key]
         comp, t = key.split("|")
         for r in self.by_company.get(comp, []) if comp else []:
-            if difflib.SequenceMatcher(None, t, r["key"].split("|")[1]).ratio() >= SIMILAR:
+            if same_title(t, r["key"].split("|")[1]):
                 return r
         return None
 
