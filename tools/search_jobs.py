@@ -32,6 +32,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import atomic  # noqa: E402
 import ledger  # noqa: E402
+import version  # noqa: E402
 from config import CFG  # noqa: E402
 from scope import Region, Scope, role_type, search_areas  # noqa: E402
 
@@ -39,7 +40,9 @@ ROOT = ledger.ROOT
 OUT = ROOT / "data" / "candidates.json"
 BA_SEARCH = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v6/jobs"
 BA_DETAIL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobdetails/"
-BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", "User-Agent": "Mozilla/5.0"}
+# Say who we are instead of posing as a browser, so a source can see the traffic and contact the project.
+UA = {"User-Agent": f"jobhunt-agent/{version.version()} (+https://github.com/Jaival/jobhunt-agent)"}
+BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", **UA}
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
 GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
 
@@ -132,7 +135,7 @@ def write(jobs, status, since):
 def arbeitnow(since, status):
     out, cutoff = [], dt.datetime.fromisoformat(since).timestamp()
     for page in range(1, 8):
-        data = requests.get(ARBEITNOW, params={"page": page}, timeout=30).json().get("data", [])
+        data = requests.get(ARBEITNOW, params={"page": page}, headers=UA, timeout=30).json().get("data", [])
         status["fetched"] = status.get("fetched", 0) + len(data)
         for x in data:
             if x["created_at"] < cutoff or not x["url"].startswith("https://www.arbeitnow.com/"):
@@ -157,7 +160,7 @@ def watchlist(since, status):
         company, url = cells[1], cells[4].split()[0]
         try:
             if "personio" in url and url.endswith("/xml"):
-                root = ET.fromstring(requests.get(url, timeout=30).content)
+                root = ET.fromstring(requests.get(url, headers=UA, timeout=30).content)
                 for p in root.iter("position"):
                     created = (p.findtext("createdAt") or "")[:10]
                     jid = p.findtext("id")
@@ -165,17 +168,17 @@ def watchlist(since, status):
                                     company=company, location=p.findtext("office") or "", posted=created,
                                     url=url.replace("/xml", f"/job/{jid}")))
             elif "api.ashbyhq.com" in url:
-                for j in requests.get(url, timeout=30).json().get("jobs", []):
+                for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"ashby-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=j.get("location", ""),
                                     posted=(j.get("publishedAt") or "")[:10], url=j.get("jobUrl", "")))
             elif "greenhouse.io" in url:
-                for j in requests.get(url, timeout=30).json().get("jobs", []):
+                for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"gh-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=(j.get("location") or {}).get("name", ""),
                                     posted=(j.get("updated_at") or "")[:10], url=j.get("absolute_url", "")))
             elif "api.lever.co" in url:
-                for j in requests.get(url, timeout=30).json():
+                for j in requests.get(url, headers=UA, timeout=30).json():
                     out.append(dict(id=f"lever-{j['id']}", source=f"Watchlist ({company})", title=j["text"],
                                     company=company, location=(j.get("categories") or {}).get("location", ""),
                                     posted=f"{dt.date.fromtimestamp(j['createdAt'] / 1000):%Y-%m-%d}",

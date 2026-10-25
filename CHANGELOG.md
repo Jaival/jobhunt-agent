@@ -34,6 +34,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
+- `search_jobs.py` identifies itself to the job sources as `jobhunt-agent/<version> (+repo URL)` instead of
+  posing as a browser (`Mozilla/5.0`). The Arbeitsagentur and Arbeitnow APIs accept it.
 - SETUP.md and the setup guide: the task must be a **Code**-tab task with "Only on this computer" and permission
   mode Auto (cloud and Cowork tasks run without the safety rules); step 5 no longer says to "always allow"
   bash, curl and python, since the rules are installed by `setup_check.py --init`.
@@ -45,7 +47,6 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   title words (in any order, ignoring gender forms, punctuation and filler words). Jobs the old similarity check
   hid ("SAP CO" behind "SAP FI", "Senior" behind "Junior") show up as new once; reposts with reordered words or
   the other gender form (Kauffrau / Kaufmann) now count as seen.
-
 - The daily run can no longer send or draft email, type into web pages, or change engine/, .claude/ or the master
   CV and letter: those tool calls are refused with "denied by your permission settings". Nothing in the routine
   needs them.
@@ -54,7 +55,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Migration
 - `upgrade.py migrate` adds the missing permission rules and the guard hook to `.claude/settings.json`, keeping
-  every rule and hook already there (`--dry-run` lists them), and copies `.claude/hooks/jobhunt_guard.py`. `settings.local.json` isn't touched. Config version stays 2.
+  every rule and hook already there (`--dry-run` lists them), and copies `.claude/hooks/jobhunt_guard.py`.
+  `settings.local.json` isn't touched. Config version stays 2.
 
 ### Fixed
 - `search_jobs.py --details` no longer crashes when an Arbeitsagentur ad can't be fetched: candidates.json is
