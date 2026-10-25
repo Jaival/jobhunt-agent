@@ -30,6 +30,19 @@ what the unattended daily run can do, and can Sprint 2 rely on subagents with re
 | Are project allow rules always applied? | **Only in a trusted folder** | CLI in an untrusted folder: "Ignoring 2 permissions.allow entries … not trusted". Deny rules and hooks still applied. Desktop asks to trust the folder when the task is created. |
 | Do subagents with restricted tools work? | **Yes in the CLI**; not yet seen in Desktop | The `reader` subagent (`tools: Read, Glob`) had no Write tool. The project hook fired for its calls with `agent_type: "reader"`. No daily run has used a subagent yet. |
 
+### Where the task runs matters (Desktop test, 2026-10-25)
+The first attempt at the Desktop check ran twice: once as a **cloud** task (the files went to `/home/claude` in a
+container) and once from a session outside the folder that reached it through `device_bash`. In both runs **none
+of the folder's `.claude/` config applied**: the writes went through, `guard.py` never ran, the `send_message`
+tools were still listed (as `mcp__Gmail__send_message`, a third naming scheme) and the `reader` agent was unknown.
+So the guards only exist in a **local Claude Code session whose project folder is the workspace**, which is what
+`job-hunt-daily` is today (its transcripts have `entrypoint: claude-desktop` and the JobHunt folder as `cwd`).
+Consequences:
+- SETUP.md and the setup guide must say: create the task in the **Code** tab with **Only on this computer** on
+  and the workspace as the local folder, never as a cloud task or a Cowork task with the folder attached.
+- The run can't rely on the guard being there, so it must check: the hook writes a heartbeat (e.g.
+  `data/guard.log`), and the brief says "guard active" or warns when no heartbeat was written this run (S1-2/S1-3).
+
 ## Decisions
 
 ### Permission template (S1-1)
@@ -73,6 +86,8 @@ A host allowlist for the browser would break the routine, which reads career pag
   personal data in the URL, not a deliberately encoded message.
 
 ## Still to confirm in Claude Desktop (10 minutes, before S1-1 merges)
+
+The first attempt didn't run locally (see above); this has to be repeated as a local Code-tab task.
 The docs say Desktop reads the same files, and the transcripts show hooks firing. But no run has used a
 *project* hook or a subagent yet. In a throwaway folder (not the JobHunt workspace):
 1. Create `.claude/settings.json` with `"deny": ["Edit(/engine/**)", "mcp__*__send_message"]` and a PreToolUse
