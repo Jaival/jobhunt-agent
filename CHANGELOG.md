@@ -40,6 +40,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   workspace (in scope, role type, hard mismatch, score range, German level), contact data removed. Sprint 2
   records a scoring baseline against them; a test keeps the labels well-formed and the title-filter label in step
   with `scope.py`.
+- Upgrade guides per release in `docs/upgrading/` ([v0.2.0 to v0.3.0](docs/upgrading/v0.3.0.md),
+  [v0.1.0 to v0.2.0](docs/upgrading/v0.2.0.md)), linked from UPGRADING.md: what each update shows step by
+  step, what changes in the daily run and how to check it worked.
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
