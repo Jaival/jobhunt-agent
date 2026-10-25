@@ -14,9 +14,11 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
   scheme other than http(s). Browser navigation may go to any host but gets this check;
 - browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...).
 
-Every call it sees refreshes data/guard.json (the heartbeat); blocks are appended to data/guard.log.
-`python engine/tools/hooks/guard.py --status` prints whether the guard is active in this session: run through
-Bash, the hook itself sees that call first, so a fresh heartbeat proves it ran.
+Every call it sees refreshes data/guard.json (the heartbeat, with the session's transcript path); blocks are
+appended to data/guard.log. `python engine/tools/hooks/guard.py --status` prints whether the guard is active in
+this session: run through Bash, the hook itself sees that call first, so a fresh heartbeat proves it ran.
+Calls the permission rules refuse (deny rules, auto-mode classifier) never reach the hook, so --status also
+reads this session's transcript for tool results saying so and lists them as "refused" lines.
 
 Limits: it reads Bash as text, not as a shell would. `cd engine && ...`, generated code or an encoded command
 get past it, and so can a page told something by which URL is opened. The permission rules are the main
@@ -40,7 +42,11 @@ import atomic  # noqa: E402
 ROOT = Path(os.environ.get("JOBHUNT_ROOT") or os.environ.get("CLAUDE_PROJECT_DIR") or TOOLS.parents[1])
 HEARTBEAT = ROOT / "data" / "guard.json"
 LOG = ROOT / "data" / "guard.log"
-FRESH = 120   # seconds: --status counts the guard as active when it saw a call this recently
+# tool_result texts of refused calls, anchored so that command output mentioning them doesn't count
+REFUSED = re.compile(r"(<tool_use_error>[^<]*denied by your permission settings|Permission to use .* has been "
+                     r"denied\.?$|Permission for this action was denied by the Claude Code auto mode classifier)", re.S)
+MAX_TRANSCRIPT = 200 * 2**20
+FRESH = 120  # seconds: --status counts the guard as active when it saw a call this recently
 
 API_HOSTS = ["rest.arbeitsagentur.de", "arbeitnow.com", "jobs.personio.de", "jobs.personio.com", "api.ashbyhq.com",
              "boards-api.greenhouse.io", "api.lever.co", "api.eu.lever.co", "api.smartrecruiters.com",
@@ -308,6 +314,7 @@ def beat(call, blocked=None):
     if state.get("session_id") != sid:
         state = {"session_id": sid, "calls": 0, "blocked": 0}
     state["calls"] += 1
+    state["transcript"] = call.get("transcript_path") or state.get("transcript") or ""
     state["blocked"] += bool(blocked)
     state["last_seen"] = now().isoformat(timespec="seconds")
     try:
@@ -318,6 +325,60 @@ def beat(call, blocked=None):
                                     "agent": call.get("agent_type"), "reason": blocked}) + "\n")
     except OSError:
         pass  # a read-only or missing data/ folder must not block the call
+
+
+def text_of(content):
+    if isinstance(content, list):
+        content = " ".join(str(c.get("text", "")) for c in content if isinstance(c, dict))
+    return content if isinstance(content, str) else ""
+
+
+def summary(inp):
+    """What a call was about: its path, command or URL, at most 80 characters."""
+    if isinstance(inp, dict):
+        for key in ("file_path", "notebook_path", "path", "command", "url"):
+            if isinstance(inp.get(key), str):
+                return " ".join(inp[key].split())[:80]
+    return ""
+
+
+def refusals(state):
+    """(tool, input summary, 'permission rule' | 'auto mode') per call of this session that the permission
+    system refused, read from the transcript. An unreadable transcript gives []."""
+    try:
+        path = Path(state.get("transcript") or "")
+        if not path.is_file() or path.stat().st_size > MAX_TRANSCRIPT:
+            return []
+        denied = {}   # tool_use_id -> why
+        with path.open(encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if '"is_error"' not in line or "denied" not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                    if d.get("sessionId") not in (None, state.get("session_id")):
+                        continue
+                    for c in d["message"]["content"]:
+                        text = text_of(c.get("content"))
+                        if c.get("type") == "tool_result" and c.get("is_error") and REFUSED.match(text.strip()):
+                            denied[c["tool_use_id"]] = "auto mode" if "auto mode" in text else "permission rule"
+                except (ValueError, KeyError, TypeError, AttributeError):
+                    continue
+        calls = {}
+        if denied:
+            with path.open(encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if '"tool_use"' not in line or not any(i in line for i in denied):
+                        continue
+                    try:
+                        for c in json.loads(line)["message"]["content"]:
+                            if c.get("type") == "tool_use" and c.get("id") in denied:
+                                calls[c["id"]] = (str(c.get("name")), summary(c.get("input")))
+                    except (ValueError, KeyError, TypeError, AttributeError):
+                        continue
+        return [(*calls.get(i, ("?", "")), why) for i, why in denied.items()]
+    except (OSError, ValueError):
+        return []
 
 
 def status():
@@ -339,9 +400,13 @@ def status():
                 continue
             if e.get("session_id") == state.get("session_id"):
                 reasons.append(f"{e.get('tool')}: {e.get('reason')}")
-    print(f"guard active: {state.get('calls', 0)} call(s) checked, {state.get('blocked', 0)} blocked this session")
+    refused = refusals(state)
+    print(f"guard active: {state.get('calls', 0)} call(s) checked, {state.get('blocked', 0)} blocked"
+          + (f", {len(refused)} refused by the permission rules" if refused else "") + " this session")
     for r in reasons[-10:]:
         print(f"  blocked {r}")
+    for tool, what, why in refused[-10:]:
+        print(f"  refused {tool}: {what or '-'} ({why})")
     return 0
 
 
