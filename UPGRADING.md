@@ -21,6 +21,14 @@ Wishes the engine can't do yet go in `custom.md` in your workspace, never into `
 block updates). On each update Claude checks them against [CHANGELOG.md](CHANGELOG.md) and drafts a GitHub issue
 for the rest, which you can post if you like.
 
+## Guides per release
+
+What each release changes in your workspace and daily run, what the update shows you, and how to check it:
+
+- [v0.2.0 to v0.3.0](docs/upgrading/v0.3.0.md): permission rules and a guard for the daily run, no lost jobs.
+- [v0.1.0 to v0.2.0](docs/upgrading/v0.2.0.md): the first "update the engine", German letters. Also for
+  workspaces from before v0.1.0.
+
 ## First update from an older engine
 
 Engines from before October 2026 don't know "update the engine" yet. Paste this into Claude Code, opened in your
