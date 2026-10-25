@@ -28,9 +28,14 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   permission rules). It blocks writes into `engine/`, `.claude/` and the master files (also through Bash and
   PowerShell), curl / wget / WebFetch / inline Python HTTP to hosts other than the job APIs and the hosts in
   companies.md and sources.md (to.indeed.com only as the redirect lookup), URLs carrying the candidate's name,
-  email, phone or a long encoded value, IP addresses and odd ports, and page scripts that make network calls.
-  Every block prints a reason. `guard.py --status` says whether the guard ran this session; the brief shows it
-  under Sources and lists what was blocked. `setup_check.py` starts the hook once to prove it blocks.
+  email, phone, address, birth date or last name (also as base64, base32, hex or double URL-encoded text in any
+  path segment or query value) or a long encoded value, IP addresses and odd ports, and page scripts that make
+  network calls. Browser navigation to a host outside companies.md and sources.md also refuses a shorter value
+  that decodes to text or looks random; plain words in a query (`?cv=SAP+FI+5+years`) still pass.
+  Every block prints a reason. `guard.py --status` says whether the guard ran this session and also lists the
+  calls the permission rules refused (they never reach the hook; read from the session transcript); the brief
+  shows it under Sources and lists what was blocked or refused. `setup_check.py` starts the hook once to prove it
+  blocks.
 - Eval seed: 33 real public ads in `tests/evals/ads/` with the labels the routine should give them for the sample
   workspace (in scope, role type, hard mismatch, score range, German level), contact data removed. Sprint 2
   records a scoring baseline against them; a test keeps the labels well-formed and the title-filter label in step

@@ -44,6 +44,9 @@ Consequences:
   and the workspace as the local folder, never as a cloud task or a Cowork task with the folder attached.
 - The run can't rely on the guard being there, so it must check: the hook writes a heartbeat (e.g.
   `data/guard.log`), and the brief says "guard active" or warns when no heartbeat was written this run (S1-2/S1-3).
+  Calls refused by the deny rules never reach the hook (and `PermissionDenied` fires only for auto-mode classifier
+  denials), so the heartbeat also stores the session's `transcript_path` and `--status` lists the refusals found
+  there as `refused ...` lines.
 
 ## Decisions
 
@@ -77,15 +80,19 @@ A host allowlist for the browser would break the routine, which reads career pag
   `to.indeed.com` only in the redirect-lookup form (`-o /dev/null -w "%{redirect_url}"`).
 - **Browser navigation** (`mcp__obscura__browser_navigate`, `mcp__Claude_Browser__navigate`): any host, but the
   URL must pass a **leak check**, the same one applied to curl and WebFetch. It only allows `http`/`https` on the
-  default ports and no IP-address hosts. The URL must not contain the candidate's email, phone number or name (read
-  from config.yaml and CLAUDE.md), and no query or path value may be longer than about 64 characters of base64- or
-  hex-like text.
+  default ports and no IP-address hosts. The URL must not contain the candidate's email, phone number, name, address
+  or birth date (read from config.yaml and CLAUDE.md), nor a distinctive last name in a query value, in the clear or
+  as base64, base32, hex or double URL-encoded text in any path segment or query key or value; and no value may be
+  longer than about 64 characters of base64- or hex-like text. On a host outside `companies.md` and `sources.md`
+  a shorter value (12+ characters) that decodes to text, or a 16+ character mixed-case letters-and-digits token,
+  is refused too; UUIDs, hyphen slugs, numeric and lowercase-hex ids pass.
 - **Browser tools that send data:** deny `browser_type`, `browser_set_cookie`, `browser_set_storage_state` and
   `browser_upload*` in the template. For `browser_evaluate` (used in every run to read pages), the hook blocks
   scripts that contain `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `import(`, `window.open` or an
   assignment to `location`/`src`/`href`.
 - Documented limit: a page can still be told something by *which* URL the agent opens. The leak check catches
-  personal data in the URL, not a deliberately encoded message.
+  personal data in the URL, not a deliberately encoded message, and plain CV facts in a query
+  (`?cv=SAP+FI+5+years`) can't be told from a search term.
 
 ## Local check with Desktop's Claude Code (2026-10-25)
 
