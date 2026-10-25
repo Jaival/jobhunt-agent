@@ -119,6 +119,29 @@ def engine_behind():
     return int(n) if n.isdigit() else 0
 
 
+def guard_starts(launcher):
+    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call: it must exit 2.
+
+    A hook that can't start doesn't block anything (docs/spike-scheduled-tasks.md), so this is the only proof.
+    Returns (ok, fix)."""
+    python = shutil.which("python")
+    if not python:
+        return False, ("the guard hook runs `python`, which isn't on PATH (macOS often only has python3): "
+                       "install Python from python.org or add a `python` command")
+    call = json.dumps({"session_id": "setup-check", "cwd": str(ROOT), "tool_name": "mcp__x__send_message",
+                       "tool_input": {}})
+    try:
+        r = subprocess.run([python, str(launcher)], input=call, capture_output=True, text=True, timeout=30,
+                           env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"the guard hook didn't run ({e})"
+    if r.returncode == 2 and "guard:" in r.stderr:
+        return True, ""
+    return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
+                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
+                   "there? say 'update the engine'")
+
+
 def checks():
     """Every check as {area, item, status, fix}. Status: ok, todo (blocks the routine) or warn."""
     out = []
@@ -219,6 +242,10 @@ def checks():
             "python engine/tools/setup_check.py --init", warn=True)
     except permissions.SettingsError as e:
         add("safety", "permission rules (.claude/settings.json)", False, str(e), warn=True)
+    launcher = ROOT / ".claude" / "hooks" / "jobhunt_guard.py"
+    if launcher.is_file():
+        ok, fix = guard_starts(launcher)
+        add("safety", "guard hook starts and blocks", ok, fix, warn=True)
 
     edits = engine_edits()
     add("engine", "no local edits in engine/", not edits,

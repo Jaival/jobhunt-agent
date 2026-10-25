@@ -70,7 +70,10 @@ def test_install_merges_and_is_idempotent(tmp_path):
     (tmp_path / ".claude" / "settings.json").write_text(json.dumps(own), encoding="utf-8")
     added = permissions.install(tmp_path, {"master_cv": "cv/Me_CV.docx"})
     data = json.loads((tmp_path / ".claude" / "settings.json").read_text(encoding="utf-8"))
-    assert data["model"] == "opus" and data["hooks"] == own["hooks"]
+    assert data["model"] == "opus" and data["hooks"]["Stop"] == own["hooks"]["Stop"]
+    assert "jobhunt_guard.py" in data["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    assert (tmp_path / ".claude" / "hooks" / "jobhunt_guard.py").is_file()
+    assert "file .claude/hooks/jobhunt_guard.py" in added
     assert data["permissions"]["allow"] == ["Bash(git status)", "Bash(python engine/tools/*)"]
     assert data["permissions"]["deny"].count("mcp__*__reply") == 1
     assert set(DENY) | {"Edit(/cv/Me_CV.docx)"} == set(data["permissions"]["deny"])

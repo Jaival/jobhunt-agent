@@ -24,6 +24,13 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   into the workspace's `.claude/settings.json` and also makes the master CV and letter from config.yaml read-only;
   `setup_check.py` warns while rules are missing. Deny rules hold in every permission mode, auto included. They
   apply to a local Code-tab task only, not to cloud or Cowork tasks ([spike](docs/spike-scheduled-tasks.md)).
+- A guard hook, `tools/hooks/guard.py`, checks tool calls before they run (defence in depth on top of the
+  permission rules). It blocks writes into `engine/`, `.claude/` and the master files (also through Bash and
+  PowerShell), curl / wget / WebFetch / inline Python HTTP to hosts other than the job APIs and the hosts in
+  companies.md and sources.md (to.indeed.com only as the redirect lookup), URLs carrying the candidate's name,
+  email, phone or a long encoded value, IP addresses and odd ports, and page scripts that make network calls.
+  Every block prints a reason. `guard.py --status` says whether the guard ran this session; the brief shows it
+  under Sources and lists what was blocked. `setup_check.py` starts the hook once to prove it blocks.
 
 ### Changed
 - This changelog uses the Keep a Changelog layout with a "Behaviour changes" heading.
@@ -41,10 +48,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The daily run can no longer send or draft email, type into web pages, or change engine/, .claude/ or the master
   CV and letter: those tool calls are refused with "denied by your permission settings". Nothing in the routine
   needs them.
+- curl and WebFetch only reach the job APIs and the hosts in companies.md and sources.md; other web pages are
+  read with the browser. The brief gets a "guard active" line and a "Blocked by the guard" list.
 
 ### Migration
-- `upgrade.py migrate` adds the missing permission rules to `.claude/settings.json`, keeping every rule and hook
-  already there (`--dry-run` lists them). `settings.local.json` isn't touched. Config version stays 2.
+- `upgrade.py migrate` adds the missing permission rules and the guard hook to `.claude/settings.json`, keeping
+  every rule and hook already there (`--dry-run` lists them), and copies `.claude/hooks/jobhunt_guard.py`. `settings.local.json` isn't touched. Config version stays 2.
 
 ### Fixed
 - `search_jobs.py --details` no longer crashes when an Arbeitsagentur ad can't be fetched: candidates.json is
