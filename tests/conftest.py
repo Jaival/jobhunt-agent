@@ -54,3 +54,20 @@ def sample_de(tmp_path):
 @pytest.fixture
 def tool_de(sample_de):
     return runner(sample_de)
+
+
+@pytest.fixture
+def ledger_mod(tmp_path, monkeypatch):
+    """tools/ledger.py loaded against the sample workspace, writing its CSV into tmp_path.
+
+    config.py reads JOBHUNT_ROOT when it's imported, so config and ledger are imported fresh here and dropped from
+    sys.modules afterwards: no other test sees the sample workspace's settings.
+    """
+    monkeypatch.setenv("JOBHUNT_ROOT", str(SAMPLE))
+    for name in ("config", "ledger"):
+        sys.modules.pop(name, None)
+    import ledger
+    monkeypatch.setattr(ledger, "LEDGER", tmp_path / "data" / "seen_jobs.csv")
+    yield ledger
+    for name in ("config", "ledger"):
+        sys.modules.pop(name, None)

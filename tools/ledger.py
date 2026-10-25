@@ -14,13 +14,13 @@ import argparse
 import csv
 import datetime as dt
 import difflib
+import io
 import json
-import os
 import re
 import sys
-import tempfile
 from pathlib import Path
 
+import atomic
 from config import ROOT
 LEDGER = ROOT / "data" / "seen_jobs.csv"
 CANDIDATES = ROOT / "data" / "candidates.json"
@@ -59,20 +59,12 @@ def load():
 
 
 def save(rows):
-    """Write the whole ledger to a temp file next to it, then swap it in: a crash mid-write keeps the old ledger."""
-    LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".seen_jobs.", suffix=".tmp", dir=LEDGER.parent)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=FIELDS)
-            w.writeheader()
-            w.writerows(rows)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, LEDGER)
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
+    """Write the whole ledger at once (atomic.py): a run stopped mid-save keeps the old ledger."""
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=FIELDS)
+    w.writeheader()
+    w.writerows(rows)
+    atomic.write_text(LEDGER, buf.getvalue(), newline="")
 
 
 class Index:
