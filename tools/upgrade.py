@@ -65,7 +65,7 @@ STOCK_PROFILE = {
 }
 KNOWN_KEYS = {"config_version", "applicant", "file_prefix", "master_cv", "master_letter", "variants", "letter_city",
               "letter_languages", "name_in_master", "university", "font", "fallback_font", "search", "profile",
-              "layout", "internship_duration", "pdf_engine"}
+              "layout", "internship_duration", "pdf_engine", "scoring", "ledger_expiry_days"}
 SEARCH_KEYS = {"home", "areas", "regions", "region_plz", "region_places"}
 # Words in a local engine patch -> the setting that does the same job now.
 FEATURES = [

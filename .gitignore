@@ -4,6 +4,7 @@
 *.csv
 *.json
 !templates/**/*.json
+!tests/evals/baselines/*.json
 config.yaml
 !templates/workspace/config.yaml
 !examples/sample-workspace/config.yaml

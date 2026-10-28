@@ -7,12 +7,14 @@ companies.md. Indeed (connector) and Gmail alerts stay manual tool calls in the 
 
 Titles are filtered by the profile: block in config.yaml (role types, include / exclude words; scope.py), and
 locations by search.regions when it is set (for example [Bayern]; scope.Region).
-Writes data/candidates.json (all in-scope jobs, each marked new / seen) and prints the new ones.
+Writes data/candidates.json (all in-scope jobs, each marked new / seen) and prints the new ones. Ad texts go to
+data/ads/<id>.txt (the job's `ad_file`), never into candidates.json: they are untrusted, and only the ad reader
+reads them (extract.py).
 It does not change the ledger: after scoring, run `python engine/tools/ledger.py record`.
 
 Usage (from the JobHunt folder):
     python engine/tools/search_jobs.py [--days 3] [--details]
-      --details  also fetch the full ad text of new Arbeitsagentur jobs into candidates.json (candidates.json is
+      --details  also fetch the full ad text of new Arbeitsagentur jobs into data/ads/ (candidates.json is
                  written first, so a failed fetch loses no jobs; jobs whose text couldn't be fetched get detail_error)
 """
 import argparse
@@ -31,6 +33,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import atomic  # noqa: E402
+import extract  # noqa: E402
 import ledger  # noqa: E402
 import version  # noqa: E402
 from config import CFG  # noqa: E402
@@ -137,6 +140,7 @@ def fetch_details(jobs, status):
             in_a_row = 0
         except Exception as e:  # keep going; the job stays in candidates.json without its text
             j["detail_error"] = f"{type(e).__name__}: {e}"
+            j.pop("text", None)  # an empty text isn't an ad file
             failed += 1
             in_a_row += 1
     if todo:
@@ -144,6 +148,11 @@ def fetch_details(jobs, status):
 
 
 def write(jobs, status, since):
+    for j in jobs:  # ad texts to data/ads/<id>.txt, so reading candidates.json never shows one
+        if "text" in j:
+            path = ROOT / "data" / "ads" / f"{extract.file_stem(j['id'])}.txt"
+            atomic.write_text(path, j.pop("text"))
+            j["ad_file"] = path.relative_to(ROOT).as_posix()
     atomic.write_text(OUT, json.dumps({"generated": dt.datetime.now().isoformat(timespec="minutes"), "since": since,
                                        "status": status, "jobs": jobs}, ensure_ascii=False, indent=1))
 

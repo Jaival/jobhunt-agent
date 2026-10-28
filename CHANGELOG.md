@@ -12,6 +12,57 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Added
+- Eval harness: `python tools/eval_run.py run` judges the 33 labelled ads in `tests/evals/ads/` the way the daily
+  run judges a new job (one headless `claude -p` call per ad, no tools) and writes
+  `tests/evals/baselines/v<version>.md` and `.json`: agreement with the labels per metric, the model used, the
+  cost. `eval_run.py compare` shows what changed between two baselines and fails when a metric drops by more than
+  2 ads. The `v0.3.0` baseline is checked in (recorded before this sprint changed the scoring); the release
+  checklist runs the eval before each release. For engine development only; the daily run doesn't use it.
+- Ad extracts: `templates/ad_extract.schema.json` (`ad_extract_version: 1`) lists the facts the routine takes
+  from a job ad: title, company, location, remote, language, role type, closed flag with the words that show it,
+  German level, hours per week, start, duration, years of experience, enrolment, Pflichtpraktikum, up to 12
+  requirements with their importance (playbook C) and the ad's wording, tasks, and `injection_text` for any
+  instructions found in the ad. `python engine/tools/extract.py check <file or folder>` validates extracts and
+  refuses links, email addresses and AI instructions in any field other than `url` and `injection_text`.
+- Rubric scoring: `engine/rubric.md` holds written anchors (0-5) for five criteria (skills, seniority, language,
+  location, hours/eligibility), and `python engine/tools/score.py skills=4 seniority=5 language=3 location=5 hours=4`
+  turns them into the fit score with its reasons: skills sets the base (5 -> 95, 4 -> 88, 3 -> 70, 2 -> 58),
+  each other criterion below 5 takes points off (4 -> 2, 3 -> 5, 2 -> 8, 1 -> 20), the `score_bonus` skills add 3
+  points each (at most two) and a hard mismatch (a 0 for seniority, language, location or hours) halves the
+  total. The levels were set against the labelled eval ads; config.yaml `scoring:` can change the weights of the
+  deductions, which criteria are blockers, and the bonus points.
+- Quarantined ad reader: the `ad-reader` subagent (`.claude/agents/ad-reader.md`) reads every ad, Indeed job,
+  Gmail job alert and careers page and returns only extracts and leads as JSON. It has no write, shell or agent
+  tools and doesn't load CLAUDE.md, so it knows nothing about the candidate. `python engine/tools/extract.py
+  pending` lists the ads without an extract as reader tasks, `extract.py save <reply>` validates the reader's
+  reply and writes `data/ads/<id>.json` (leads go through the title filter and the ledger), `extract.py read`
+  is the fallback through headless `claude -p` and `extract.py attach <id> <folder>` copies the extract and the
+  ad text into the job folder. `search_jobs.py` writes full ad texts to `data/ads/<id>.txt` instead of
+  candidates.json.
+- Ledger expiry: config.yaml `ledger_expiry_days` (default 90, 0 = never). A job the ledger has as screened,
+  skipped or closed for longer than that counts as new again; `ledger.py record` reuses its row (new date, the
+  old date and verdict in the note) and `ledger.py check` prints `NEW (seen <date> <verdict>, expired)`.
+  Tailored, applied, rejected and interview rows never expire.
+
+### Behaviour changes
+- Fit scores come from the rubric: the routine gives five 0-5 sub-scores and score.py computes the total,
+  instead of the model choosing a 0-100 number. The same judgment now always gives the same score, but scores
+  can move by several points against older runs, and a hard mismatch always lands below 60 (usually
+  below 40). The eval baseline
+  shows the effect on the labelled ads.
+- The routine never reads ad text itself: it judges, scores and tailors from the extract, so instructions hidden
+  in an ad can't reach the context that holds the CV and the tools. job.md links `ad.json` and `ad.txt` instead of
+  holding the ad text. Injection attempts in the brief come from the extract's `injection_text`.
+- Jobs skipped or screened more than 90 days ago show up as new again when they're reposted or still online.
+
+### Migration
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/ad-reader.md` into the workspace;
+  `setup_check.py` warns while it's missing. Config version stays 2.
+
+### Fixed
+- `upgrade.py migrate` no longer lists `scoring:` in config.yaml as an unknown setting.
+
 ## [0.3.0] - 2026-10-25: safe & lossless
 
 ### Added

@@ -56,8 +56,10 @@ def run(sample, plan):
 def test_details_failure_keeps_candidates(sample):
     out, status, jobs = run(sample, {"1": "500", "2": "ok", "3": "empty"})
     assert set(jobs) == {"1", "2", "3"}
-    assert jobs["1"]["detail_error"].startswith("HTTPError: 500") and "text" not in jobs["1"]
-    assert jobs["2"]["text"] == "Full ad text" and "detail_error" not in jobs["2"]
+    assert jobs["1"]["detail_error"].startswith("HTTPError: 500") and "ad_file" not in jobs["1"]
+    assert "text" not in jobs["2"] and "detail_error" not in jobs["2"]   # ad texts never in candidates.json
+    assert (sample / jobs["2"]["ad_file"]).read_text(encoding="utf-8") == "Full ad text"
+    assert jobs["2"]["ad_file"] == "data/ads/ba-2.txt"
     assert "no ad text" in jobs["3"]["detail_error"] and jobs["3"]["external_url"] == "https://acme.example/job"
     assert status["details"] == "1 ok, 2 failed"
     assert "details 1 ok, 2 failed" in out and out.count("no ad text (detail_error)") == 2
