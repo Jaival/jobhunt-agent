@@ -19,6 +19,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   cost. `eval_run.py compare` shows what changed between two baselines and fails when a metric drops by more than
   2 ads. The `v0.3.0` baseline is checked in (recorded before this sprint changed the scoring); the release
   checklist runs the eval before each release. For engine development only; the daily run doesn't use it.
+- Ad extracts: `templates/ad_extract.schema.json` (`ad_extract_version: 1`) lists the facts the routine takes
+  from a job ad: title, company, location, remote, language, role type, closed flag with the words that show it,
+  German level, hours per week, start, duration, years of experience, enrolment, Pflichtpraktikum, up to 12
+  requirements with their importance (playbook C) and the ad's wording, tasks, and `injection_text` for any
+  instructions found in the ad. `python engine/tools/extract.py check <file or folder>` validates extracts and
+  refuses links, email addresses and AI instructions in any field other than `url` and `injection_text`.
 
 ## [0.3.0] - 2026-10-25: safe & lossless
 
