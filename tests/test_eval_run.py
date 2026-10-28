@@ -4,6 +4,7 @@ import json
 import pytest
 
 import eval_run
+from test_extract import GOOD
 
 EXP_GOOD = {"in_scope": True, "role_type": "Werkstudent", "hard_mismatch": None, "score": [75, 92],
             "german_required": "C1+"}
@@ -32,10 +33,10 @@ def test_scored_runs_score_py_on_the_subscores():
     assert eval_run.scored({"in_scope": False, "subscores": None}, "")["score"] is None
 
 
-def test_user_prompt_marks_the_ad_untrusted():
+def test_user_prompt_is_the_extract():
     ad = eval_run.load_ad(sorted(eval_run.ADS.glob("*.md"))[0])
-    text = eval_run.user_prompt(ad)
-    assert ad["title"] in text and "untrusted" in text and ad["text"][:50] in text
+    text = eval_run.user_prompt(ad, {**GOOD, "id": ad["id"]})
+    assert f"data/ads/{ad['id']}.json" in text and '"german_required": "C1+"' in text and ad["text"][:50] not in text
 
 
 def test_grade_agreement():
@@ -95,10 +96,13 @@ def test_run_writes_both_files(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(eval_run, "BASELINES", tmp_path)
     answer = {**judgment(), "subscores": dict.fromkeys(eval_run.score.CRITERIA, 5)}
     monkeypatch.setattr(eval_run, "ask", lambda system, user, model: (answer, "claude-test", 0.01))
+    monkeypatch.setattr(eval_run.extract, "read_text", lambda job, text, model: (dict(GOOD), "claude-test", 0.02))
     args = eval_run.argparse.Namespace(only="01,02", model=None, label="9.9.9", jobs=2)
     assert eval_run.cmd_run(args) == 0
     data = json.loads((tmp_path / "v9.9.9.json").read_text(encoding="utf-8"))
     assert [r["ad"][:2] for r in data["results"]] == ["01", "02"] and data["model"] == "claude-test"
+    assert data["results"][1]["extract"]["id"].startswith("ba-") and data["results"][1]["extract"]["id"] != GOOD["id"]
+    assert data["cost_usd"] == pytest.approx(0.06)
     assert (tmp_path / "v9.9.9.md").read_text(encoding="utf-8").startswith("# Eval baseline v9.9.9")
 
 

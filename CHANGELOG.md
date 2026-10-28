@@ -32,8 +32,23 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   points each (at most two) and a hard mismatch (a 0 for seniority, language, location or hours) halves the
   total. The levels were set against the labelled eval ads; config.yaml `scoring:` can change the weights of the
   deductions, which criteria are blockers, and the bonus points.
+- Quarantined ad reader: the `ad-reader` subagent (`.claude/agents/ad-reader.md`) reads every ad, Indeed job,
+  Gmail job alert and careers page and returns only extracts and leads as JSON. It has no write, shell or agent
+  tools and doesn't load CLAUDE.md, so it knows nothing about the candidate. `python engine/tools/extract.py
+  pending` lists the ads without an extract as reader tasks, `extract.py save <reply>` validates the reader's
+  reply and writes `data/ads/<id>.json` (leads go through the title filter and the ledger), `extract.py read`
+  is the fallback through headless `claude -p` and `extract.py attach <id> <folder>` copies the extract and the
+  ad text into the job folder. `search_jobs.py` writes full ad texts to `data/ads/<id>.txt` instead of
+  candidates.json.
 
 ### Behaviour changes
+- The routine never reads ad text itself: it judges, scores and tailors from the extract, so instructions hidden
+  in an ad can't reach the context that holds the CV and the tools. job.md links `ad.json` and `ad.txt` instead of
+  holding the ad text. Injection attempts in the brief come from the extract's `injection_text`.
+
+### Migration
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/ad-reader.md` into the workspace;
+  `setup_check.py` warns while it's missing. Config version stays 2.
 - Fit scores come from the rubric: the routine gives five 0-5 sub-scores and score.py computes the total,
   instead of the model choosing a 0-100 number. The same judgment now always gives the same score, but scores
   can move by several points against older runs, and a hard mismatch always lands below 60 (usually
