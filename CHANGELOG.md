@@ -25,6 +25,20 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   requirements with their importance (playbook C) and the ad's wording, tasks, and `injection_text` for any
   instructions found in the ad. `python engine/tools/extract.py check <file or folder>` validates extracts and
   refuses links, email addresses and AI instructions in any field other than `url` and `injection_text`.
+- Rubric scoring: `engine/rubric.md` holds written anchors (0-5) for five criteria (skills, seniority, language,
+  location, hours/eligibility), and `python engine/tools/score.py skills=4 seniority=5 language=3 location=5 hours=4`
+  turns them into the fit score with its reasons: skills sets the base (5 -> 95, 4 -> 88, 3 -> 70, 2 -> 58),
+  each other criterion below 5 takes points off (4 -> 2, 3 -> 5, 2 -> 8, 1 -> 20), the `score_bonus` skills add 3
+  points each (at most two) and a hard mismatch (a 0 for seniority, language, location or hours) halves the
+  total. The levels were set against the labelled eval ads; config.yaml `scoring:` can change the weights of the
+  deductions, which criteria are blockers, and the bonus points.
+
+### Behaviour changes
+- Fit scores come from the rubric: the routine gives five 0-5 sub-scores and score.py computes the total,
+  instead of the model choosing a 0-100 number. The same judgment now always gives the same score, but scores
+  can move by several points against older runs, and a hard mismatch always lands below 60 (usually
+  below 40). The eval baseline
+  shows the effect on the labelled ads.
 
 ## [0.3.0] - 2026-10-25: safe & lossless
 

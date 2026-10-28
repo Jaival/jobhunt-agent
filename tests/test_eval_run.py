@@ -20,7 +20,16 @@ def judgment(**kw):
 def test_system_prompt_has_the_routine_and_the_candidate():
     text = eval_run.system_prompt()
     assert "4. Score each remaining job 0-100" in text and "5. Tailor" not in text
-    assert "Lena Fischer" in text and "Rules for every application" in text and "Canva" in text
+    assert "Lena Fischer" in text and "Rules for every application" in text and "# Fit-score rubric" in text
+
+
+def test_scored_runs_score_py_on_the_subscores():
+    sub = dict.fromkeys(eval_run.score.CRITERIA, 5)
+    got = eval_run.scored({"in_scope": True, "subscores": {**sub, "skills": 3}}, "Canva und Instagram")
+    assert got["score"] == 76 and got["hard_mismatch"] is None   # 70 + 2 bonus skills
+    got = eval_run.scored({"in_scope": True, "subscores": {**sub, "location": 0}}, "")
+    assert got["score"] == 32 and got["hard_mismatch"] == "location"
+    assert eval_run.scored({"in_scope": False, "subscores": None}, "")["score"] is None
 
 
 def test_user_prompt_marks_the_ad_untrusted():
@@ -84,7 +93,8 @@ def test_compare_flags_a_drop_beyond_tolerance():
 
 def test_run_writes_both_files(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(eval_run, "BASELINES", tmp_path)
-    monkeypatch.setattr(eval_run, "ask", lambda system, user, model: (judgment(), "claude-test", 0.01))
+    answer = {**judgment(), "subscores": dict.fromkeys(eval_run.score.CRITERIA, 5)}
+    monkeypatch.setattr(eval_run, "ask", lambda system, user, model: (answer, "claude-test", 0.01))
     args = eval_run.argparse.Namespace(only="01,02", model=None, label="9.9.9", jobs=2)
     assert eval_run.cmd_run(args) == 0
     data = json.loads((tmp_path / "v9.9.9.json").read_text(encoding="utf-8"))

@@ -34,7 +34,8 @@ above the tailoring threshold of 70 (ads 01-04 should, ads 05-07 are borderline,
 ## Running an eval
 `python tools/eval_run.py run` (from the engine folder) judges every ad the way the daily run judges a new job,
 with a headless `claude -p` call per ad (no tools, an empty working folder), and grades the answers against the
-labels. The prompt is built from this checkout's ROUTINE.md, RULES.md and the sample workspace, so a run measures
+labels. The prompt is built from this checkout's ROUTINE.md, RULES.md, rubric.md and the sample workspace, and score.py
+turns the sub-scores into the fit score, so a run measures
 the engine as it is. It writes `baselines/v<VERSION>.json` (every answer) and `baselines/v<VERSION>.md` (the
 summary, disagreements in bold); `--label 0.3.0` names the files after another version, `--model` picks the model,
 `--only 01,07` runs a few ads. A full run takes a few minutes and costs about $2-3 on Opus.

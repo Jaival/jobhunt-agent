@@ -1,9 +1,10 @@
 """Eval harness (S2-5): run the routine's judgment on the labelled ads in tests/evals/ads and grade it.
 
-Each ad is judged the way the daily run judges a new job (ROUTINE.md steps 3 and 4: in scope, role type, hard
-mismatch, fit score, German level) for the sample workspace (examples/sample-workspace), by a headless
-`claude -p` call per ad with no tools. The prompt is built from the engine's own files at run time, so a run
-measures the routine as it is in this checkout. The result is compared with the `expected:` labels
+Each ad is judged the way the daily run judges a new job (ROUTINE.md steps 3 and 4: in scope, role type, German
+level and the five rubric sub-scores) for the sample workspace (examples/sample-workspace), by a headless
+`claude -p` call per ad with no tools; score.py turns the sub-scores into the fit score and any hard mismatch,
+as in the daily run. The prompt is built from the engine's own files at run time, so a run measures the routine
+as it is in this checkout. The result is compared with the `expected:` labels
 (tests/evals/README.md) and written to tests/evals/baselines/v<version>.json (every answer) and .md (summary).
 
 Model runs cost money and are noisy, so they run on demand, not in CI; the grading and comparison are tested
@@ -28,6 +29,7 @@ from pathlib import Path
 import yaml
 
 import atomic
+import score
 import version
 
 ENGINE = Path(__file__).resolve().parents[1]
@@ -43,12 +45,12 @@ JUDGMENT = {
     "properties": {
         "in_scope": {"type": "boolean"},
         "role_type": {"enum": ROLE_TYPES},
-        "hard_mismatch": {"type": ["string", "null"]},
-        "score": {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
         "german_required": {"enum": GERMAN},
+        "subscores": {"type": ["object", "null"], "additionalProperties": False, "required": list(score.CRITERIA),
+                      "properties": {c: {"type": "integer", "minimum": 0, "maximum": 5} for c in score.CRITERIA}},
         "reasons": {"type": "string"},
     },
-    "required": ["in_scope", "role_type", "hard_mismatch", "score", "german_required", "reasons"],
+    "required": ["in_scope", "role_type", "german_required", "subscores", "reasons"],
     "additionalProperties": False,
 }
 
@@ -75,23 +77,31 @@ def section(text, start, end):
 
 
 def system_prompt():
-    """The routine's steps 3 and 4 with the sample candidate's CLAUDE.md (RULES.md inlined) and score bonus."""
+    """The routine's steps 3 and 4 and the rubric, with the sample candidate's CLAUDE.md (RULES.md inlined)."""
     routine = (ENGINE / "ROUTINE.md").read_text(encoding="utf-8")
     claude_md = (SAMPLE / "CLAUDE.md").read_text(encoding="utf-8").replace(
         "@engine/RULES.md", (ENGINE / "RULES.md").read_text(encoding="utf-8"))
-    profile = yaml.safe_load((SAMPLE / "config.yaml").read_text(encoding="utf-8"))["profile"]
     return "\n\n".join([
         "You are the job-application routine of the workspace below, judging one new job ad as steps 3 and 4 of "
         "the routine describe. This is an evaluation: there are no tools and no files; the ad is the user "
         "message. Judge it from the ad text and the candidate's CLAUDE.md only.",
         "Answer with: in_scope (step 3: the candidate's field and a wanted role type, not senior in disguise; "
         "location doesn't decide this), role_type (corrected from the ad; Other when it isn't one of the wanted "
-        "types), hard_mismatch (null, or a short reason such as 'location: Berlin'), score (the 0-100 fit score "
-        "from step 4, null when the job is out of scope), german_required and reasons (two sentences).",
+        "types), german_required, subscores (step 4's five 0-5 sub-scores from engine/rubric.md; null when the "
+        "job is out of scope) and reasons (two sentences). score.py is run for you on the sub-scores.",
         "# The routine, steps 3 and 4 (engine/ROUTINE.md)\n" + section(routine, "3. Filter", "5. Tailor"),
-        f"profile.score_bonus in config.yaml: {', '.join(profile.get('score_bonus') or []) or 'none'}",
+        "# engine/rubric.md\n" + (ENGINE / "rubric.md").read_text(encoding="utf-8"),
         "# The candidate's CLAUDE.md\n" + claude_md,
     ])
+
+
+def scored(judgment, text):
+    """The judgment plus the fit score and hard mismatch score.py gives its sub-scores (the sample's config.yaml)."""
+    if not judgment["in_scope"] or not judgment.get("subscores"):
+        return {**judgment, "score": None, "hard_mismatch": None}
+    cfg = yaml.safe_load((SAMPLE / "config.yaml").read_text(encoding="utf-8"))
+    r = score.compute(judgment["subscores"], score.settings(cfg), text)
+    return {**judgment, "score": r["score"], "hard_mismatch": ", ".join(r["hard_mismatch"]) or None}
 
 
 def user_prompt(ad):
@@ -191,7 +201,8 @@ def cmd_run(a):
     def one(ad):
         try:
             got, model, cost = ask(system, user_prompt(ad), a.model)
-        except (RuntimeError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as e:
+            got = scored(got, ad["text"])
+        except (RuntimeError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError, ValueError) as e:
             return {"ad": ad["name"], "expected": ad["expected"], "error": str(e), "got": {}, "grades": {}}, None, 0
         print(f"{ad['name']}: score {got['score']}, in scope {got['in_scope']}", flush=True)
         return {"ad": ad["name"], "expected": ad["expected"], "got": got, "grades": grade(ad["expected"], got)}, model, cost

@@ -32,13 +32,13 @@ Today = the current local date. Work in this order. All tools run from the works
 - Liveness gate (playbook A): drop closed ads and list them under "Skipped: closed".
 - Same role on several platforms: keep one entry, prefer the company's own page, list the others in Match Reasons ("also on: StepStone, XING"). Reposts per playbook B.
 
-4. Score each remaining job 0-100
-- Criteria: tech overlap with the candidate's real strengths, seniority fit, German requirement, location, enrolment conditions.
+4. Score each remaining job 0-100 (engine/rubric.md)
+- Give each job five sub-scores from 0 to 5 against the anchors in engine/rubric.md: skills (overlap with the candidate's real strengths), seniority, language, location and hours (hours, start, duration, eligibility). Decisions in CLAUDE.md override the anchors. Then run `python engine/tools/score.py skills=N seniority=N language=N location=N hours=N` for the job: it prints the fit score, any hard mismatch and the reasons. That number is the job's score; never adjust it by hand. Put the sub-scores and the reasons under Match reasons and Gaps.
+- Hard mismatches come from score.py: a 0 for seniority, language, location or hours (the rubric says when a 0 applies). Name the reason in the brief.
 - Location: follow the location preferences in CLAUDE.md "Routine settings". Jobs marked `location_check` in candidates.json have no location in the ad (config.yaml search.regions couldn't place them): check the location while scoring. Letters for far-away roles say the candidate is willing to relocate only if CLAUDE.md says so, and never imply the candidate lives there.
-- Student checks, noted under gaps: required hours vs. availability; start date and duration; "Pflichtpraktikum" only -> "check eligibility", not a hard mismatch; enrolment needed for the whole contract.
-- Student roles: score against the skills listed in CLAUDE.md "Routine settings" and the master CV. Tools or methods the candidate doesn't have yet are gaps, never a hard mismatch for student roles. Add points for the skills in `profile.score_bonus` (config.yaml).
-- Research-assistant (HiWi) roles at the institutes listed in CLAUDE.md "Routine settings" (if any) are strong fits: score generously.
-- german_required: none / basic / B2 / C1+ / unknown. C1+ German or ineligibility is a hard mismatch for junior roles only, unless CLAUDE.md records a different decision (student roles: RULES.md rule 3).
+- Student checks, noted under gaps (they set the hours sub-score): required hours vs. availability; start date and duration; "Pflichtpraktikum" only -> "check eligibility", not a hard mismatch; enrolment needed for the whole contract.
+- Student roles: score skills against the skills listed in CLAUDE.md "Routine settings" and the master CV. Tools or methods the candidate doesn't have yet are gaps, never a hard mismatch for student roles. score.py adds the points for the skills in `profile.score_bonus` (config.yaml).
+- german_required: none / basic / B2 / C1+ / unknown ("sehr gute Deutschkenntnisse" counts as C1+; unknown when the ad states no level). C1+ German or ineligibility is a hard mismatch for junior roles only, unless CLAUDE.md records a different decision (student roles: RULES.md rule 3); the language and hours anchors in rubric.md encode this.
 - Posting check (playbook B): High confidence / Proceed with caution / Suspicious. It never changes the score.
 - **Record the outcome in the ledger:** `python engine/tools/ledger.py record` (adds every job in candidates.json), then `python engine/tools/ledger.py set <url or key> --verdict screened|skipped|closed|tailored --score N --note "<reason>"` for each job you scored or skipped, including jobs from Indeed, Gmail and the browser (add them to candidates.json first or `set` by URL after `record`).
 
