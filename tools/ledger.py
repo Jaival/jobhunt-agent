@@ -6,12 +6,17 @@ at the same company are the same job when they have the same words in any order,
 by a hyphen matches the joined word (E-Commerce / eCommerce). Every other word must match exactly, so
 "SAP FI" and "SAP CO", or Projektmanagement and Produktmanagement, stay different jobs.
 
+A match expires after config.yaml `ledger_expiry_days` (default 90; 0 = never) when its verdict was screened,
+skipped or closed: a job seen again after that counts as new, and `record` reuses its row (the note keeps the old
+date and verdict). Tailored, applied, rejected and interview never expire.
+
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
                                                   (verdict "screened")
     python engine/tools/ledger.py set <key|url|id> --verdict tailored|skipped|closed|applied|rejected|screened
                                [--score 72] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
+                                                  (NEW, SEEN, or NEW (seen ..., expired))
     python engine/tools/ledger.py backfill               seed from the tracker, application folders and daily briefs
 """
 import argparse
@@ -25,10 +30,14 @@ import sys
 from pathlib import Path
 
 import atomic
-from config import ROOT
+from config import CFG, ROOT
 LEDGER = ROOT / "data" / "seen_jobs.csv"
 CANDIDATES = ROOT / "data" / "candidates.json"
 FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note"]
+EXPIRES = {"screened", "skipped", "closed"}  # verdicts whose match expires; every other verdict stays seen
+EXPIRY_DAYS = CFG.get("ledger_expiry_days", 90)
+if not isinstance(EXPIRY_DAYS, int) or isinstance(EXPIRY_DAYS, bool) or EXPIRY_DAYS < 0:
+    sys.exit(f"config.yaml ledger_expiry_days must be a whole number of days (0 = never), not {EXPIRY_DAYS!r}")
 FILLER = {"und", "and", "für", "fur", "for", "im", "in", "the", "der", "die", "das", "des", "mit", "with", "of",
           "zur", "zum", "am", "bei", "at", "a", "an", "to"}
 
@@ -110,6 +119,22 @@ class Index:
             self.by_company.setdefault(r["key"].split("|")[0], []).append((title_words(r["title"]), r))
 
     def find(self, company="", title="", url="", job_id=""):
+        """The row this job matches, or None when there is none or it has expired."""
+        r = self.match(company, title, url, job_id)
+        return None if r and self.expired(r) else r
+
+    @staticmethod
+    def expired(row, today=None):
+        if not EXPIRY_DAYS or row["verdict"] not in EXPIRES:
+            return False
+        try:
+            seen = dt.date.fromisoformat(row["first_seen"])
+        except ValueError:  # blank or hand-edited: keep it seen
+            return False
+        return ((today or dt.date.today()) - seen).days > EXPIRY_DAYS
+
+    def match(self, company="", title="", url="", job_id=""):
+        """The row this job matches, expired or not."""
         if url and url in self.by_url:
             return self.by_url[url]
         if job_id and job_id in self.by_id:
@@ -225,8 +250,11 @@ def main():
     idx = Index(load())
 
     if a.cmd == "check":
-        r = idx.find(a.company, a.title)
-        print(f"SEEN {r['first_seen']} {r['verdict']} {r['score']} {r['url']}" if r else "NEW")
+        r = idx.match(a.company, a.title)
+        if r and idx.expired(r):
+            print(f"NEW (seen {r['first_seen']} {r['verdict']} {r['score']}, expired) {r['url']}")
+        else:
+            print(f"SEEN {r['first_seen']} {r['verdict']} {r['score']} {r['url']}" if r else "NEW")
         return 0
     if a.cmd == "backfill":
         n = backfill(idx)
@@ -237,7 +265,13 @@ def main():
         cands = json.loads(CANDIDATES.read_text(encoding="utf-8"))
         n = 0
         for j in cands["jobs"]:
-            if not idx.find(j["company"], j["title"], j["url"], j["id"]):
+            r = idx.match(j["company"], j["title"], j["url"], j["id"])
+            if r and idx.expired(r):  # seen again after the expiry: the same row starts over
+                old = f"seen {r['first_seen']} {r['verdict']} {r['score']}".strip()
+                r.update(job_id=j["id"], url=j["url"], first_seen=f"{dt.date.today():%Y-%m-%d}", verdict="screened",
+                         score="", note=f"posted {j.get('posted') or '?'}; {old}")
+                n += 1
+            elif not r:
                 idx.add(job_id=j["id"], source=j["source"], company=j["company"], title=j["title"], url=j["url"],
                         verdict="screened", note=f"posted {j.get('posted') or '?'}")
                 n += 1

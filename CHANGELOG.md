@@ -40,20 +40,28 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   is the fallback through headless `claude -p` and `extract.py attach <id> <folder>` copies the extract and the
   ad text into the job folder. `search_jobs.py` writes full ad texts to `data/ads/<id>.txt` instead of
   candidates.json.
+- Ledger expiry: config.yaml `ledger_expiry_days` (default 90, 0 = never). A job the ledger has as screened,
+  skipped or closed for longer than that counts as new again; `ledger.py record` reuses its row (new date, the
+  old date and verdict in the note) and `ledger.py check` prints `NEW (seen <date> <verdict>, expired)`.
+  Tailored, applied, rejected and interview rows never expire.
 
 ### Behaviour changes
-- The routine never reads ad text itself: it judges, scores and tailors from the extract, so instructions hidden
-  in an ad can't reach the context that holds the CV and the tools. job.md links `ad.json` and `ad.txt` instead of
-  holding the ad text. Injection attempts in the brief come from the extract's `injection_text`.
-
-### Migration
-- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/ad-reader.md` into the workspace;
-  `setup_check.py` warns while it's missing. Config version stays 2.
 - Fit scores come from the rubric: the routine gives five 0-5 sub-scores and score.py computes the total,
   instead of the model choosing a 0-100 number. The same judgment now always gives the same score, but scores
   can move by several points against older runs, and a hard mismatch always lands below 60 (usually
   below 40). The eval baseline
   shows the effect on the labelled ads.
+- The routine never reads ad text itself: it judges, scores and tailors from the extract, so instructions hidden
+  in an ad can't reach the context that holds the CV and the tools. job.md links `ad.json` and `ad.txt` instead of
+  holding the ad text. Injection attempts in the brief come from the extract's `injection_text`.
+- Jobs skipped or screened more than 90 days ago show up as new again when they're reposted or still online.
+
+### Migration
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/ad-reader.md` into the workspace;
+  `setup_check.py` warns while it's missing. Config version stays 2.
+
+### Fixed
+- `upgrade.py migrate` no longer lists `scoring:` in config.yaml as an unknown setting.
 
 ## [0.3.0] - 2026-10-25: safe & lossless
 
