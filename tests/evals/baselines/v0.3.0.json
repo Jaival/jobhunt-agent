@@ -1,0 +1,983 @@
+{
+ "version": "0.3.0",
+ "engine": "0.4.0-dev (7e950ef-dirty)",
+ "model": "claude-opus-5-5",
+ "date": "2026-10-28",
+ "cost_usd": 1.3103828,
+ "results": [
+  {
+   "ad": "01-golf-club-st-leon-rot",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     75,
+     92
+    ],
+    "german_required": "C1+",
+    "note": "Social media, content and KPI reporting; names Canva. Close to home."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 86,
+    "german_required": "C1+",
+    "reasons": "This working-student social media and content role is in St. Leon-Rot, inside the Rhine-Neckar area near Heidelberg. It fits Lena's strengths in social media planning, copywriting, Instagram, Canva and KPI reporting (Canva and Instagram also earn bonus points), and her native German easily meets the \"very good German\" requirement. Gaps to note: CapCut, Adobe Creative Suite and video or reels production; occasional weekend events and the flexibility asked for, to check against her 20 h/week in semester; and enrolment must last through the one-year fixed-term contract."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "02-dpg-neue-medien",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     70,
+     88
+    ],
+    "german_required": "C1+",
+    "note": "Content, social media, newsletters, Google Analytics. The title filter drops it (no include word in 'Neue Medien')."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 85,
+    "german_required": "C1+",
+    "reasons": "This Mannheim working-student role in online marketing and social media (Instagram, LinkedIn, newsletter, content and graphics, Google Analytics) closely matches Lena's real strengths, her Campus Café and newsletter results, and the score_bonus skills. The ad asks for \"sehr gute Deutschkenntnisse\", which Lena meets as a native speaker. Gaps are TikTok, WordPress, email-marketing software and day-to-day sales support. The ad was posted on 2025-08-29, so check that it's still open before applying."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "03-zeropraxen-schwetzingen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     78,
+     95
+    ],
+    "german_required": "unknown",
+    "note": "Social media content with Canva/Meta, 15-20 h/week, her field of study is named. Video and Typo3 are gaps."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 86,
+    "german_required": "C1+",
+    "reasons": "This is a working-student role in communication and marketing in Schwetzingen, which is in the Rhine-Neckar area near Mannheim. The core tasks (social media content in Canva/Meta, copywriting, employer-branding campaigns) match Lena's real strengths and the Canva bonus, 15-20 h/week fits her availability, and her native German covers the strong writing skills a German-language ad implies. The gaps are video production and editing, Typo3/CMS and Word/PowerPoint (she lists Google Sheets but no other Office tools), and the medical-care setting is new to her."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "04-leyselect-speyer",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     75,
+     92
+    ],
+    "german_required": "unknown",
+    "note": "LinkedIn/Instagram content and podcasts, Canva, 15-20 h. AI content tools are required: a gap, not a mismatch."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 85,
+    "german_required": "C1+",
+    "reasons": "This marketing and social media Werkstudent role in Speyer (Rhine-Neckar) asks for 15–20 h/week. It fits Lena's availability, location and core strengths: Instagram/LinkedIn, Canva, copywriting and KPI-based monitoring, with bonus points for Instagram and Canva. The ad is written entirely in German and asks for strong writing, so near-native German is implied, which is fine because Lena is a native speaker. Gaps: AI content tools (required), Reels/podcast/YouTube production and event marketing. Also check liveness: the ad was posted 2026-09-18 and the start date is 01.11.2026."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "05-flowzoom-tiktok-remote",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     50,
+     72
+    ],
+    "german_required": "C1+",
+    "note": "Fully remote, so location is fine. Must-haves are short-form video editing and a portfolio she does not have."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 66,
+    "german_required": "C1+",
+    "reasons": "This is a remote social media working-student role (the company sits in Neckargemünd, inside the Rhine-Neckar area). It fits her availability (15–20 h/week, start as soon as possible) and the enrolment requirement, and it uses her real strengths: Instagram content, posting rhythm, KPI analysis and the Campus Café follower result. Native German is required, which she has. The main gaps are short-form video editing (CapCut/Premiere/Final Cut), a TikTok/Reels portfolio, being on camera and affiliate/creator marketing, and the ad also asks for 2–3 self-edited videos and an answer on the AIR travel pillow."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   }
+  },
+  {
+   "ad": "06-abb-messen-events",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     50,
+     72
+    ],
+    "german_required": "C1+",
+    "note": "Trade-fair and event marketing; her strengths (social, copy) are barely used. The title filter drops it."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 60,
+    "german_required": "C1+",
+    "reasons": "This marketing working-student role in Mannheim (hybrid) fits Lena's scope and location, and her native German meets the native-level requirement. The work is mostly trade fairs, events and showrooms, with no social media, copywriting, Canva or GA4, so her core strengths only partly match. Gaps to note: hours and contract length aren't stated. The ad is from 2026-08-03, about 3 months old, so check it's still open before applying."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   }
+  },
+  {
+   "ad": "07-basf-marketing-sales-academy",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": [
+     55,
+     75
+    ],
+    "german_required": "none",
+    "note": "Internal communication and digital learning, 3-6 months from Feb 2027. 'Sales' in the title drops it; Pflichtpraktikum preferred: check eligibility."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": 68,
+    "german_required": "basic",
+    "reasons": "This is a marketing and communication internship in Ludwigshafen, inside the Rhine-Neckar area. The work (internal communication, community management, content creation, marketing materials) fits Lena's copywriting, newsletter relaunch and Marketing Intern experience, and German is only \"von Vorteil\" while fluent English is required. Gaps: the ad asks for BWL/marketing studies, PowerPoint/Excel, e-learning tools, SharePoint and GenAI, and none of the score_bonus skills appear. Also check eligibility because a Pflichtpraktikum is preferred, and the Feb 2027 start for 3–6 months."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   }
+  },
+  {
+   "ad": "08-mhc-mediengestaltung-webdesign",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "B2",
+    "note": "Web design and media design study required: outside her field."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 50,
+    "german_required": "B2",
+    "reasons": "This working-student role is mostly website redesign and upkeep, with some content creation and digital company communication. That's within reach of Lena's content and communication focus, and Germersheim (Rhine-Neckar region, about 40 km from Mannheim) and the 20 h/week in semester fit her availability. Gaps: web design and graphics tools, responsive layout, CMS work and design or typography skills are core here, and only Canva and copywriting carry over. Also check whether her Media and Communication degree counts as a \"comparable\" programme to Mediengestaltung/Webdesign. German isn't an issue: she's a native speaker and the ad asks for good German."
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "09-frankenthal-wirtschaftsfoerderung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Economic development in a city administration; PR is a small part."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": 55,
+    "german_required": "C1+",
+    "reasons": "This is a borderline but in-scope working-student role: it is mainly municipal economic development, but it includes PR work (website, information materials), city marketing and events, marketing is named as a suitable degree, and Frankenthal is in the Rhine-Neckar area, so location is fine. The 20 h/week and one-year contract fit Lena's availability and the ad is entirely in German, which is no issue for a native speaker. However, most tasks (site analysis, business data, funding research, MS Office) don't use her social media, Canva or GA4 strengths, so the fit is moderate. Gaps to note: she must stay enrolled for the whole one-year contract, and the deadline is 18.11.2026 (reference 169-A-2026)."
+   },
+   "grades": {
+    "in_scope": false,
+    "german": false,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "10-kalkmann-junior-marketing",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": null,
+    "score": [
+     35,
+     60
+    ],
+    "german_required": "unknown",
+    "note": "Junior, but at least 30 h/week, a finished degree and ideally 2-3 years; Adobe InDesign/Photoshop/Illustrator required."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": null,
+    "score": 45,
+    "german_required": "C1+",
+    "reasons": "This junior marketing role in Heidelberg fits Lena's field and location, and the \"ideally 2–3 years\" experience is a preference, not a requirement. Her German is native, so the German-only ad isn't a problem. The score is held down because the job centres on media design with Adobe InDesign, Photoshop and Illustrator, which she doesn't have (only Canva). It also needs at least 30 h/week while she can work 20 h in semester, and the ad is from 30.07., so check it's still open."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "11-snk-performance-marketing-muenchen",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Paid ads (a listed gap) in Munich; 'manager' drops it by title."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": "location: München (outside the Rhine-Neckar area; home office is mentioned, but the role isn't fully remote)",
+    "score": 15,
+    "german_required": "C1+",
+    "reasons": "This is a junior marketing role, so it is in scope, but it is based in Munich and only offers some home office, which is a hard mismatch under Lena's Rhine-Neckar-or-remote rule. The job centres on paid ads budgets (Google, LinkedIn, Meta and programmatic ads), which is one of her listed gaps, so only her Google Analytics reporting and LinkedIn experience carry over; the required very good German is no problem because she is a native speaker."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "12-alfatraining-content-marketing-trainer",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Freelance teaching contract (Ulm or remote), not a job for a student."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": "role type: freelance lecturer (Lehrauftrag) needing expert practitioner knowledge, not a student or junior role",
+    "score": null,
+    "german_required": "C1+",
+    "reasons": "Despite the \"Content Marketing Manager:in\" title, this is a freelance teaching contract: teaching content marketing, SEM, CMS and AI to university graduates full-time (Mon–Fri 8:30–15:35) for 12 weeks, and it asks for practical expertise and trainer experience, so it is an expert role in disguise and not a Werkstudent, internship or junior position. Location is not the problem because home office is possible, and the German-language teaching (effectively C1+) is no issue for a native speaker, but the role is out of scope and gets no score."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "13-limelight-senior-digital-marketing",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Senior role, several years of campaign experience required."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": "senior role: requires several years of digital campaign experience and a completed degree",
+    "score": null,
+    "german_required": "C1+",
+    "reasons": "This is a full-time Senior Manager Digital Marketing role. It asks for a completed degree and several years of planning, running and optimising digital campaigns, including Google Ad Manager and Meta paid ads, so it is out of scope for a third-year B.A. student looking for Werkstudent, internship or junior roles. The Mannheim location and the asks for organic social media and Google Analytics fit Lena well, and her native German meets the very good German requirement, but the seniority and the paid-ads focus (a gap she must never claim) rule it out."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "14-sunny-roofs-digital-marketing-manager",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Full-time all-round marketer with Google Ads/SEO experience and a driving licence; not a student or junior role."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": null,
+    "score": 48,
+    "german_required": "C1+",
+    "reasons": "This is an all-round digital marketing job at a small firm in Worms, which is in the Rhine-Neckar area. It asks for no set years of experience and accepts training, a degree or relevant experience, so I treat it as a junior role. Instagram, social content, Canva and copywriting match her strengths well, and the fluent German it requires is no problem since she is a native speaker. Points are lost because Google Ads, SEA, SEO and Local SEO are core tasks and are among her listed gaps, WordPress is missing, and a class B driving licence is required but her profile doesn't say whether she has one. It is probably a full-time job, which clashes with her 20 hours a week during the semester, so the letter should ask whether part-time or working-student hours are possible."
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "15-db-praktikum-marketing-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Good content fit otherwise; 6 months full time in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": 30,
+    "german_required": "C1+",
+    "reasons": "This is a 6-month marketing and communication internship. The tasks (content for internal communication and social media, measuring how well communication works, communication materials) fit Lena's social media, copywriting and analytics strengths, and her native German easily meets the C1 requirement. The internship is in Berlin, though, which is outside the Rhine-Neckar area and remote, and she won't relocate, so that's a hard mismatch. Other gaps: it needs full-time hours (40 h/week) against her 20 h in semester, it asks for Photoshop, InDesign and Illustrator, and it needs a current enrolment certificate."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "16-theraeasy-social-media-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "unknown",
+    "note": "Social media internship in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin (on-site, no remote mentioned)",
+    "score": 25,
+    "german_required": "unknown",
+    "reasons": "This social media internship fits Lena's real strengths very well: content planning, running Instagram channels and supporting campaigns. Starting now at 20 h/week also matches her availability, though TikTok and Reels experience are gaps and the ad gives no duration. The score is low because the job is on-site in Berlin with no remote option, which is outside the Rhine-Neckar area and remote work she accepts, and she won't relocate while studying. The ad is in German but names no German level, which doesn't matter since she is a native speaker."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "17-precision-labs-influencer-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Mostly remote but needs regular presence in Munich."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: München (on-site presence for shoots/events, office planned; not fully remote)",
+    "score": 35,
+    "german_required": "B2",
+    "reasons": "This working-student role in influencer marketing and social media fits Lena well: Instagram content planning, the editorial calendar and analysing which content works, at 20 h/week for enrolled students. Her native German meets the requirement for confident written German, and TikTok, creator relations and event work are only gaps to learn. But the role needs regular presence in Munich now and more office time later, which breaks her Rhine-Neckar-or-remote rule and makes it a hard mismatch."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "18-bsh-marketing-communication-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Marketing communication in Munich."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: München (outside Rhine-Neckar, not remote; mobile work max. 50%)",
+    "score": 15,
+    "german_required": "C1+",
+    "reasons": "This is a Werkstudent role in marketing communication that asks for no years of experience, so it is in scope. Lena's newsletter relaunch and copywriting fit the tasks, and as a native speaker she meets the very good German requirement. However, the job is in Munich with at most 50% mobile work, and her CLAUDE.md says anything beyond the Rhine-Neckar area or remote is a hard mismatch, so the score is low."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "19-videogames-online-redaktion",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     30,
+     55
+    ],
+    "german_required": "C1+",
+    "note": "Writing for a gaming site, home office possible (office in Bielefeld); gaming expertise required."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Bielefeld (home office only 'possible', not fully remote)",
+    "score": 25,
+    "german_required": "C1+",
+    "reasons": "This working-student editorial role fits Lena's field. It covers content writing, CMS work and social media, she studies media and communication, and her native German meets the 'fehlerfrei' requirement. The low score comes from the location: the job is in Bielefeld, far outside Rhine-Neckar, and home office is only 'possible', not fully remote. It also asks for deep gaming-scene expertise and writing samples she may not have, and the ad was posted on 2026-05-26, so we should check that it's still open."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": false,
+    "score": false,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "20-nayoki-paid-social-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "unknown",
+    "note": "Onsite in Munich; paid social is a listed gap."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: München, onsite only; the ad also requires enrolment at a university in the Munich area",
+    "score": 25,
+    "german_required": "unknown",
+    "reasons": "This working-student job is in Lena's field (Instagram, campaign reporting and KPIs, no prior experience required), but the paid-ads work is one of her listed gaps. The job is onsite in München and asks for a student enrolled in the Munich area, which is outside Rhine-Neckar/remote, so it's a hard mismatch. The ad is written in German but doesn't state a level, and she's a native speaker anyway."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "21-ruv-kommunikation-wiesbaden",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Wiesbaden",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Internal communication in Wiesbaden, outside the Rhine-Neckar area."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Wiesbaden (hybrid, not remote; outside Rhine-Neckar)",
+    "score": 30,
+    "german_required": "C1+",
+    "reasons": "This is a real communication and marketing working-student role, and it fits Lena's strengths well: copywriting, newsletters, visual content and her Media and Communication degree, at 11-20 h/week, which matches her semester availability. But the job is in Wiesbaden with only hybrid home office, outside the Rhine-Neckar area she wants (a hard mismatch), and the ad is from 2025-07-09, so check that it is still open. Gaps are SharePoint/CMS and AI video tools like Synthesia; the near-native German it asks for is no problem since she is a native speaker."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "22-avd-online-marketing-frankfurt",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Frankfurt",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "At least 2 days/week in Frankfurt; SEO/SEA is a gap."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Frankfurt am Main, on-site at least 2 days/week (outside Rhine-Neckar, no relocation)",
+    "score": 30,
+    "german_required": "C1+",
+    "reasons": "It's a marketing working-student role for 15-20 h/week, so it fits Lena's scope and hours, and it overlaps well with her strengths: social media content, the newsletter (her faculty newsletter result) and analytics and reporting. SEO/SEA, performance marketing and CMS are gaps, and the bigger problem is that the job needs her in Frankfurt at least 2 days a week, which is outside the Rhine-Neckar area she set, so it's a hard mismatch (the German requirement is no problem, as she's a native speaker)."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "23-root-sales-recruiting",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Sales and recruiting."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "reasons": "This is a sales and recruiting working-student job at a recruitment agency for finance and accounting staff. The work is active sourcing, screening candidates, finding new clients and keeping data up to date, and the ad wants business or HR students, so it falls outside Lena's marketing, content, social media and communication scope, even though writing job ads and using LinkedIn overlap a little. Mannheim and 20 hours a week fit her, but the role isn't in her field, so it isn't scored; the ad is all in German, which suits her native German, but it doesn't state a level."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "24-sap-neukunden-vertrieb",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Sales (lead generation for account executives)."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "field: sales (Neukunden-Vertrieb), not marketing/communication",
+    "score": null,
+    "german_required": "C1+",
+    "reasons": "This is a working-student role in new-customer sales. The core work is building the pipeline, qualifying leads, talking to customers, keeping the CRM up to date and writing sales reports, so it falls outside Lena's scope of marketing, content, social media, communication and PR, even though it mentions campaigns, social selling and Canva. If it were in scope, Walldorf (Rhine-Neckar) and the \"Exzellentes Deutsch\" requirement would both be fine since Lena is a native speaker, but CRM work is one of her listed gaps."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "25-troendle-bauingenieurwesen",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Civil engineering."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "field: civil engineering (Bauingenieurwesen), not marketing/communication",
+    "score": null,
+    "german_required": "unknown",
+    "reasons": "This working-student job supports construction site management (planning and checking building work, quantity surveys, documenting progress) and requires a degree in civil engineering with a structural focus. That is outside Lena's field of marketing, content, social media and PR, so it is out of scope even though Edingen-Neckarhausen is in the Rhine-Neckar area and the hours are part-time."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "26-rheinmetall-prozessentwicklung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "B2",
+    "note": "Manufacturing process engineering."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "field: engineering/process development, not marketing or communication",
+    "score": null,
+    "german_required": "B2",
+    "reasons": "This is a working-student or internship role in production process engineering: metalworking, CATIA modelling, Python image processing and sensor technology. It asks for studies in mechatronics, mechanical or electrical engineering, which is outside Lena's scope of marketing, content, social media, communication and PR. St. Leon-Rot is in the Rhine-Neckar area, so location would have been fine, and the ad asks for good German, which Lena has as a native speaker."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "27-epicto-ausbildung-veranstaltung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Apprenticeship (Ausbildung), not a student role."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": "role type: 3-year Ausbildung (vocational training), not a student or junior role",
+    "score": null,
+    "german_required": "B2",
+    "reasons": "This is a 3-year Ausbildung as Veranstaltungskaufmann/-frau (event management) starting in August 2027, and the candidate isn't looking for that kind of role: she wants Werkstudent, internship or junior roles in marketing, content, social media or communication, and marketing is only one of several departments the trainee passes through. The location in Edingen-Neckarhausen is in the Rhine-Neckar area, and the ad is in German with customer contact and good school grades in German expected, which is no problem for a native speaker, but the full-time training contract and the required internship beforehand don't fit her studies."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "28-keil-unternehmensentwicklung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Business development and strategy for business/engineering students; marketing is a side topic."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": 42,
+    "german_required": "C1+",
+    "reasons": "This is a 3 to 6 month corporate development internship in Speyer, which is inside the Rhine-Neckar area. Strategic marketing and sales are one of its five areas, it fits the candidate's 6-month internship window, and her native German meets the \"very good German\" requirement. The fit is only partial: the ad asks for business or industrial engineering students, and most of the work is market analysis, process documentation, KPIs and AI research in Excel and PowerPoint, with no social media, copywriting, Canva or Instagram, so only her Google Sheets/GA4 reporting carries over, and the ad also asks applicants to state start, duration and whether it is a mandatory internship (Pflichtpraktikum), so check eligibility."
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "29-flexlog-technisches-marketing-karlsruhe",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Karlsruhe",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Karlsruhe is outside the Rhine-Neckar area; HubSpot (a listed gap); Pflichtpraktikum only."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Karlsruhe (outside Rhine-Neckar, not remote)",
+    "score": 30,
+    "german_required": "C1+",
+    "reasons": "This is a marketing internship and her degree is on the list of fields it names. But it's in Karlsruhe, outside the Rhine-Neckar area she set, it isn't remote, and the core tasks are HubSpot, SEO and B2B automation, which are her stated gaps. Google Analytics, KPI reporting and copywriting give her some fit, and her native German easily meets the fluent-German requirement. The ad accepts only a mandatory internship (Pflichtpraktikum), so check eligibility first."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "30-check24-ai-content-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "AI product content in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": 25,
+    "german_required": "C1+",
+    "reasons": "This is a content marketing internship that matches Lena's copywriting and social content strengths, and her native German covers the \"sehr gute Deutschkenntnisse\" requirement. The job is on site in Berlin-Mitte, outside the Rhine-Neckar area, and she won't relocate during her studies, so it's a hard mismatch; the ad also wants AI tools like ChatGPT and Midjourney, which she hasn't listed, and it gives no hours or duration."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "31-db-werkstudent-kommunikation-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "unknown",
+    "note": "LinkedIn posts and texts, a strong content fit, but in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Berlin (not Rhine-Neckar, no remote option)",
+    "score": 25,
+    "german_required": "C1+",
+    "reasons": "The tasks fit Lena well: LinkedIn corporate posts, writing for internal communication and image editing match her social media, copywriting and Canva strengths, and the role asks for a communication degree. CMS experience is a gap, and she is a native German speaker, so the requirement for very good German is no problem. But the job is on-site in Berlin, outside the Rhine-Neckar area, with no remote option, and Lena won't relocate during her studies."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "32-abc-travel-marketing-manager",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Explicitly no career starters; several years of experience required."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": "senior-only: several years of experience required, explicitly no career starters",
+    "score": null,
+    "german_required": "C1+",
+    "reasons": "The ad looks for an experienced Marketing Manager (\"erfahrenen\", \"mehrjährige relevante Berufserfahrung\"), says it does not want a career starter (\"keinen Berufseinsteiger\"), and the role includes owning the budget, so it's a senior job in disguise and Lena, a student with one internship, isn't a fit. The field (social media, content, PR in Mannheim) would match her, but it's out of scope because of the seniority, and it also asks for very good German (fine for her as a native speaker), video editing and budget experience she doesn't have."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   }
+  },
+  {
+   "ad": "33-baker-tilly-marketing-communications",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Duesseldorf/Frankfurt",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Internship or working student at Duesseldorf, Frankfurt and other offices, none in Rhine-Neckar; SEO/SEA gaps."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Düsseldorf (Frankfurt also listed; rest of the title cut off with '...')",
+    "score": 25,
+    "german_required": "C1+",
+    "reasons": "This marketing and communications student role (Praktikant or Werkstudent, from the 3rd semester) fits Lena well: B2B content, social media, KPI reporting and copywriting, with her German being native. It scores low because it is based in Düsseldorf/Frankfurt, outside the Rhine-Neckar area. There are also gaps in SEO and paid ads (SEA/social), and the ad was posted on 2025-09-30, so check whether it's still open and whether the cut-off location list includes anything in the region."
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": false,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   }
+  }
+ ],
+ "summary": {
+  "in_scope": [
+   29,
+   33
+  ],
+  "role_type": [
+   20,
+   21
+  ],
+  "hard_mismatch": [
+   20,
+   21
+  ],
+  "score": [
+   20,
+   21
+  ],
+  "tailor": [
+   30,
+   30
+  ],
+  "german": [
+   24,
+   33
+  ]
+ }
+}

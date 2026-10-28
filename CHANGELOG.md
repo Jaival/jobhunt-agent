@@ -12,6 +12,14 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Added
+- Eval harness: `python tools/eval_run.py run` judges the 33 labelled ads in `tests/evals/ads/` the way the daily
+  run judges a new job (one headless `claude -p` call per ad, no tools) and writes
+  `tests/evals/baselines/v<version>.md` and `.json`: agreement with the labels per metric, the model used, the
+  cost. `eval_run.py compare` shows what changed between two baselines and fails when a metric drops by more than
+  2 ads. The `v0.3.0` baseline is checked in (recorded before this sprint changed the scoring); the release
+  checklist runs the eval before each release. For engine development only; the daily run doesn't use it.
+
 ## [0.3.0] - 2026-10-25: safe & lossless
 
 ### Added
