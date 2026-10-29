@@ -1,0 +1,3630 @@
+{
+ "version": "0.4.0",
+ "engine": "0.4.0-dev (8196660)",
+ "model": "claude-opus-5-5",
+ "date": "2026-10-29",
+ "cost_usd": 3.5580608000000002,
+ "results": [
+  {
+   "ad": "01-golf-club-st-leon-rot",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     75,
+     92
+    ],
+    "german_required": "C1+",
+    "note": "Social media, content and KPI reporting; names Canva. Close to home."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 4,
+     "hours": 3
+    },
+    "reasons": "This is a social media and content working-student role that fits the candidate's strengths well: managing Instagram and LinkedIn channels, writing posts, Canva, and KPI reporting with GA4 and Google Sheets, backed by the Campus Café campaign and her internship. The gaps are photo and video production (Reels, CapCut, Adobe) and the weekly hours and start date, which the ad doesn't give; her native German meets the C1+ requirement, and St. Leon-Rot is in the Rhine-Neckar area near Heidelberg, but it isn't her home city.",
+    "score": 84,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003664495-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003664495-S",
+    "title": "Werkstudent:in Marketing & Content Administrator (m/w/d)",
+    "company": "Golf Club St.Leon-Rot B.mbH&Co.KG",
+    "location": "68789 St. Leon-Rot",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": 12,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutschkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Vertrautheit mit Social-Media-Plattformen",
+      "importance": "high",
+      "ad_wording": "Du bist auf den gängigen Social-Media-Plattformen zuhause und kennst deren Besonderheiten"
+     },
+     {
+      "requirement": "Begeisterung für digitale Kommunikation und Trends",
+      "importance": "meaningful",
+      "ad_wording": "Du begeisterst Dich für digitale Kommunikation und aktuelle Trends"
+     },
+     {
+      "requirement": "Strukturierte, zuverlässige, eigenverantwortliche Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Strukturierte, zuverlässige und eigenverantwortliche Arbeitsweise mit Hands-on-Mentalität"
+     },
+     {
+      "requirement": "Zeitliche Flexibilität, gelegentlich Wochenendeinsätze",
+      "importance": "meaningful",
+      "ad_wording": "Bereitschaft, gelegentlich bei Veranstaltungen am Wochenende zu unterstützen"
+     },
+     {
+      "requirement": "Erste Erfahrungen in der Content-Erstellung",
+      "importance": "preferred",
+      "ad_wording": "Idealerweise hast Du bereits erste Erfahrungen in der Content-Erstellung"
+     },
+     {
+      "requirement": "Kenntnisse in Canva, CapCut, Adobe Creative Suite",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse in Canva, CapCut, Adobe Creative Suite o.ä. Tools sind von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Betreuung der Social-Media-Auftritte",
+     "Konzeption, Erstellung und Veröffentlichung von Content (Texte, Fotos, Reels, Videos, Grafiken)",
+     "Unterstützung bei Foto- und Videoproduktionen",
+     "Community-Interaktion, Beantwortung von Kommentaren und Nachrichten",
+     "Monitoring, Reporting und KPI-Analyse",
+     "Mitwirkung an der Social-Media-Strategie"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "02-dpg-neue-medien",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     70,
+     88
+    ],
+    "german_required": "C1+",
+    "note": "Content, social media, newsletters, Google Analytics. The title filter drops it (no include word in 'Neue Medien')."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 5,
+     "hours": 3
+    },
+    "reasons": "This Werkstudent role in Mannheim focuses on social media (Instagram, LinkedIn), content and graphics, newsletters and Google Analytics, which match Lena's Campus Café campaign, the newsletter relaunch, her Canva and GA4 skills and her marketing internship; her native German covers the \"sehr gute Deutschkenntnisse\" requirement. Gaps: TikTok/Facebook, WordPress and email-marketing software are new to her and weekly hours aren't stated; the ad was posted on 2025-08-29, over a year ago, so check that it's still open before applying.",
+    "score": 89,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": false,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-18828-0059021178-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/18828-0059021178-S",
+    "title": "Werkstudent Neue Medien (m/w/d)",
+    "company": "DPG Deutsche Elektro Prüfgesellschaft mbH",
+    "location": "68165 Mannheim",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "ab sofort",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulation in Marketing, Kommunikation, Medien, BWL o.ä.",
+      "importance": "critical",
+      "ad_wording": "eingeschriebene/r Student/in im Bereich Marketing, Kommunikation, Medien, BWL oder vergleichbar"
+     },
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutschkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Kreativität, digitale Affinität, Gespür für Sprache",
+      "importance": "high",
+      "ad_wording": "Kreativität, digitale Affinität und ein Gespür für Sprache"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit MS Office"
+     },
+     {
+      "requirement": "Strukturierte, zuverlässige, eigenverantwortliche Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "strukturiert, zuverlässig und eigenverantwortlich"
+     },
+     {
+      "requirement": "Erste Erfahrungen im Online-Marketing",
+      "importance": "preferred",
+      "ad_wording": "Erste Erfahrungen im Online-Marketing sind wünschenswert"
+     },
+     {
+      "requirement": "Kenntnisse in WordPress, Google Analytics oder E-Mail-Marketing-Software",
+      "importance": "preferred",
+      "ad_wording": "idealerweise erste Kenntnisse in Tools wie WordPress, Google Analytics oder E-Mail-Marketing-Software"
+     }
+    ],
+    "tasks": [
+     "Konzeption und Umsetzung von Online-Marketingmaßnahmen",
+     "Erstellung von Content und Grafiken für Website, Newsletter, Social Media",
+     "Pflege und Weiterentwicklung der Social-Media-Präsenzen (TikTok, Instagram, Facebook, LinkedIn)",
+     "Planung und Durchführung von E-Mail-Kampagnen",
+     "Allgemeine Unterstützung des Sales-Teams im Tagesgeschäft"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "03-zeropraxen-schwetzingen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     78,
+     95
+    ],
+    "german_required": "unknown",
+    "note": "Social media content with Canva/Meta, 15-20 h/week, her field of study is named. Video and Typo3 are gaps."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 4,
+     "hours": 5
+    },
+    "reasons": "This marketing and communication Werkstudent role fits Lena's field. Her Media and Communication degree, social media planning and copywriting, and Canva are evidence for the critical and high requirements and the main social media task, and the gaps are only preferred items (video production, Typo3) plus employer branding and website work that are new to her. Schwetzingen is an easy commute from Mannheim inside the Rhine-Neckar area. The 15-20 h/week and start as soon as possible match her availability and her enrolment, and as a native speaker she meets any German level the ad might expect, although it states none.",
+    "score": 89,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-12811-2353837-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12811-2353837-S",
+    "title": "Werkstudent (m/w/d) Marketing und Kommunikation, Hauptverwaltung Schwetzingen",
+    "company": "ze:roPRAXEN",
+    "location": "68723 Schwetzingen",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": 15,
+     "max": 20
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Studium Marketing, Medien- oder Kommunikationswissenschaften o. ä.",
+      "importance": "critical",
+      "ad_wording": "Studium im Bereich Marketing, Medien- oder Kommunikationswissenschaften oder vergleichbare Fachrichtung"
+     },
+     {
+      "requirement": "Social-Media-Kompetenz und Textsicherheit",
+      "importance": "high",
+      "ad_wording": "Ausgeprägte Social Media-Kompetenz und Textsicherheit"
+     },
+     {
+      "requirement": "Eigeninitiative und selbstständige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Hohe Eigeninitiative und selbstständige Arbeitsweise"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit MS Office Anwendungen (Word, Excel, Powerpoint)"
+     },
+     {
+      "requirement": "Erfahrung in Videoproduktion und -bearbeitung",
+      "importance": "preferred",
+      "ad_wording": "Erfahrung in Videoproduktion und -bearbeitung ... wünschenswert"
+     },
+     {
+      "requirement": "Erfahrung mit CMS (Typo3)",
+      "importance": "preferred",
+      "ad_wording": "Umgang mit Content-Management-Systemen (Typo3) wünschenswert"
+     }
+    ],
+    "tasks": [
+     "Content-Planung und -Erstellung für Social Media (Canva/Meta)",
+     "Employer Branding und Personalmarketing-Kampagnen",
+     "Content-Erstellung und Pflege der Websites",
+     "Mitarbeit beim Relaunch des Intranets",
+     "Vorbereitung und Begleitung von Events",
+     "Administrative Aufgaben"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "04-leyselect-speyer",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     75,
+     92
+    ],
+    "german_required": "unknown",
+    "note": "LinkedIn/Instagram content and podcasts, Canva, 15-20 h. AI content tools are required: a gap, not a mismatch."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 4,
+     "seniority": 4,
+     "language": 4,
+     "location": 4,
+     "hours": 5
+    },
+    "reasons": "This social media and marketing Werkstudent role fits Lena well. Her Instagram and LinkedIn planning, copywriting, Canva and KPI monitoring are backed by the Campus Café campaign and her internship, which covers the \"first experience\" the ad asks for. The gaps are the required AI content tools, MS Office (she has only Google Sheets) and producing reels, podcasts and YouTube content. Speyer is in the Rhine-Neckar area and an easy commute from Mannheim. The ad's 15-20 h/week, the 01.11.2026 start and the enrolment condition fit her availability and her B.A. at Universität Mannheim. The ad states no German level, and she is a native speaker.",
+    "score": 88,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003732307-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003732307-S",
+    "title": "Werkstudent Marketing I Social Media (mIwId)",
+    "company": "LeySelect GmbH",
+    "location": "67346 Speyer",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": 15,
+     "max": 20
+    },
+    "start": "2026-11-01",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Eingeschriebener Student Marketing, Kommunikation, Medien, BWL mit Schwerpunkt Marketing o.ä.",
+      "importance": "critical",
+      "ad_wording": "Du bist eingeschriebener Student im Bereich Marketing, Kommunikationswissenschaften, Medienmanagement..."
+     },
+     {
+      "requirement": "Erste Erfahrungen im Social-Media-Management oder in der Content-Erstellung",
+      "importance": "high",
+      "ad_wording": "Erste Erfahrungen im Social-Media-Management oder in der Content-Erstellung"
+     },
+     {
+      "requirement": "Erfahrung mit KI-Tools zur Content-Generierung",
+      "importance": "high",
+      "ad_wording": "Erfahrung mit KI-Tools zur Content-Generierung ist eine Voraussetzung"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office und Canva",
+      "importance": "high",
+      "ad_wording": "Sicherer Umgang mit MS Office sowie kreativen Tools wie Canva"
+     },
+     {
+      "requirement": "Ausgeprägte Schreib- und Texterqualitäten",
+      "importance": "high",
+      "ad_wording": "Ausgeprägte Schreib- und Texterqualitäten sowie ein Gespür für zielgruppengerechte Kommunikation"
+     },
+     {
+      "requirement": "Selbstständige Planung und Umsetzung von Projekten und Content-Plänen",
+      "importance": "meaningful",
+      "ad_wording": "Fähigkeit, Projekte und Content-Pläne selbstständig zu planen und umzusetzen"
+     },
+     {
+      "requirement": "Teamfähigkeit und Offenheit für Feedback",
+      "importance": "meaningful",
+      "ad_wording": "Gute Zusammenarbeit im Team und Offenheit für Feedback"
+     }
+    ],
+    "tasks": [
+     "Social-Media-Strategien entwickeln und umsetzen (LinkedIn, Instagram, Facebook, YouTube)",
+     "Redaktionelle Inhalte, Stories und Kampagnen für die Arbeitgebermarke erstellen",
+     "Content, Präsentationen, Reels, Stellen-Postings und Podcasts produzieren",
+     "Externe Kommunikation mitgestalten",
+     "Konsistenten, zielgruppengerechten Ton in allen Kanälen sicherstellen",
+     "Organisation und Vermarktung von Veranstaltungsreihen unterstützen",
+     "Monitoring, Auswertung und Optimierung der Social-Media-Aktivitäten anhand von Kennzahlen",
+     "Trends analysieren und Content-Strategie anpassen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "05-flowzoom-tiktok-remote",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     50,
+     72
+    ],
+    "german_required": "C1+",
+    "note": "Fully remote, so location is fine. Must-haves are short-form video editing and a portfolio she does not have."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 2,
+     "seniority": 3,
+     "language": 5,
+     "location": 5,
+     "hours": 5
+    },
+    "reasons": "This fully remote working-student job in social media content is in Lena's field, and nothing else stands in the way: she is a native German speaker with C1 English, she is enrolled, and 15-20 h/week starting as soon as possible fits her availability. Her Instagram planning, the Campus Café campaign and her GA4 reporting carry over only partly, because the critical requirements are short-form video editing with a portfolio, editing tools like CapCut or Premiere, and filming herself on camera, which she has no evidence for, so skills is 2 and seniority is 3.",
+    "score": 56,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003816918-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003816918-S",
+    "title": "TikTok Content Creation & Video Editierung (m/w/d) – Werkstudent, 100% Remote",
+    "company": "FLOWZOOM GmbH",
+    "location": "69151 Neckargemünd",
+    "remote": "full",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 15,
+     "max": 20
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Deutsch auf muttersprachlichem Niveau",
+      "importance": "critical",
+      "ad_wording": "Du sprichst Deutsch auf muttersprachlichem Niveau"
+     },
+     {
+      "requirement": "Fließend Englisch",
+      "importance": "critical",
+      "ad_wording": "du sprichst fließend Englisch (unsere Teamsprache)"
+     },
+     {
+      "requirement": "Immatrikulation",
+      "importance": "critical",
+      "ad_wording": "Du bist immatrikuliert"
+     },
+     {
+      "requirement": "Erfahrung im Short-Form-Editing, Portfolio",
+      "importance": "critical",
+      "ad_wording": "Erfahrung im Short-Form-Editing – idealerweise ein Portfolio an TikToks, Reels oder Shorts"
+     },
+     {
+      "requirement": "Sicher mit Schnitt-Tools",
+      "importance": "high",
+      "ad_wording": "sicher mit Schnitt-Tools (z. B. CapCut, Premiere oder Final Cut)"
+     },
+     {
+      "requirement": "Wohl vor der Kamera",
+      "importance": "high",
+      "ad_wording": "Du fühlst dich vor der Kamera wohl"
+     },
+     {
+      "requirement": "Video-Performance anhand von KPIs analysieren",
+      "importance": "high",
+      "ad_wording": "Performance eines Videos anhand von KPIs analysieren (z. B. Engagement, Retention …)"
+     },
+     {
+      "requirement": "Gespür für TikTok und Trends",
+      "importance": "high",
+      "ad_wording": "Gespür für TikTok, für Trends und für das, was Leute gern schauen"
+     },
+     {
+      "requirement": "Strukturiert, zuverlässig, eigenständig",
+      "importance": "meaningful",
+      "ad_wording": "Du arbeitest strukturiert, zuverlässig und eigenständig"
+     },
+     {
+      "requirement": "Nutzung von AI-Tools",
+      "importance": "preferred",
+      "ad_wording": "Du nutzt gern AI-Tools"
+     },
+     {
+      "requirement": "Erfahrung im Affiliate- oder Creator-Marketing",
+      "importance": "preferred",
+      "ad_wording": "Erfahrung im Affiliate- oder Creator-Marketing"
+     }
+    ],
+    "tasks": [
+     "Short-Form-Videos aus Rohmaterial und eigenem Footage schneiden",
+     "Eigene Short-Form-Videos für den TikTok Shop Brand Account drehen",
+     "Auf dem Brand Account veröffentlichen, konstanter Posting-Rhythmus, Community-Austausch",
+     "Beste Videos für Instagram und Facebook aufbereiten",
+     "Wöchentliche Performance-Analyse (Hook, Format, CTA, Länge)",
+     "Video-Bibliothek pflegen und Nutzungsrechte dokumentieren",
+     "Unterstützung bei Outreach, Onboarding und Aktivierung von Affiliate-Creatorn"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "06-abb-messen-events",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     50,
+     72
+    ],
+    "german_required": "C1+",
+    "note": "Trade-fair and event marketing; her strengths (social, copy) are barely used. The title filter drops it."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 5,
+     "language": 5,
+     "location": 5,
+     "hours": 3
+    },
+    "reasons": "This is a Werkstudent role in marketing and communication for trade fairs, events and showrooms at ABB in Mannheim (hybrid), which is Lena's home city. Her German is native and her English is C1, so the language requirements are met, and she has the communication degree and marketing internship the ad asks for. The core event-planning tasks are new to her, though, so skills score only 3 (about half backed). Hours, start and duration aren't stated, so hours score 3 and are a gap to check. The ad was posted on 2026-08-03, nearly three months ago, so the posting check is \"proceed with caution\" and she should confirm the role is still open.",
+    "score": 65,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003481774-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003481774-S",
+    "title": "Werkstudent (m/w/d) - Messen, Events und Showrooms",
+    "company": "ABB AG Analysetechnik",
+    "location": "68309 Mannheim",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Deutsch auf muttersprachlichem Niveau",
+      "importance": "critical",
+      "ad_wording": "Verhandlungssichere Deutschkenntnisse auf muttersprachlichem Niveau"
+     },
+     {
+      "requirement": "Verhandlungssicheres Englisch",
+      "importance": "critical",
+      "ad_wording": "Verhandlungssichere Englischkenntnisse"
+     },
+     {
+      "requirement": "Studium BWL, Marketing oder Kommunikation",
+      "importance": "high",
+      "ad_wording": "(Fach-)Hochschulstudium in den Bereichen Betriebswirtschaft, Marketing oder Kommunikation oder eine vergleichbare Qualifikation"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit den gängigen Microsoft Office Programmen"
+     },
+     {
+      "requirement": "Organisations- und Kommunikationsstärke, Kreativität",
+      "importance": "meaningful",
+      "ad_wording": "Eigenverantwortung, Kommunikations- und Organisationsstärke, Kreativität und Flexibilität"
+     },
+     {
+      "requirement": "Erste Erfahrung in Marketing/Kommunikation",
+      "importance": "preferred",
+      "ad_wording": "Erste praktische Erfahrungen im Bereich Marketing/Kommunikation von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Planung, Umsetzung, Durchführung und Nachbereitung von Messen und Events unterstützen",
+     "Formate zur Produktpräsentation auf Messen, Events und in Showrooms gestalten und umsetzen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "07-basf-marketing-sales-academy",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": [
+     55,
+     75
+    ],
+    "german_required": "none",
+    "note": "Internal communication and digital learning, 3-6 months from Feb 2027. 'Sales' in the title drops it; Pflichtpraktikum preferred: check eligibility."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 3,
+     "seniority": 5,
+     "language": 5,
+     "location": 4,
+     "hours": 3
+    },
+    "reasons": "This marketing internship at BASF is in scope and its location fits: it is hybrid in Ludwigshafen, an easy commute within the Rhine-Neckar area. Lena's native German and C1 English cover the language requirements. Her internal communication, community management, content and data-reporting experience (Campus Café campaign, newsletter relaunch, GA4/Sheets) covers about half of what the ad asks for, and her Media and Communication degree is close to the business or marketing degrees it names. Gaps: digital learning and e-learning, AI/GenAI tools, PowerPoint and SharePoint. The weekly hours aren't stated (an internship is likely full-time), and a 3–6 month placement starting February 2027 probably overlaps the spring semester, so check the hours against her 20 h/week. A mandatory internship is only \"ideally\" wanted, so that is a point to check, not a hard mismatch.",
+    "score": 63,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-16852-44512612-1016-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/16852-44512612-1016-S",
+    "title": "Praktikum Marketing & Sales - Global Training Projects & Digital Learning (m/w/d)",
+    "company": "BASF SE",
+    "location": "67063 Ludwigshafen am Rhein",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "2027-02 (1. oder 16. Februar 2027)",
+    "duration_months": 3,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Laufendes Bachelor- oder Masterstudium BWL, Marketing und Vertrieb, International Business o.ä.",
+      "importance": "critical",
+      "ad_wording": "laufendes Bachelor- oder Masterstudium der Betriebswirtschaftslehre, Marketing und Vertrieb, International Business"
+     },
+     {
+      "requirement": "Fließende Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "fließende Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Verfügbarkeit für mindestens 3 Monate",
+      "importance": "critical",
+      "ad_wording": "Verfügbarkeit für mindestens 3 und idealerweise bis zu 6 Monate"
+     },
+     {
+      "requirement": "Analytische Fähigkeiten und Erstellung professioneller Präsentationen",
+      "importance": "high",
+      "ad_wording": "ausgeprägte analytische Fähigkeiten ... in klare, professionelle Präsentationen und Kommunikationsmaterialien zu überführen"
+     },
+     {
+      "requirement": "Microsoft 365 (PowerPoint, Excel) und Erfahrung mit AI-/GenAI-Tools",
+      "importance": "high",
+      "ad_wording": "sicherer Umgang mit Microsoft 365, insbesondere PowerPoint und Excel, und Erfahrung mit AI- und GenAI-Tools"
+     },
+     {
+      "requirement": "Kenntnisse in digitalen Medien, digitalem Lernen, Content-Erstellung",
+      "importance": "high",
+      "ad_wording": "praktische Kenntnisse oder Erfahrungen mit digitalen Medien, digitalem Lernen, Content-Erstellung und Lerntechnologien"
+     },
+     {
+      "requirement": "Selbstständige Arbeitsweise im virtuellen Umfeld, Kreativität",
+      "importance": "meaningful",
+      "ad_wording": "proaktive, zuverlässige und selbstständige Arbeitsweise, insbesondere im virtuellen Arbeitsumfeld"
+     },
+     {
+      "requirement": "Pflichtpraktikum",
+      "importance": "preferred",
+      "ad_wording": "idealerweise ein Pflichtpraktikum als fester Bestandteil Ihres Studiums"
+     },
+     {
+      "requirement": "Deutschkenntnisse",
+      "importance": "preferred",
+      "ad_wording": "Deutschkenntnisse von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Planung, Koordination und Umsetzung globaler Trainingsprojekte für Marketing & Vertrieb",
+     "Interne Kommunikation und Community Management der Academy",
+     "Analyse von Trainingsdaten und Verbesserungsempfehlungen",
+     "Einsatz von AI-/GenAI-Tools für Lernkonzepte, Inhalte und Feedbackprozesse",
+     "Erstellung von Managementpräsentationen und Kommunikationsmaterialien",
+     "Entwicklung digitaler Lernformate (E-Learnings, Microlearnings)",
+     "Pflege von SharePoint-Seiten und Intranet-Portalen",
+     "Recherche zu Marketing- und Vertriebsthemen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "08-mhc-mediengestaltung-webdesign",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "B2",
+    "note": "Web design and media design study required: outside her field."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "B2",
+    "subscores": {
+     "skills": 2,
+     "seniority": 5,
+     "language": 5,
+     "location": 3,
+     "hours": 4
+    },
+    "reasons": "I count this as in scope, though only just: it's a Werkstudent role with digital communication and content tasks (texts, images, web content), but the job is mainly website design and upkeep. Lena's real strengths cover only a few of the requirements (copywriting, Canva, communication), so skills scores 2. Her degree in Media and Communication is not the design degree the ad lists, and typography, web design tools and website maintenance are gaps. Everything else fits: B2 German against her native German, at most 20 hours a week, matching her semester availability, and no experience required. Germersheim is inside the Rhine-Neckar metro region but a long commute from Mannheim, and the ad doesn't say whether remote work is possible. Start date and duration are not stated either.",
+    "score": 51,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003875637-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003875637-S",
+    "title": "Werkstudent Mediengestaltung & Webdesign (m/w/d)",
+    "company": "MHC Holding GmbH",
+    "location": "76726 Germersheim",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "B2",
+    "hours_per_week": {
+     "min": null,
+     "max": 20
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulierter Student (Bachelor/Master) in Mediengestaltung, Webdesign, Mediendesign, Digitalmedia o. ä.",
+      "importance": "critical",
+      "ad_wording": "immatrikulierter Student (Bachelor/Master) (m/w/d) im Bereich Mediengestaltung, Webdesign, Mediendesign, Digitalmedia"
+     },
+     {
+      "requirement": "Gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Gute Deutschkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Gespür für Design, Typografie und visuelle Gestaltung",
+      "importance": "high",
+      "ad_wording": "Kreativität, ein gutes Gespür für Design, Typografie und visuelle Gestaltung"
+     },
+     {
+      "requirement": "Verfügbarkeit bis zu 20 Std./Woche im Semester",
+      "importance": "high",
+      "ad_wording": "Verfügbarkeit von bis zu 20 Stunden pro Woche während des Semesters"
+     },
+     {
+      "requirement": "Sicherer Umgang mit digitalen Anwendungen",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit digitalen Anwendungen"
+     },
+     {
+      "requirement": "Interesse an digitalen Trends und Webtechnologien",
+      "importance": "meaningful",
+      "ad_wording": "Interesse an digitalen Trends und modernen Webtechnologien"
+     },
+     {
+      "requirement": "Strukturierte, selbstständige und zuverlässige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Strukturierte, selbstständige und zuverlässige Arbeitsweise"
+     },
+     {
+      "requirement": "Teamfähigkeit und Eigeninitiative",
+      "importance": "meaningful",
+      "ad_wording": "Teamfähigkeit und Eigeninitiative"
+     },
+     {
+      "requirement": "Erste Erfahrung in Gestaltung und Pflege von Websites",
+      "importance": "preferred",
+      "ad_wording": "Erste praktische Erfahrungen in der Gestaltung und Pflege von Websites ... sind von Vorteil"
+     },
+     {
+      "requirement": "Kenntnisse in Grafik- und Webdesign-Tools",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse in gängigen Grafik- und Webdesign-Tools sind von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Mitwirkung bei Neugestaltung und Weiterentwicklung der Unternehmenswebsite",
+     "Gestaltung und Aufbereitung von Webinhalten",
+     "Pflege, Aktualisierung und Optimierung der Homepage",
+     "Erstellung und Einbindung von Texten, Bildern und digitalen Inhalten",
+     "Sicherstellung der Darstellung auf verschiedenen Endgeräten",
+     "Unterstützung der digitalen Unternehmenskommunikation",
+     "Identifikation von Optimierungspotenzialen bei Design, Usability und Funktionalität"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "09-frankenthal-wirtschaftsfoerderung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Economic development in a city administration; PR is a small part."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 2,
+     "seniority": 5,
+     "language": 4,
+     "location": 4,
+     "hours": 5
+    },
+    "reasons": "This is a borderline in-scope Werkstudent role. The ad lists Marketing as a fitting degree and includes Öffentlichkeitsarbeit (PR: website, information materials) and event organisation, but most of the work is economic development: company and location data, market and location analyses, and research on public funding. These tasks are new to Lena, and of her strengths only social media and copywriting are relevant, mainly for the website and information materials. Frankenthal is in the Rhine-Neckar area next to Ludwigshafen, the ad states no German level (Lena is native), and up to 20 h/week, an as-soon-as-possible start and 12 months with enrolment all fit, with \"sicherer Umgang mit MS Office\" noted as a gap because the CV shows Google Sheets.",
+    "score": 54,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003892316-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003892316-S",
+    "title": "Werkstudent Wirtschaftsförderung und Standortentwicklung (m/w/d)",
+    "company": "Stadtverwaltung Frankenthal (Pfalz)",
+    "location": "67227 Frankenthal (Pfalz)",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": 20
+    },
+    "start": "as soon as possible",
+    "duration_months": 12,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulation an (Fach-)Hochschule oder Universität",
+      "importance": "critical",
+      "ad_wording": "Du bist immatrikulierter Student (m/w/d) an einer (Fach-)Hochschule oder Universität"
+     },
+     {
+      "requirement": "Studium mit Bezug zu Stadtentwicklung, Geographie, Wirtschaftswissenschaften oder Marketing",
+      "importance": "preferred",
+      "ad_wording": "idealerweise in einem Studiengang mit Bezug zu Stadtentwicklung, Geographie, Wirtschaftswissenschaften oder Marketing"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "high",
+      "ad_wording": "Sicherer Umgang mit MS Office"
+     },
+     {
+      "requirement": "Kommunikationsfähigkeit und Freude am Umgang mit Bürgeranliegen",
+      "importance": "high",
+      "ad_wording": "Freude am Umgang mit Bürgeranliegen und ein hohes Maß an Kommunikationsfähigkeit"
+     },
+     {
+      "requirement": "Organisationsgeschick, mehrere Vorgänge parallel",
+      "importance": "meaningful",
+      "ad_wording": "Organisationsgeschick sowie die Fähigkeit, mehrere Vorgänge gleichzeitig im Blick zu behalten"
+     },
+     {
+      "requirement": "Sorgfältige, zuverlässige, strukturierte Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Du arbeitest sorgfältig, zuverlässig und strukturiert"
+     },
+     {
+      "requirement": "Offenheit, Lernbereitschaft und Teamfähigkeit",
+      "importance": "meaningful",
+      "ad_wording": "Offenheit, Lernbereitschaft und Teamfähigkeit"
+     }
+    ],
+    "tasks": [
+     "Unterstützung der Wirtschaftsförderung bei operativen und strategischen Aufgaben",
+     "Organisation und Vor-/Nachbereitung von Terminen, Veranstaltungen und Netzwerktreffen",
+     "Pflege und Auswertung von Unternehmens- und Standortdaten",
+     "Recherchen, Markt- und Standortanalysen, Präsentationen und Berichte",
+     "Fördermittelrecherchen und -dokumentationen",
+     "Öffentlichkeitsarbeit (Internetauftritt, Informationsmaterialien)",
+     "Interdisziplinäre Projekte mit Fachbereichen und externen Akteuren",
+     "Organisatorische und administrative Aufgaben in der Stabstelle"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "10-kalkmann-junior-marketing",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": null,
+    "score": [
+     35,
+     60
+    ],
+    "german_required": "unknown",
+    "note": "Junior, but at least 30 h/week, a finished degree and ideally 2-3 years; Adobe InDesign/Photoshop/Illustrator required."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 2,
+     "seniority": 2,
+     "language": 4,
+     "location": 4,
+     "hours": 2
+    },
+    "reasons": "This junior marketing role in Heidelberg (hybrid, an easy commute from Mannheim) is in scope, and Lena's social media and content work backs one high requirement, but the main tasks are designing brochures and exposés in Adobe Creative Cloud (InDesign, Photoshop, Illustrator) and updating websites, where she only has Canva as adjacent experience. Gaps: the ad ideally wants 2-3 years of experience against her 6-month internship, it asks for 30-40 h/week against her 20 h during semester (the letter should ask about a part-time arrangement), and German is a German-language ad with no stated level, which her native German covers.",
+    "score": 38,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003466431-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003466431-S",
+    "title": "Junior Marketing Specialist (m/w/d) – Schwerpunkt Mediengestaltung",
+    "company": "Kalkmann Wohnwerte GmbH & Co. KG",
+    "location": "69115 Heidelberg",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Junior",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": 30,
+     "max": 40
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Ausbildung oder Studium in Mediengestaltung, Grafikdesign, Marketing o. ä.",
+      "importance": "critical",
+      "ad_wording": "Ausbildung oder ein Studium im Bereich Mediengestaltung, Grafikdesign, Marketing oder einer vergleichbaren Fachrichtung"
+     },
+     {
+      "requirement": "Sicherer Umgang mit Adobe Creative Cloud (InDesign, Photoshop, Illustrator)",
+      "importance": "critical",
+      "ad_wording": "arbeiten sicher mit der Adobe Creative Cloud, insbesondere mit InDesign, Photoshop und Illustrator"
+     },
+     {
+      "requirement": "Gespür für Gestaltung, Typografie und Bildsprache",
+      "importance": "high",
+      "ad_wording": "Gespür für Gestaltung, Typografie und Bildsprache"
+     },
+     {
+      "requirement": "Social-Media-Kenntnisse und zielgruppengerechter Content",
+      "importance": "high",
+      "ad_wording": "kennen sich mit Social Media aus und haben ein Gespür für zielgruppengerechten Content"
+     },
+     {
+      "requirement": "Aussagekräftige Arbeitsproben",
+      "importance": "meaningful",
+      "ad_wording": "inklusive aussagekräftiger Arbeitsproben"
+     },
+     {
+      "requirement": "Strukturierte, sorgfältige Arbeitsweise bei mehreren Projekten",
+      "importance": "meaningful",
+      "ad_wording": "arbeiten strukturiert, sorgfältig und behalten auch bei mehreren Projekten den Überblick"
+     },
+     {
+      "requirement": "Teamfähigkeit, offene Kommunikation, Eigenständigkeit",
+      "importance": "meaningful",
+      "ad_wording": "arbeiten gerne im Team, kommunizieren offen und gehen Aufgaben zuverlässig und eigenständig an"
+     },
+     {
+      "requirement": "Zwei bis drei Jahre Berufserfahrung",
+      "importance": "preferred",
+      "ad_wording": "idealerweise zwei bis drei Jahre Berufserfahrung"
+     }
+    ],
+    "tasks": [
+     "Gestaltung von Broschüren, Exposés, Anzeigen und Werbemitteln",
+     "Social-Media-Beiträge inkl. Fotos und kurzer Videos erstellen und veröffentlichen",
+     "Unternehmens- und Projektwebsites betreuen und aktualisieren",
+     "Druckereien, Fotografen, Agenturen und Dienstleister koordinieren",
+     "Projekte dokumentieren und Marketingmaßnahmen vor Ort unterstützen",
+     "Unterstützung bei Marketingbudgets, Rechnungen und Angeboten",
+     "Unterstützung bei Fotoshootings und Events"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "11-snk-performance-marketing-muenchen",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": true,
+    "role_type": "Junior",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Paid ads (a listed gap) in Munich; 'manager' drops it by title."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 2,
+     "seniority": 4,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This is a junior marketing role, so it is in scope, and Lena meets the language needs (German native, English C1). But the core of the job is running B2B paid ads on Google, LinkedIn, Meta and programmatic channels and planning their budgets, which she has listed as a gap she must never claim, so only her GA4 and reporting work is backed. The office is in Munich with regular office days, outside the Rhine-Neckar area or remote, which her settings make a hard mismatch; the ad gives no hours, start date or duration, so these need checking.",
+    "score": 10,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-13635-79ebdf71_JB5271601-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/13635-79ebdf71_JB5271601-S",
+    "title": "(Junior) Performance Marketing Manager (m/w/d)",
+    "company": "schoene neue kinder GmbH",
+    "location": "81543 München",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Junior",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Sicherer Umgang mit Paid Ads Channels (Google Ads, LinkedIn Ads, Meta Ads, Programmatic)",
+      "importance": "critical",
+      "ad_wording": "Sicherer Umgang mit Paid Ads Channels wie Google Ads, LinkedIn Ads, Meta Ads oder Programmatic Advertising"
+     },
+     {
+      "requirement": "Analytisches Verständnis und Zahlenaffinität",
+      "importance": "high",
+      "ad_wording": "Analytisches Verständnis, hohe Zahlenaffinität"
+     },
+     {
+      "requirement": "Kanalübergreifendes Denken, Einarbeitung in Kanäle und Daten",
+      "importance": "meaningful",
+      "ad_wording": "dich tief in Kanäle und Daten einzuarbeiten und kanalübergreifend zu denken"
+     },
+     {
+      "requirement": "Strategisches Denken und Eigenverantwortung",
+      "importance": "meaningful",
+      "ad_wording": "Strategisches Denken, Eigenverantwortung und ein hoher Qualitätsanspruch"
+     },
+     {
+      "requirement": "Freude an Testing und Optimierung",
+      "importance": "meaningful",
+      "ad_wording": "Freude an Testing, Optimierung und Innovation"
+     },
+     {
+      "requirement": "Erfahrung mit AI-Tools oder Marketing Automation Tools",
+      "importance": "preferred",
+      "ad_wording": "Idealerweise erste Berührungspunkte und Erfahrung mit AI-Tools oder Marketing Automation Tools"
+     }
+    ],
+    "tasks": [
+     "B2B-Paid-Media-Kampagnen planen, steuern und optimieren (Google Ads, LinkedIn Ads, Programmatic)",
+     "Kanalübergreifende Media-Strategien, Budgetplanung und Forecasting",
+     "Performance-Daten analysieren, Optimierung auf Leads, CPL, MQLs",
+     "A/B-Tests für Creatives, Zielgruppen und Landingpages",
+     "Reporting und Präsentation von Empfehlungen vor Kunden und Team",
+     "AI-Tools für Kampagnenanalyse, Budgetsteuerung und Creatives nutzen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "12-alfatraining-content-marketing-trainer",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Freelance teaching contract (Ulm or remote), not a job for a student."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "german_required": "unknown",
+    "subscores": null,
+    "reasons": "This is a freelance teaching contract (Lehrauftrag), not a working-student, internship or junior role: the person teaches academics in a further-education course on content marketing, SEM, web design/CMS and AI, full-time Mon-Fri 8:30-15:35. It needs established practical expertise and preferably trainer experience, so it is really a role for experienced people despite the remote setup and the content-marketing field, and Lena's background doesn't cover SEM or teaching.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10000-1183204067-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1183204067-S",
+    "title": "Content Marketing Manager:in",
+    "company": "alfatraining Bildungszentrum GmbH",
+    "location": "89077 Ulm, Donau",
+    "remote": "full",
+    "language": "de",
+    "role_type": "Other",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": 35,
+     "max": 35
+    },
+    "start": "26.10.2026, 23.11.2026 (und weitere Beauftragungstermine)",
+    "duration_months": 3,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Ausbildung oder Studium mit praktischer Expertise im Content Marketing",
+      "importance": "critical",
+      "ad_wording": "Ausbildung oder Studium und praktische Expertise"
+     },
+     {
+      "requirement": "Fachwissen Content Marketing und SEM Marketing",
+      "importance": "high",
+      "ad_wording": "Fachwissen Content Marketing; Fachwissen SEM Marketing"
+     },
+     {
+      "requirement": "Basiswissen Webdesign und CMS",
+      "importance": "meaningful",
+      "ad_wording": "Basiswissen Webdesign und CMS"
+     },
+     {
+      "requirement": "KI im Arbeitsprozess",
+      "importance": "meaningful",
+      "ad_wording": "Künstliche Intelligenz (KI) im Arbeitsprozess"
+     },
+     {
+      "requirement": "Erfahrung als Trainer",
+      "importance": "preferred",
+      "ad_wording": "Erfahrung als Trainer (w/m/d) vorteilhaft"
+     },
+     {
+      "requirement": "Kenntnisse im Videopräsenzunterricht",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse im Videopräsenzunterricht optional"
+     }
+    ],
+    "tasks": [
+     "Freiberuflicher Lehrauftrag: Unterricht für Akademiker in Weiterbildung Content Marketing",
+     "Vermittlung Basiswissen Webdesign und CMS",
+     "Vermittlung KI im Arbeitsprozess",
+     "Vermittlung Fachwissen Content Marketing und SEM Marketing",
+     "Betreuung Projektarbeit, Zertifizierungsvorbereitung und -prüfung",
+     "Unterricht per Videokonferenz (alfaview), Mo-Fr 8:30-15:35"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "13-limelight-senior-digital-marketing",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Senior role, several years of campaign experience required."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "german_required": "C1+",
+    "subscores": null,
+    "reasons": "This is a Senior Manager Digital Marketing role (full-time, 40 h), not a Werkstudent, internship, HiWi, thesis or junior role, so it isn't a role type Lena wants. The ad asks for several years of planning and running paid digital campaigns and expects her to own the paid-ads, CMS and social strategy work, which makes it senior-level, and paid ads budgets are one of her stated gaps.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-12117-YF-52046-YF-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12117-YF-52046-YF-S",
+    "title": "Senior Manager Digital Marketing (m/w/d)",
+    "company": "LIMELIGHT LIVE ENTERTAINMENT GmbH",
+    "location": "68159 Mannheim",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Other",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 40,
+     "max": 40
+    },
+    "start": "2027-01-01",
+    "duration_months": null,
+    "years_experience": 2,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutsch- und Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Mehrjährige Erfahrung mit digitalen Kampagnen",
+      "importance": "critical",
+      "ad_wording": "Mehrjährige Erfahrung in der Planung, Umsetzung und Optimierung digitaler Kampagnen"
+     },
+     {
+      "requirement": "Google Ad Manager, Google Analytics, Meta Werbeanzeigen Manager",
+      "importance": "high",
+      "ad_wording": "Sicherheit im Umgang mit dem Google Ad Manager sowie Google Analytics, dem Meta Werbeanzeigen Manager"
+     },
+     {
+      "requirement": "Tracking von Digital-Kampagnen",
+      "importance": "high",
+      "ad_wording": "Erfahrung mit und Verständnis für das Tracking von Digital Kampagnen"
+     },
+     {
+      "requirement": "Abgeschlossenes Studium/Ausbildung Digital Marketing, Wirtschaft, Medienmanagement o.ä.",
+      "importance": "meaningful",
+      "ad_wording": "Ein abgeschlossenes Studium und/oder Ausbildung im Bereich Digital Marketing, Wirtschaftswissenschaften, Medienmanagement o.ä."
+     },
+     {
+      "requirement": "Erfahrung mit CMS und Website-Pflege",
+      "importance": "meaningful",
+      "ad_wording": "Erfahrung mit CMS-Systemen und der Pflege bzw. Weiterentwicklung von Websites"
+     },
+     {
+      "requirement": "Gespür für Social Media und Content",
+      "importance": "meaningful",
+      "ad_wording": "Ein gutes Gespür für Social Media, Content und aktuelle digitale Trends"
+     },
+     {
+      "requirement": "Bereitschaft zu Abend-/Wochenendarbeit und Dienstreisen",
+      "importance": "meaningful",
+      "ad_wording": "Bereitschaft zu Abend- und Wochenendarbeit sowie zu Dienstreisen"
+     },
+     {
+      "requirement": "Erfahrung in der Veranstaltungsbranche",
+      "importance": "preferred",
+      "ad_wording": "idealerweise in der Veranstaltungsbranche"
+     },
+     {
+      "requirement": "Webflow-Kenntnisse",
+      "importance": "preferred",
+      "ad_wording": "Webflow-Kenntnisse von Vorteil"
+     },
+     {
+      "requirement": "Weitere Sprachen",
+      "importance": "preferred",
+      "ad_wording": "weitere Sprachen vorteilhaft"
+     }
+    ],
+    "tasks": [
+     "Paid-Kampagnen planen und umsetzen (Zielgruppen, Briefing, Texte, Monitoring)",
+     "Kampagnen auswerten und optimieren",
+     "Website über CMS pflegen, Landingpages optimieren",
+     "Organische Social-Media-Präsenz strategisch weiterentwickeln",
+     "Neue Impulse für digitale Vermarktung der Shows setzen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "14-sunny-roofs-digital-marketing-manager",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Full-time all-round marketer with Google Ads/SEO experience and a driving licence; not a student or junior role."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Junior",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 2,
+     "language": 5,
+     "location": 4,
+     "hours": 3
+    },
+    "reasons": "This is an in-scope junior marketing role in Worms (Rhine-Neckar, an easy commute from Mannheim). It asks for no years of experience and accepts a degree, and fluent German is no problem because Lena is a native speaker. Her Instagram content, copywriting, Canva and internship back about half of the requirements, but Google Ads/SEO/SEA, Facebook, Adobe CC, WordPress and Local SEO are gaps; the sole-marketer tasks (whole marketing function, agency coordination) read like an experienced role; hours aren't stated (probably full-time, which means asking about part-time for a student); and the required Class B driving licence still needs checking.",
+    "score": 61,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003695249-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003695249-S",
+    "title": "Digital Marketing Manager / Marketing Specialist (m/w/d)",
+    "company": "Sunny Roofs Sonnenschutzsysteme GmbH",
+    "location": "67551 Worms",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Other",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Fließende Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Fließende Deutschkenntnisse in Wort und Schrift sind zwingend erforderlich"
+     },
+     {
+      "requirement": "Führerschein Klasse B",
+      "importance": "critical",
+      "ad_wording": "Führerschein Klasse B ist erforderlich"
+     },
+     {
+      "requirement": "Ausbildung, Studium oder Berufserfahrung im (Digital) Marketing oder vergleichbar",
+      "importance": "high",
+      "ad_wording": "Ausbildung, Studium oder einschlägige Berufserfahrung im Bereich Digital Marketing, Online Marketing, Marketing, Social Media, Mediengestaltung, Kommunikation"
+     },
+     {
+      "requirement": "Praktische Erfahrung im Digital- und Online-Marketing",
+      "importance": "high",
+      "ad_wording": "Praktische Erfahrung im Digital- und Online-Marketing"
+     },
+     {
+      "requirement": "Erfahrung mit Instagram und Facebook und Social-Media-Content",
+      "importance": "high",
+      "ad_wording": "Erfahrung mit Instagram und Facebook sowie der Erstellung von Social-Media-Content"
+     },
+     {
+      "requirement": "Kenntnisse in Google Ads, SEO und SEA",
+      "importance": "high",
+      "ad_wording": "Kenntnisse im Bereich Google Ads, SEO und SEA"
+     },
+     {
+      "requirement": "Canva, Adobe Creative Cloud o. ä.",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit Canva, Adobe Creative Cloud oder vergleichbaren Grafik- und Bildbearbeitungsprogrammen"
+     },
+     {
+      "requirement": "Gespür für Design, Bildsprache und Texte",
+      "importance": "meaningful",
+      "ad_wording": "Gutes Gespür für Design, Bildsprache, Texte und moderne Unternehmenskommunikation"
+     },
+     {
+      "requirement": "Selbstständige, strukturierte Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Strukturierte, zuverlässige und selbstständige Arbeitsweise"
+     },
+     {
+      "requirement": "Google Business Profile und Local SEO",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse im Bereich Google Business Profile und Local SEO sind von Vorteil"
+     },
+     {
+      "requirement": "Erfahrung mit CMS, z. B. WordPress",
+      "importance": "preferred",
+      "ad_wording": "Erfahrung mit CMS- bzw. Website-Systemen, beispielsweise WordPress, ist wünschenswert"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "preferred",
+      "ad_wording": "Sehr gute Englischkenntnisse sind von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Betreuung der Social-Media-Kanäle Instagram und Facebook",
+     "Erstellung von Beiträgen, Fotos, Videos und Grafiken",
+     "Pflege des Google Business Profiles und Local SEO",
+     "Planung und Optimierung von Google-Ads-Kampagnen, SEA und SEO",
+     "Pflege und Aktualisierung der Unternehmenswebsite",
+     "Konzeption und Gestaltung von Werbematerialien (Flyer, Broschüren, Banner)",
+     "Planung und Organisation von Promotion- und Veranstaltungsmaßnahmen",
+     "Abstimmung mit Agenturen, Druckereien und Dienstleistern"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "15-db-praktikum-marketing-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Good content fit otherwise; 6 months full time in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 4
+    },
+    "reasons": "This is a 6-month marketing and communication internship that fits Lena's field. Her communication degree, social media content work, copywriting and GA4-based measurement cover most requirements, and as a native speaker she meets the C1 German requirement. The gaps are Photoshop/InDesign/Illustrator, event preparation and MS Excel (she has Google Sheets as related experience). The office is on-site in Berlin, far outside the Rhine-Neckar area or remote work she accepts, so location is a hard mismatch. The 40 h/week full-time internship is a small conflict with her 20 h/week semester availability, but it matches the 6 months she can offer.",
+    "score": 28,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-12456-1645041-1-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12456-1645041-1-S",
+    "title": "Praktikum Marketing und Kommunikation (w/m/d)",
+    "company": "Deutsche Bahn AG (DB Bahnbau Gruppe GmbH)",
+    "location": "10789 Berlin",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 40,
+     "max": 40
+    },
+    "start": "as soon as possible",
+    "duration_months": 6,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse (mind. C1)",
+      "importance": "critical",
+      "ad_wording": "sehr gute Deutschkenntnisse auf mindestens C1-Niveau"
+     },
+     {
+      "requirement": "Studium BWL, Wirtschafts- oder Kommunikationswissenschaften mit Schwerpunkt Marketing oder Eventmanagement",
+      "importance": "critical",
+      "ad_wording": "Du studierst BWL, Wirtschafts- oder Kommunikationswissenschaften oder einen vergleichbaren Studiengang mit dem Schwerpunkt Marketing oder Eventmanagement"
+     },
+     {
+      "requirement": "Aktuelle Immatrikulationsbescheinigung",
+      "importance": "high",
+      "ad_wording": "benötigen wir auch eine aktuelle Immatrikulationsbescheinigung"
+     },
+     {
+      "requirement": "Kommunikationsstärke, Motivation und Kreativität",
+      "importance": "high",
+      "ad_wording": "hohe Kommunikationsstärke, Motivation und Kreativität"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office und Excel",
+      "importance": "meaningful",
+      "ad_wording": "Der sichere Umgang mit MS Office und MS Excel"
+     },
+     {
+      "requirement": "Erste Erfahrung mit zielgruppengerechten Kommunikationsmitteln oder Marketingkonzepten",
+      "importance": "preferred",
+      "ad_wording": "Idealerweise konntest du bereits erste Erfahrungen in der Erstellung zielgruppengerechter Kommunikationsmittel oder Marketingkonzepte sammeln"
+     },
+     {
+      "requirement": "Kenntnisse in Photoshop sowie InDesign oder Illustrator",
+      "importance": "preferred",
+      "ad_wording": "Erweiterte Kenntnisse in Photoshop sowie InDesign oder Illustrator sind wünschenswert"
+     }
+    ],
+    "tasks": [
+     "Konzeption, Weiterentwicklung und Erfolgsmessung der Kommunikationsaktivitäten",
+     "Einhaltung von Corporate Design und Konzernvorgaben sicherstellen",
+     "Präsentationen und Kommunikationsmittel digital und gedruckt erstellen",
+     "Neue Dialog- und Kommunikationsmittel entwickeln",
+     "Veranstaltungen vorbereiten",
+     "Mitarbeitendeninterviews auf Baustellen vorbereiten und durchführen",
+     "Content für interne Kommunikation und Social Media erstellen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "16-theraeasy-social-media-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "unknown",
+    "note": "Social media internship in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 4,
+     "seniority": 4,
+     "language": 4,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This social media marketing internship is in Lena's field. Its main tasks (planning and creating content, running the channels, Instagram) match her real strengths, her Campus Café campaign and her Marketing Intern job; TikTok and Reels experience are the only gaps. The workplace is in Berlin with no remote option stated, which is outside the Rhine-Neckar area or remote that CLAUDE.md accepts, so location is a hard mismatch (0). The ad also gives no internship duration (it asks for at least 20 hours a week and a start as soon as possible), so check the duration under gaps.",
+    "score": 26,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003896329-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003896329-S",
+    "title": "Praktikum im Bereich Social Media Marketing (m/w/d)",
+    "company": "Theraeasy GmbH",
+    "location": "13187 Berlin",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": 20,
+     "max": null
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Erste praktische Erfahrung im Social Media Marketing",
+      "importance": "critical",
+      "ad_wording": "Erste praktische Erfahrung im Bereich Social Media Marketing"
+     },
+     {
+      "requirement": "Sicherer Umgang mit Instagram, TikTok",
+      "importance": "high",
+      "ad_wording": "Sicherer Umgang mit Instagram, TikTok und Co."
+     },
+     {
+      "requirement": "Kreativität und Gespür für Trends",
+      "importance": "high",
+      "ad_wording": "Kreativität und ein gutes Gespür für Trends"
+     },
+     {
+      "requirement": "Erste Erfahrungen im Online-Marketing",
+      "importance": "meaningful",
+      "ad_wording": "bereits erste Erfahrungen im Online-Marketing gesammelt"
+     },
+     {
+      "requirement": "Selbstständige, zuverlässige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Selbstständige und zuverlässige Arbeitsweise"
+     },
+     {
+      "requirement": "Motivation, eigene Ideen einzubringen",
+      "importance": "meaningful",
+      "ad_wording": "Motivation, eigene Ideen einzubringen"
+     }
+    ],
+    "tasks": [
+     "Erstellung und Planung von Social-Media-Content",
+     "Pflege und Betreuung der Social-Media-Kanäle",
+     "Entwicklung kreativer Ideen für Posts, Reels und Stories",
+     "Unterstützung bei Marketingkampagnen",
+     "Beobachtung aktueller Trends und Social-Media-Entwicklungen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "17-precision-labs-influencer-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Mostly remote but needs regular presence in Munich."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This is a social media working-student job, so it fits Lena's field. Her Instagram planning, content and copywriting work, including the Campus Café campaign, covers about half the ad, while creator outreach, TikTok, video shoots and events would be new to her. Her native German meets the C1+ requirement, and 20 hours a week matches her semester availability, though the ad gives no start date. The job is hybrid in Munich with regular office days for shoots and events, which is outside the Rhine-Neckar area she accepts and she won't relocate during her studies, so location is a hard mismatch.",
+    "score": 19,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-13635-7a7132f6_JB5271918-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/13635-7a7132f6_JB5271918-S",
+    "title": "Werkstudent Influencer Marketing & Social Media (m/w/d)",
+    "company": "Precision Labs GmbH",
+    "location": "80335 München",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 20,
+     "max": 20
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulation an einer Hochschule (z. B. Marketing, Kommunikation, Medien)",
+      "importance": "critical",
+      "ad_wording": "Du bist an einer Hochschule eingeschrieben, beispielsweise in Marketing, Kommunikation, Medien"
+     },
+     {
+      "requirement": "Sicheres Deutsch in Schrift",
+      "importance": "critical",
+      "ad_wording": "Du schreibst sicher auf Deutsch"
+     },
+     {
+      "requirement": "Interesse an Influencer Marketing, Social Media und Internetkultur",
+      "importance": "high",
+      "ad_wording": "Du interessierst dich für Influencer Marketing, Social Media und Internetkultur"
+     },
+     {
+      "requirement": "Gespür für Creator und Trends",
+      "importance": "high",
+      "ad_wording": "hast ein Gespür für spannende Creator und relevante Trends"
+     },
+     {
+      "requirement": "Präsenz in München für Drehs, Events und Teamarbeit",
+      "importance": "high",
+      "ad_wording": "Du kannst für Drehs, Events und Teamarbeit nach München kommen"
+     },
+     {
+      "requirement": "Gute Englischkenntnisse",
+      "importance": "meaningful",
+      "ad_wording": "kannst dich auch auf Englisch gut ausdrücken"
+     },
+     {
+      "requirement": "Strukturierte, zuverlässige, selbstständige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Du arbeitest strukturiert, zuverlässig und selbstständig"
+     },
+     {
+      "requirement": "Kreativität und Teamarbeit",
+      "importance": "meaningful",
+      "ad_wording": "Spaß daran, kreative Ideen zu entwickeln und gemeinsam im Team weiterzudenken"
+     },
+     {
+      "requirement": "Offenheit, Bereitschaft vor der Kamera zu stehen und bei Events anzupacken",
+      "importance": "meaningful",
+      "ad_wording": "Du gehst offen auf Menschen zu und packst bei Drehs und Events gerne mit an"
+     },
+     {
+      "requirement": "Erste Erfahrung in Social Media oder Influencer Marketing",
+      "importance": "preferred",
+      "ad_wording": "Erste praktische Berufserfahrung im Bereich Social Media oder Influencer Marketing ... ist von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Passende Creator recherchieren und prüfen",
+     "Ansprache und Betreuung von Creator bis zur Veröffentlichung",
+     "Briefings erstellen, Timings koordinieren",
+     "Creator-Datenbank pflegen und Kooperationen auswerten",
+     "Ideen für Instagram und TikTok entwickeln, Trends recherchieren",
+     "Contentplanung und Redaktionsplan pflegen",
+     "Content-Drehs vorbereiten und begleiten",
+     "Events mit Creator planen, organisieren und durchführen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "18-bsh-marketing-communication-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Marketing communication in Munich."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 4,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This marketing communication Werkstudent role fits Lena's field: her degree, her internship (the ad asks for first internship experience), the faculty newsletter relaunch and her GA4/Sheets analysis back about half the tasks, though the AI/prompting work and desk research on consumer data are gaps, and her native German and C1 English meet the \"sehr gute\" requirements. It is a hard mismatch on location, because the hybrid office is in München, outside the Rhine-Neckar area she accepts, and the ad states no hours, start date or duration (gaps to note).",
+    "score": 16,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-15986-45921-1-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/15986-45921-1-S",
+    "title": "Werkstudent/-in Marketing Communication (m/w/d)",
+    "company": "BSH Hausgeräte GmbH",
+    "location": "81739 München",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Betriebswirtschaftliches Studium, idealerweise Marketing oder Kommunikationswissenschaften",
+      "importance": "high",
+      "ad_wording": "Betriebswirtschaftliches Studium, idealerweise mit Schwerpunkt Marketing oder Kommunikationswissenschaften"
+     },
+     {
+      "requirement": "Begeisterung für Marketing und digitale Themen",
+      "importance": "high",
+      "ad_wording": "Begeisterung für Marketing und digitale Themen"
+     },
+     {
+      "requirement": "Grundlegendes Verständnis von KI und Prompting",
+      "importance": "meaningful",
+      "ad_wording": "Grundlegendes Verständnis von Künstlicher Intelligenz und Prompting"
+     },
+     {
+      "requirement": "Erste Berufserfahrung durch Praktika",
+      "importance": "meaningful",
+      "ad_wording": "Erste Berufserfahrung durch Praktika"
+     },
+     {
+      "requirement": "Selbständiges, strukturiertes Arbeiten und Engagement",
+      "importance": "meaningful",
+      "ad_wording": "Selbständig, strukturiert Arbeiten und hohes Engagement"
+     }
+    ],
+    "tasks": [
+     "Unterstützung bei internationalen Marketing-Kommunikations-Projekten",
+     "Desk Research und Analysen von Konsumentendaten",
+     "Ausarbeitung von Kommunikationskonzepten, Präsentationen und Newslettern",
+     "Organisation von Workshops/Events",
+     "Entwicklung und Implementierung von KI-Lösungen im Marketing"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "19-videogames-online-redaktion",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": [
+     30,
+     55
+    ],
+    "german_required": "C1+",
+    "note": "Writing for a gaming site, home office possible (office in Bielefeld); gaming expertise required."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 4,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This working-student online-editorial role fits Lena's content and communication field. Her media studies, copywriting and social media work cover about half the requirements, and her native German easily meets the C1+ level. Gaps: she has no gaming-scene expertise, no CMS experience and no ready writing samples, and the ad gives no hours. The hard mismatch is location: the job is hybrid in Bielefeld, outside the Rhine-Neckar area, and CLAUDE.md treats anything further as a hard mismatch with no relocation during her studies.",
+    "score": 16,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": false,
+    "score": false,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003122059-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003122059-S",
+    "title": "Werkstudent:in Online-Redaktion (m/w/d) für videogames.de",
+    "company": "Ideenkraftwerk GmbH",
+    "location": "33609 Bielefeld",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Fehlerfreies Deutsch und sicherer, lebendiger Schreibstil",
+      "importance": "critical",
+      "ad_wording": "Dein Deutsch ist fehlerfrei und dein Schreibstil ist sicher, lebendig und zielgruppengerecht"
+     },
+     {
+      "requirement": "Studium Geistes-, Medien- oder Kommunikationswissenschaften o. ä.",
+      "importance": "critical",
+      "ad_wording": "Du studierst Geistes-, Medien- oder Kommunikationswissenschaften (oder ein vergleichbares Fach)"
+     },
+     {
+      "requirement": "Erfahrung in der Gaming-Szene, Expertise über Plattformen",
+      "importance": "high",
+      "ad_wording": "einschlägige Erfahrung in der Gaming-Szene und eine große Expertise über Plattformen (PC, Konsole, Mobile)"
+     },
+     {
+      "requirement": "Schreibproben",
+      "importance": "meaningful",
+      "ad_wording": "idealerweise 2-3 aussagekräftige Schreibproben"
+     },
+     {
+      "requirement": "Zuverlässig, strukturiert, eigene Themenvorschläge",
+      "importance": "meaningful",
+      "ad_wording": "Du arbeitest zuverlässig, strukturiert und bringst gerne eigene Themenvorschläge ein"
+     }
+    ],
+    "tasks": [
+     "News, Previews und Testberichte zu Games verfassen",
+     "Recherche und Content-Pflege im CMS",
+     "Trend-Scouting in der Gaming-Szene (Twitch, Reddit, Discord)",
+     "Artikel auf Social-Media-Kanälen in Szene setzen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "20-nayoki-paid-social-muenchen",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Munich",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "unknown",
+    "note": "Onsite in Munich; paid social is a listed gap."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": {
+     "skills": 3,
+     "seniority": 5,
+     "language": 4,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This is a social media marketing working-student role, so it is in scope. Lena's Instagram/LinkedIn work, the Campus Café campaign and her GA4 and Sheets reporting cover the social media and numbers requirements, but running paid campaigns is the main task and paid ads is one of her listed gaps. The job is on-site in München, outside the Rhine-Neckar area, and it requires enrolment at a university in the Munich area, so location is a hard mismatch (0). The ad gives no hours, start date or duration.",
+    "score": 18,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003491961-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003491961-S",
+    "title": "Werkstudent Paid Social (m/w/d) – Online Marketing",
+    "company": "Nayoki Performance GmbH",
+    "location": "81543 München",
+    "remote": "none",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Eingeschriebener Student im Großraum München (Onsite)",
+      "importance": "critical",
+      "ad_wording": "Eingeschriebener Student (m/w/d) in bzw. im Großraum München (Onsite-Stelle)"
+     },
+     {
+      "requirement": "Interesse an Social Media und Plattformen wie TikTok, Instagram, LinkedIn",
+      "importance": "high",
+      "ad_wording": "Social Media ist Deine Welt: Du interessierst Dich für aktuelle Trends und nutzt Plattformen wie TikTok, Instagram, LinkedIn & Co."
+     },
+     {
+      "requirement": "Gespür für Zahlen und datenbasierte Zusammenhänge",
+      "importance": "high",
+      "ad_wording": "ein gutes Gespür für Zahlen sowie datenbasierte Zusammenhänge"
+     },
+     {
+      "requirement": "Kreativität und Neugier",
+      "importance": "meaningful",
+      "ad_wording": "Kreativität, Neugier"
+     },
+     {
+      "requirement": "Strukturierte, sorgfältige, zuverlässige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Eine strukturierte, sorgfältige und zuverlässige Arbeitsweise"
+     },
+     {
+      "requirement": "Teamfähigkeit und Motivation",
+      "importance": "meaningful",
+      "ad_wording": "packst gerne mit an und arbeitest mit Freude im Team"
+     },
+     {
+      "requirement": "Erste Erfahrungen im Social Media Marketing oder Paid Social",
+      "importance": "preferred",
+      "ad_wording": "Idealerweise konntest Du bereits erste Erfahrungen im Social Media Marketing oder Paid Social sammeln"
+     }
+    ],
+    "tasks": [
+     "Erstellung, Pflege und Optimierung von Social Paid Kampagnen (TikTok, Instagram, Pinterest, Reddit)",
+     "Kampagnen-Setups und Monitoring",
+     "Auswertungen, Reportings und KPIs aufbereiten",
+     "Recherchen und Qualitätssicherung im Tagesgeschäft",
+     "Umsetzung von Optimierungsmaßnahmen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "21-ruv-kommunikation-wiesbaden",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Wiesbaden",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "Internal communication in Wiesbaden, outside the Rhine-Neckar area."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 4
+    },
+    "reasons": "This working-student job in internal communication and marketing fits Lena well: she studies Media and Communication, has her copywriting work, the faculty newsletter relaunch (opening rate up from 31% to 44%) and visual work in Canva, and as a native speaker she easily meets the C1+ German; the gaps are only the preferred items (a CMS or SharePoint Online, and AI video tools like Synthesia), and the 11-20 hours fit her semester availability, though the ad gives no start date. It is still a hard mismatch, because the job is hybrid in Wiesbaden, outside the Rhine-Neckar area, which her CLAUDE.md treats as a hard mismatch, and the ad was posted on 2025-07-09, so check that it is still open before doing anything with it.",
+    "score": 28,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10000-1203068958-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1203068958-S",
+    "title": "Werkstudent (m/w/d) im Bereich Kommunikation & Marketing",
+    "company": "R+V ALLGEMEINE VERS. AG",
+    "location": "Wiesbaden",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 11,
+     "max": 20
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Laufendes Studium (ab 2. Semester) Medien, Kommunikation, Marketing o. ä.",
+      "importance": "critical",
+      "ad_wording": "Laufendes Studium ab 2. Semester im Bereich Medien, Kommunikation, Marketing oder vergleichbarem Studienfach"
+     },
+     {
+      "requirement": "Sehr gutes Sprachgefühl und sichere deutsche Rechtschreibung",
+      "importance": "critical",
+      "ad_wording": "Sehr gutes Sprachgefühl und sichere Rechtschreibung in der deutschen Sprache"
+     },
+     {
+      "requirement": "Interesse an Kommunikation & digitalen Medien, Gespür für Design/visuelle Kommunikation",
+      "importance": "high",
+      "ad_wording": "Lust auf Kommunikation & digitale Medien und ein Gespür für Design bzw. visuelle Kommunikation"
+     },
+     {
+      "requirement": "Affinität zu neuen Tools",
+      "importance": "meaningful",
+      "ad_wording": "Affinität zu neuen Tools"
+     },
+     {
+      "requirement": "Eigeninitiative, strukturierte Arbeitsweise, Teamwork",
+      "importance": "meaningful",
+      "ad_wording": "Eigeninitiative, zuverlässige und strukturierte Arbeitsweise, Spaß an Teamwork"
+     },
+     {
+      "requirement": "CMS-Kenntnisse, idealerweise SharePoint Online",
+      "importance": "preferred",
+      "ad_wording": "Idealerweise kennst Du das eine oder andere CMS (toll wäre Sharpepoint Online)"
+     },
+     {
+      "requirement": "Erste Erfahrung mit KI-Tools zur Text-, Bild- & Videogenerierung (z. B. Synthesia)",
+      "importance": "preferred",
+      "ad_wording": "Gerne verfügst Du schon über erste Erfahrungen mit KI-Tools zur Text-, Bild- & Videogenerierung wie z.B. Synthesia"
+     }
+    ],
+    "tasks": [
+     "Texten und Erstellen von Inhalten für Mailings, Intranet-Seiten und Newsletter",
+     "Unterstützung bei visueller Kommunikation (Logos, Bildwelten, Präsentationen)",
+     "Mitarbeit und Qualitätssicherung der internen Personal-Kommunikation",
+     "Pflege und Weiterentwicklung der Intranet-Seiten der R+V Akademie",
+     "Kreative Unterstützung bei Videoproduktion (auch mit KI-Tools)"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "22-avd-online-marketing-frankfurt",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Frankfurt",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "At least 2 days/week in Frankfurt; SEO/SEA is a gap."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 4,
+     "language": 5,
+     "location": 0,
+     "hours": 5
+    },
+    "reasons": "This online-marketing working-student role is in Lena's field. Her social media copywriting, newsletter relaunch, GA4 reporting and marketing internship cover about half of what the ad asks for, but SEO/SEA, performance marketing, CMS and lead campaigns are gaps. She is a native German speaker, so the C1+ German requirement is no problem, and 15-20 h/week with an ASAP start fits her availability. However, the job is in Frankfurt am Main with at least 2 office days a week, which is outside the Rhine-Neckar area. CLAUDE.md treats that as a hard mismatch, so location scores 0.",
+    "score": 19,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003467843-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003467843-S",
+    "title": "WERKSTUDENT (w/m/d) ONLINE-MARKETING",
+    "company": "AvD Wirtschaftsdienst GmbH",
+    "location": "60528 Frankfurt am Main",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": 15,
+     "max": 20
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutschkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Laufendes Studium Marketing, Kommunikation o. ä.",
+      "importance": "critical",
+      "ad_wording": "Laufendes Studium im Bereich Marketing, Kommunikation oder vergleichbar"
+     },
+     {
+      "requirement": "Erste Erfahrung im Online-Marketing",
+      "importance": "high",
+      "ad_wording": "Erste praktische Erfahrungen im Online-Marketing"
+     },
+     {
+      "requirement": "Sicherer Umgang mit Social Media, CMS, digitalen Tools",
+      "importance": "high",
+      "ad_wording": "Sicherer Umgang mit Social Media, CMS und digitalen Tools"
+     },
+     {
+      "requirement": "Präsenz in Frankfurt mind. 2 Tage/Woche",
+      "importance": "high",
+      "ad_wording": "Regelmäßige Präsenz am Standort Frankfurt (mindestens 2 Tage pro Woche)"
+     },
+     {
+      "requirement": "Analytische Fähigkeiten, Umgang mit Zahlen",
+      "importance": "meaningful",
+      "ad_wording": "Gute analytische Fähigkeiten sowie sicherer Umgang mit Zahlen"
+     },
+     {
+      "requirement": "Selbstständige, strukturierte Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Selbstständige, strukturierte und zuverlässige Arbeitsweise"
+     },
+     {
+      "requirement": "Interesse an Automobil-/Mobilitäts-/Motorsportthemen",
+      "importance": "meaningful",
+      "ad_wording": "Interesse an Automobil-, Mobilitäts- oder Motorsportthemen"
+     },
+     {
+      "requirement": "Grundkenntnisse Performance-Marketing",
+      "importance": "preferred",
+      "ad_wording": "Grundkenntnisse in Performance-Marketing wünschenswert"
+     }
+    ],
+    "tasks": [
+     "Entwicklung von Lead-Kampagnen zur Mitgliedergewinnung",
+     "Pflege und Optimierung von Website-Inhalten",
+     "Unterstützung bei SEO-/SEA-Maßnahmen",
+     "Content für Social Media, Kampagnen und Newsletter",
+     "Mitarbeit bei Foto- und Video-Produktionen",
+     "Analyse, Tracking und Reporting",
+     "Begleitung von Events, Messen und Motorsportveranstaltungen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "23-root-sales-recruiting",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Sales and recruiting."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": null,
+    "reasons": "This working-student job in Mannheim is about sales and recruiting: active sourcing on LinkedIn and Xing, screening candidates, finding new customers and keeping data in the system. That is outside Lena's field of marketing, content, social media, communication and PR, so it is out of scope even though the location and the 20 hours fit. The ad also asks for enrolment in business administration, economics, HR or a similar subject, and her B.A. Media and Communication would only count as \"similar\" at best; the short tasks of writing job ads and using LinkedIn are not enough to make it a communication role.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-18750-k62053.1214-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/18750-k62053.1214-S",
+    "title": "Werkstudent Sales & Recruiting (m/w/d)",
+    "company": "ROOT GmbH",
+    "location": "68161 Mannheim",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": 20
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulation in BWL, Wirtschaftswissenschaften, Personalmanagement o.ä.",
+      "importance": "critical",
+      "ad_wording": "Aktive Immatrikulation im Bereich BWL, Wirtschaftswissenschaften, Personalmanagement oder vergleichbar"
+     },
+     {
+      "requirement": "Kommunikationsstärke und sicheres Auftreten",
+      "importance": "high",
+      "ad_wording": "Kommunikationsstärke, sicheres Auftreten und Spaß am Umgang mit Menschen"
+     },
+     {
+      "requirement": "Interesse an Recruiting, Vertrieb und/oder Finance & Accounting",
+      "importance": "high",
+      "ad_wording": "Interesse an den Bereichen Recruiting, Vertrieb und/oder Finance & Accounting"
+     },
+     {
+      "requirement": "Vertriebsnahes Mindset",
+      "importance": "meaningful",
+      "ad_wording": "hast ein vertriebsnahes Mindset"
+     },
+     {
+      "requirement": "Strukturierte, selbstständige, zuverlässige Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Strukturierte, selbstständige und zuverlässige Arbeitsweise"
+     },
+     {
+      "requirement": "Erste praktische Erfahrungen",
+      "importance": "preferred",
+      "ad_wording": "Erste praktische Erfahrungen (z. B. durch Praktika) sind ein Plus, aber kein Muss"
+     }
+    ],
+    "tasks": [
+     "Unterstützung im Active Sourcing (LinkedIn & Xing)",
+     "Unterstützung im Recruiting-Prozess (Screening, Terminvereinbarung)",
+     "Mitarbeit im Vertrieb, Identifikation neuer Kundenkontakte",
+     "Pflege von Kandidaten- und Kundendaten im System",
+     "Erstellung von Stellenanzeigen und Profilen",
+     "Identifikation und Ansprache potenzieller Kandidaten"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "24-sap-neukunden-vertrieb",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Sales (lead generation for account executives)."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": null,
+    "reasons": "This is a new-customer sales role (Neukunden-Vertrieb): building the pipeline, qualifying leads, CRM work, supporting account executives and sales reports. Sales is outside Lena's scope of marketing, content, social media, communication and PR, and marketing appears only as preferred experience and in a few side tasks (campaigns, social selling, Canva). Location doesn't decide scope, but for reference Walldorf is in the Rhine-Neckar area and the \"excellent German\" requirement is fine because she is a native speaker.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-11070-1066485-3-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/11070-1066485-3-S",
+    "title": "Werkstudent (w/m/d) - im Neukunden-Vertrieb für den Mittelstand",
+    "company": "SAP",
+    "location": "69190 Walldorf (oder Berlin)",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Immatrikulation an Universität oder Fachhochschule",
+      "importance": "critical",
+      "ad_wording": "Student (w/m/d) an einer Universität oder Fachhochschule"
+     },
+     {
+      "requirement": "Exzellentes Deutsch",
+      "importance": "critical",
+      "ad_wording": "Exzellentes Deutsch ... in Wort und Schrift"
+     },
+     {
+      "requirement": "Sehr gutes Englisch",
+      "importance": "critical",
+      "ad_wording": "sehr gutes Englisch in Wort und Schrift"
+     },
+     {
+      "requirement": "Exzellente Kommunikationsfähigkeit und Kontaktfreudigkeit",
+      "importance": "high",
+      "ad_wording": "Exzellente Kommunikationsfähigkeiten und Kontaktfreudigkeit – auch auf Geschäftsführungsebene"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "high",
+      "ad_wording": "Sicherer Umgang mit MS Office"
+     },
+     {
+      "requirement": "Wöchentliche Präsenz im Büro Walldorf oder Berlin",
+      "importance": "high",
+      "ad_wording": "Du kannst wöchentlich in unsere Büros in Walldorf oder Berlin kommen"
+     },
+     {
+      "requirement": "Teamfähigkeit und Zuverlässigkeit",
+      "importance": "meaningful",
+      "ad_wording": "Teamfähigkeit und Zuverlässigkeit"
+     },
+     {
+      "requirement": "Vertraulicher Umgang mit sensiblen Daten",
+      "importance": "meaningful",
+      "ad_wording": "Vertrauensvoller Umgang mit sensiblen Daten"
+     },
+     {
+      "requirement": "Zeitmanagement und Selbstmotivation",
+      "importance": "meaningful",
+      "ad_wording": "Gutes Zeitmanagement und hohe Selbstmotivation"
+     },
+     {
+      "requirement": "Erste Erfahrung im Vertrieb oder Marketing",
+      "importance": "preferred",
+      "ad_wording": "Erste Erfahrungen im Vertrieb oder Marketing sind von Vorteil"
+     },
+     {
+      "requirement": "Kenntnisse in Canva",
+      "importance": "preferred",
+      "ad_wording": "idealerweise Canva"
+     }
+    ],
+    "tasks": [
+     "Aufbau und Qualifizierung der Vertriebspipeline (Kampagnen, Events, Kundengespräche)",
+     "Potenzialanalysen für Leads und Entwicklung zu Opportunities",
+     "Digital-/Social Selling",
+     "Zusammenarbeit mit Presales, Demand Generation, Vertrieb und Marketing",
+     "Unterstützung der Account Executives (Präsentationen, Angebote, Termine)",
+     "Pflege von Vertriebsaktivitäten im CRM und Leadmanagement",
+     "Vertriebsberichte und Analyse von Vertriebszahlen",
+     "Terminplanung für das Management"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "25-troendle-bauingenieurwesen",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Civil engineering."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "german_required": "unknown",
+    "subscores": null,
+    "reasons": "This is a working-student job in civil and structural engineering. It requires a civil engineering degree course, and the tasks are site management support, quantity take-offs and site measurements, which are outside Lena's field (marketing, content, social media, communication and PR). The location in Edingen-Neckarhausen is in the Rhine-Neckar area, but location doesn't decide scope, so the job is out of scope and isn't scored.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003476693-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003476693-S",
+    "title": "Werkstudent (m/w/d) Bauingenieurwesen / Konstruktiver Ingenieurbau",
+    "company": "Tröndle Bau GmbH",
+    "location": "68535 Edingen-Neckarhausen",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Studium Bauingenieurwesen, Schwerpunkt konstruktiver Ingenieurbau",
+      "importance": "critical",
+      "ad_wording": "Studium im Bereich Bauingenieurwesen, Schwerpunkt konstruktiver Ingenieurbau"
+     },
+     {
+      "requirement": "Sicherer Umgang mit MS Office",
+      "importance": "meaningful",
+      "ad_wording": "Sicherer Umgang mit MS Office"
+     },
+     {
+      "requirement": "Selbstständige und genaue Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Selbstständige und genaue Arbeitsweise"
+     },
+     {
+      "requirement": "Teamgeist, Kommunikationsstärke, Verantwortungsbereitschaft",
+      "importance": "meaningful",
+      "ad_wording": "Teamgeist, Kommunikationsstärke und Lust, Verantwortung zu übernehmen"
+     },
+     {
+      "requirement": "Praktische Erfahrung auf der Baustelle",
+      "importance": "preferred",
+      "ad_wording": "Erste praktische Erfahrung auf der Baustelle von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Unterstützung der Bauleitung im Tagesgeschäft",
+     "Vorbereitung und Kontrolle von Bauabläufen",
+     "Dokumentation des Baufortschritts",
+     "Mengenermittlungen und Aufmaße",
+     "Kommunikation mit Gewerken und Projektbeteiligten"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "26-rheinmetall-prozessentwicklung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "B2",
+    "note": "Manufacturing process engineering."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Werkstudent",
+    "german_required": "B2",
+    "subscores": null,
+    "reasons": "This is a process-development working-student role in engineering. It needs a degree in mechatronics, mechanical, manufacturing or electrical engineering, plus Python/OpenCV, CATIA V5 and metallurgy work, which is outside Lena's field of marketing, content, social media and communication/PR. It is a wanted role type in a nearby location (St. Leon-Rot, Rhine-Neckar), but none of her strengths match, so it is out of scope and not scored.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-15939-BB-635520-7878-3006-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/15939-BB-635520-7878-3006-S",
+    "title": "Werkstudent / Praktikant Prozessentwicklung (m/w/d)",
+    "company": "Rheinmetall AG",
+    "location": "68789 St. Leon-Rot",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "B2",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Laufendes Studium Mechatronik, Maschinenbau, Fertigungstechnik, Elektrotechnik o.ä.",
+      "importance": "critical",
+      "ad_wording": "Laufendes Studium im Bereich Mechatronik, Maschinenbau, Fertigungstechnik, Elektrotechnik oder vergleichbar"
+     },
+     {
+      "requirement": "Gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Gute Deutsch und Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Gute Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Gute Deutsch und Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Erste Erfahrung in Python (NumPy, YOLO, OpenCV)",
+      "importance": "high",
+      "ad_wording": "Erste Erfahrung in Python (z.B. NumPy, YOLO, Open CV usw.)"
+     },
+     {
+      "requirement": "Interesse an Kameratechnik, Sensorik und datengetriebenen Modellen",
+      "importance": "meaningful",
+      "ad_wording": "Interesse an Kameratechnik, Sensorik und datengetriebenen Modellen"
+     },
+     {
+      "requirement": "Analytisches Denken und strukturierte Arbeitsweise",
+      "importance": "meaningful",
+      "ad_wording": "Hohes analytisches Denken und strukturierte Arbeitsweise"
+     },
+     {
+      "requirement": "Praktische Problemlösung, Freude an neuen Technologien",
+      "importance": "meaningful",
+      "ad_wording": "Freude daran, Probleme praktisch zu lösen und neue Technologien auszuprobieren"
+     },
+     {
+      "requirement": "CATIA V5 und DraftSight",
+      "importance": "meaningful",
+      "ad_wording": "mittels CATIA V5 und DraftSight"
+     },
+     {
+      "requirement": "Kenntnisse in Metallurgie",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse in Metallurgie ... von Vorteil"
+     },
+     {
+      "requirement": "Simulation (Abaqus)",
+      "importance": "preferred",
+      "ad_wording": "Simulation (Abaqus) ... von Vorteil"
+     },
+     {
+      "requirement": "Gewerbliche Ausbildung vor dem Studium",
+      "importance": "preferred",
+      "ad_wording": "gewerbliche Ausbildung vor dem Studium von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Unterstützung in Projekten der Prozessentwicklung (Metallverarbeitung, Bildverarbeitung, Sensorik, Automatisierung)",
+     "Planung, Durchführung und Auswertung von Versuchen zu Fertigungs-, Prüfverfahren, Kamera- und Sensorsystemen",
+     "Modellierung von Anlagen, Prototypen, Prüfsystemen und Layouts mit CATIA V5 und DraftSight",
+     "Metallurgische und messtechnische Analysen",
+     "Technische Berichte und Datenanalysen mit SAP R3 und MS Office",
+     "Schnittstelle zwischen Entwicklung, Engineering und Fertigung",
+     "Mitarbeit an KI-Projekten in der Produktion"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "27-epicto-ausbildung-veranstaltung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "unknown",
+    "note": "Apprenticeship (Ausbildung), not a student role."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "german_required": "unknown",
+    "subscores": null,
+    "reasons": "This is a 36-month vocational apprenticeship (Ausbildung) as Veranstaltungskaufleute (event management clerk) starting in August or September 2027. It is not one of the role types Lena wants (working student, internship, HiWi, thesis or junior role), and it would not fit alongside her B.A. studies. Its main tasks are event planning, quotes, budgets and staff and travel planning, which is event operations rather than marketing, content, social media or communication. So it is out of scope even though Edingen-Neckarhausen is inside the Rhine-Neckar area.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10000-1207872644-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1207872644-S",
+    "title": "Ausbildung 2027: Veranstaltungskaufleute (m/w/d)",
+    "company": "epicto GmbH",
+    "location": "68535 Edingen-Neckarhausen",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Other",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "unknown",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "2027-08 / 2027-09",
+    "duration_months": 36,
+    "years_experience": null,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Mindestens Realschulabschluss mit guten Leistungen in Mathematik, Deutsch und Englisch",
+      "importance": "critical",
+      "ad_wording": "mindestens Realschulabschluss mit guten Leistungen in Mathematik, Deutsch und Englisch"
+     },
+     {
+      "requirement": "Mindestalter 18 Jahre",
+      "importance": "critical",
+      "ad_wording": "Mindestalter: 18 Jahre"
+     },
+     {
+      "requirement": "Führerschein Klasse B",
+      "importance": "critical",
+      "ad_wording": "PKW-Führerschein: Klasse B"
+     },
+     {
+      "requirement": "Praktikum im Unternehmen vor Anstellung",
+      "importance": "high",
+      "ad_wording": "vor einer Anstellung ein Praktikum in unserem Unternehmen zu absolvieren"
+     },
+     {
+      "requirement": "Organisationstalent und Interesse an Eventbranche und Veranstaltungstechnik",
+      "importance": "high",
+      "ad_wording": "Organisationstalent und Interesse an der Eventbranche und Veranstaltungstechnik"
+     },
+     {
+      "requirement": "Kommunikationsstarke Persönlichkeit, Arbeit mit Kunden",
+      "importance": "meaningful",
+      "ad_wording": "offene und kommunikationsstarke Persönlichkeit"
+     },
+     {
+      "requirement": "Hands-on-Mentalität, selbstständiges Arbeiten",
+      "importance": "meaningful",
+      "ad_wording": "Hands-on-Mentalität und Freude selbstständig zu arbeiten"
+     },
+     {
+      "requirement": "Bereitschaft zu flexibler Arbeitszeit",
+      "importance": "meaningful",
+      "ad_wording": "Bereitschaft zu flexibler Arbeitszeit"
+     },
+     {
+      "requirement": "Zuverlässigkeit, Pünktlichkeit, Teamfähigkeit",
+      "importance": "meaningful",
+      "ad_wording": "Zuverlässigkeit und Pünktlichkeit"
+     },
+     {
+      "requirement": "Gutes Zahlenverständnis",
+      "importance": "preferred",
+      "ad_wording": "Ein gutes Zahlenverständnis schadet nicht"
+     }
+    ],
+    "tasks": [
+     "Planung, Umsetzung und Nachbereitung von Veranstaltungen",
+     "Vorbereitung von Angeboten und Auftragsabwicklung",
+     "Kundenberatung und Bearbeitung von Kundenanfragen",
+     "Budgeterstellung",
+     "Personal- und Reiseplanung",
+     "Unterstützung im operativen Tagesgeschäft verschiedener Abteilungen"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "28-keil-unternehmensentwicklung",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Internship",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Business development and strategy for business/engineering students; marketing is a side topic."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 2,
+     "seniority": 5,
+     "language": 5,
+     "location": 4,
+     "hours": 3
+    },
+    "reasons": "This business-development internship includes marketing and customer outreach, which keeps it within Lena's field, but most of the work is strategy, market and competitor analysis, KPIs, process documentation and AI research, and it asks for a business or engineering degree, Excel and PowerPoint, none of which her social media, copywriting, Canva and GA4 strengths back (only GA4/Sheets reporting is adjacent). She is a native German speaker, so the C1+ requirement isn't a problem; Speyer is inside the Rhine-Neckar area, and the 3-month internship fits her 6-month availability and enrolment, but the weekly hours aren't stated, which is a gap to check.",
+    "score": 51,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": false,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003839401-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003839401-S",
+    "title": "Praktikum Unternehmensentwicklung – Strategie, Marketing, Vertrieb und Digitalisierung (m/w/d)",
+    "company": "Keil Konzepte e.K.",
+    "location": "67346 Speyer",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "nach Absprache",
+    "duration_months": 3,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Du bringst sehr gute Deutschkenntnisse mit."
+     },
+     {
+      "requirement": "Studium Wirtschaftsingenieurwesen, Wirtschaftsinformatik, BWL o.ä.",
+      "importance": "high",
+      "ad_wording": "Du studierst Wirtschaftsingenieurwesen, Wirtschaftsinformatik, BWL oder ein vergleichbares Fach."
+     },
+     {
+      "requirement": "Gründliche Recherche, analytisches Denken, verständliche Aufbereitung",
+      "importance": "high",
+      "ad_wording": "Du recherchierst gründlich, denkst analytisch und bereitest Ergebnisse verständlich auf."
+     },
+     {
+      "requirement": "Sicherer Umgang mit Excel und PowerPoint",
+      "importance": "meaningful",
+      "ad_wording": "Excel und PowerPoint nutzt du sicher."
+     },
+     {
+      "requirement": "Kenntnisse in Automatisierung oder KI",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse in Automatisierung oder KI sind willkommen."
+     }
+    ],
+    "tasks": [
+     "Portfolio strukturieren, Märkte und Wettbewerber analysieren",
+     "Vorschläge zur Ansprache von Kunden und Multiplikatoren entwickeln",
+     "Marktchancen recherchieren und Maßnahmen vorbereiten",
+     "Abläufe und Zuständigkeiten entwickeln und dokumentieren",
+     "KPIs für Unternehmensbereiche entwickeln und aufbereiten",
+     "Digitalisierungs- und KI-Anwendungen recherchieren, bewerten und Einführung vorbereiten"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "29-flexlog-technisches-marketing-karlsruhe",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Karlsruhe",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Karlsruhe is outside the Rhine-Neckar area; HubSpot (a listed gap); Pflichtpraktikum only."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 2,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 1
+    },
+    "reasons": "Hard mismatch on location: the role is in Karlsruhe, outside the Rhine-Neckar area Lena accepts, with no remote option stated. It is also only open as a Pflichtpraktikum (mandatory internship), so her eligibility needs checking. Native German and C1 English meet the C1+ language requirement, and GA4/Sheets KPI reporting and copywriting cover part of the ad, but the main tasks (HubSpot automation, SEO and landing pages) are gaps she must not claim.",
+    "score": 6,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003640542-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003640542-S",
+    "title": "Praktikum Technisches Marketing / Automation",
+    "company": "flexlog GmbH",
+    "location": "76227 Karlsruhe",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": true,
+    "requirements": [
+     {
+      "requirement": "Immatrikulierter Student im Pflichtpraktikum",
+      "importance": "critical",
+      "ad_wording": "Immatrikulierter Student (m/w/d) im Rahmen eines vorgeschriebenen Pflichtpraktikums"
+     },
+     {
+      "requirement": "Fließende Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Fließende Deutsch- und sehr gute Englischkenntnisse"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Fließende Deutsch- und sehr gute Englischkenntnisse"
+     },
+     {
+      "requirement": "Vorerfahrung oder Interesse an Marketing-Automation / HubSpot",
+      "importance": "high",
+      "ad_wording": "Erste praktische Vorerfahrung oder starkes Interesse im Bereich Marketing-Automation / HubSpot"
+     },
+     {
+      "requirement": "Affinität für Daten, Tools und Kennzahlen",
+      "importance": "high",
+      "ad_wording": "Affinität für Daten, Tools und Kennzahlen"
+     },
+     {
+      "requirement": "Studium z. B. (Wirtschafts-)Informatik, Wirtschafts-, Medien- oder Kommunikationswissenschaften",
+      "importance": "meaningful",
+      "ad_wording": "z. B. (Wirtschafts-)Informatik, Wirtschafts-, Medien- oder Kommunikationswissenschaften"
+     },
+     {
+      "requirement": "Stilsicheres Ausdrucksvermögen, sehr gute Rechtschreibung",
+      "importance": "meaningful",
+      "ad_wording": "Stilsicheres, fehlerfreies Ausdrucksvermögen sowie sehr gute Rechtschreibung und Grammatik"
+     },
+     {
+      "requirement": "Selbstbewusstes Auftreten, eigenständiges Arbeiten",
+      "importance": "meaningful",
+      "ad_wording": "Selbstbewusstes Auftreten, zielorientiertes und eigenständiges Arbeiten"
+     },
+     {
+      "requirement": "Erste B2B-Marketing-Erfahrung",
+      "importance": "preferred",
+      "ad_wording": "Erste B2B-Marketing-Erfahrung"
+     },
+     {
+      "requirement": "Erfahrung mit CRM- oder Analyse-Tools",
+      "importance": "preferred",
+      "ad_wording": "Vorerfahrung mit CRM- oder Analyse-Tools (z. B. Google Analytics)"
+     },
+     {
+      "requirement": "Grundkenntnisse technische Schnittstellen / Webentwicklung",
+      "importance": "preferred",
+      "ad_wording": "Interesse oder Grundkenntnisse an technischen Schnittstellen / Webentwicklung"
+     }
+    ],
+    "tasks": [
+     "Aufbau und Betreuung der HubSpot-Umgebung und Automatisierungsprozesse",
+     "Aufbau, Tracking und Analyse von Marketing- und Vertriebs-KPIs",
+     "Betreuung der Firmenhomepage, Erstellung von Landing Pages und SEO-Inhalten",
+     "Erstellung von Marketingmaterialien (Präsentationen, Case Studies)",
+     "Zusammenarbeit mit dem Vertriebsteam"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "30-check24-ai-content-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "C1+",
+    "note": "AI product content in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Internship",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This content-creation internship fits Lena's field, and her copywriting, social media and media studies are relevant. Her German is native and her English is C1, so the C1+ requirement isn't a problem, but AI content tools and prompting aren't proven strengths yet, and the ad doesn't state hours, start date or length. Location is a hard mismatch: the job is in Berlin, the ad doesn't say remote work is possible, and her CLAUDE.md only accepts the Rhine-Neckar area or remote roles.",
+    "score": 18,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-20208-a945257310c34b978e5-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/20208-a945257310c34b978e5-S",
+    "title": "Praktikum AI Content Creation – neues Produkt",
+    "company": "CHECK24 Services Personal GmbH",
+    "location": "10179 Berlin",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Internship",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": false,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutsch- und Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "KI-Tools zur Content-Generierung und Prompting",
+      "importance": "critical",
+      "ad_wording": "Begeisterung für KI-Tools zur Content-Generierung (z. B. ChatGPT, Midjourney etc.) sowie ein gutes Verständnis für effektives Prompting"
+     },
+     {
+      "requirement": "Laufendes oder abgeschlossenes Studium (BWL, Marketing, Mediengestaltung o. ä.)",
+      "importance": "high",
+      "ad_wording": "Laufendes oder abgeschlossenes Studium, z. B. in BWL, Marketing, Mediengestaltung"
+     },
+     {
+      "requirement": "Interesse an E-Commerce, Content oder Performance Marketing",
+      "importance": "high",
+      "ad_wording": "Interesse an E-Commerce, Content Marketing oder Performance Marketing"
+     },
+     {
+      "requirement": "Gespür für Nutzerbedürfnisse und verkaufsstarke Kommunikation",
+      "importance": "meaningful",
+      "ad_wording": "Gespür für Nutzerbedürfnisse sowie Interesse an verkaufsstarker Kommunikation"
+     },
+     {
+      "requirement": "Strukturierte Arbeitsweise und Detailgenauigkeit",
+      "importance": "meaningful",
+      "ad_wording": "Strukturierte Arbeitsweise, Detailgenauigkeit und Motivation, Verantwortung zu übernehmen"
+     }
+    ],
+    "tasks": [
+     "Produkt-Content mit KI-Tools erstellen und optimieren (Text, Bild, ggf. Video)",
+     "Headlines, Visuals und Content-Strukturen testen und weiterentwickeln",
+     "Wettbewerber recherchieren und analysieren, Optimierungsideen ableiten",
+     "Neue KI-Anwendungen für Content-Prozesse identifizieren und implementieren",
+     "Zusammenarbeit mit Design- und Marketplace-Team"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "31-db-werkstudent-kommunikation-berlin",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "hard_mismatch": "location: Berlin",
+    "score": [
+     0,
+     50
+    ],
+    "german_required": "unknown",
+    "note": "LinkedIn posts and texts, a strong content fit, but in Berlin."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 4,
+     "seniority": 5,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This is a working-student role in marketing and communication, and its main tasks match Lena's real strengths: writing LinkedIn posts and copy for target audiences, and internal communication like her newsletter relaunch. As a native German speaker with C1 English she meets the \"sehr gute\" language levels. The gaps are CMS experience, MS Office and image editing beyond Canva, and the ad gives no hours or duration. The office is in Berlin with no stated remote option, which is outside the Rhine-Neckar area, and CLAUDE.md says anything further is a hard mismatch, so location gets a 0.",
+    "score": 26,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": false,
+    "role_type": true,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-12456-1643188-1-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12456-1643188-1-S",
+    "title": "Werkstudent:in Marketing und Kommunikation (w/m/d)",
+    "company": "Deutsche Bahn AG (DB Engineering & Consulting GmbH)",
+    "location": "10789 Berlin",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": "as soon as possible",
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Studium Kommunikation, Marketing o. ä.",
+      "importance": "critical",
+      "ad_wording": "Du studierst Kommunikationsmanagement, Kommunikationsdesign, Gesellschafts- und Wirtschaftskommunikation, Marketing oder einen vergleichbaren Studiengang"
+     },
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "Sehr gute MS-Office-Kenntnisse sowie Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "high",
+      "ad_wording": "Sehr gute MS-Office-Kenntnisse sowie Deutsch- und Englischkenntnisse"
+     },
+     {
+      "requirement": "Erste Erfahrung mit CMS",
+      "importance": "high",
+      "ad_wording": "Erste praktische Erfahrungen mit Content-Management-Systemen (CMS)"
+     },
+     {
+      "requirement": "Sprachaffinität, zielgruppenorientiertes Texten",
+      "importance": "high",
+      "ad_wording": "hohe Sprachaffinität und hast Freude daran, zielgruppenorientierte Texte zu verfassen"
+     },
+     {
+      "requirement": "Sehr gute MS-Office-Kenntnisse",
+      "importance": "meaningful",
+      "ad_wording": "Sehr gute MS-Office-Kenntnisse"
+     },
+     {
+      "requirement": "Selbstständige, strukturierte Arbeitsweise, Teamorientierung",
+      "importance": "meaningful",
+      "ad_wording": "selbstständige, strukturierte Arbeitsweise sowie Teamorientierung und Flexibilität"
+     },
+     {
+      "requirement": "Kenntnisse in Bildbearbeitung",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse in der Bildbearbeitung sind von Vorteil"
+     }
+    ],
+    "tasks": [
+     "LinkedIn-Posts für Corporate-Kanäle erstellen",
+     "Beiträge für interne Kommunikation verfassen",
+     "Recherche zu Projekten im In- und Ausland und Texterstellung",
+     "Organisation von Veranstaltungen und Messen unterstützen",
+     "Ausbau und Weiterentwicklung der Corporate Websites",
+     "Inhalte ins CMS einpflegen",
+     "Bildbearbeitung"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "32-abc-travel-marketing-manager",
+   "expected": {
+    "title_filter": "drop",
+    "in_scope": false,
+    "role_type": "Other",
+    "hard_mismatch": null,
+    "score": null,
+    "german_required": "C1+",
+    "note": "Explicitly no career starters; several years of experience required."
+   },
+   "got": {
+    "in_scope": false,
+    "role_type": "Other",
+    "german_required": "C1+",
+    "subscores": null,
+    "reasons": "The field fits (marketing, social media, newsletter and PR work in Mannheim), but this is an experienced Marketing Manager role, not a student or junior role: the ad asks for several years of relevant work experience, says outright that it doesn't want career starters, and gives the hire budget responsibility and partnership ownership. Lena is a third-year B.A. student with one 6-month internship, so it's a senior role in disguise and is out of scope at step 3, even though the C1+ German requirement is fine because she's a native speaker.",
+    "score": null,
+    "hard_mismatch": null
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-10001-1003610952-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003610952-S",
+    "title": "Marketing Manager (m/w/d) Travel, Cooperations & Communications",
+    "company": "ABC Travel Service GmbH & Co. KG",
+    "location": "68309 Mannheim",
+    "remote": "hybrid",
+    "language": "de",
+    "role_type": "Other",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": 2,
+    "enrolment_required": null,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Mehrjährige relevante Berufserfahrung, kein Berufseinsteiger",
+      "importance": "critical",
+      "ad_wording": "mehrjährige relevante Berufserfahrung; ausdrücklich keinen Berufseinsteiger"
+     },
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "sehr gute Deutschkenntnisse"
+     },
+     {
+      "requirement": "Gute bis sehr gute Englischkenntnisse",
+      "importance": "high",
+      "ad_wording": "gute bis sehr gute Englischkenntnisse"
+     },
+     {
+      "requirement": "Eigenständige Planung und Umsetzung von Marketingmaßnahmen",
+      "importance": "high",
+      "ad_wording": "Erfahrung in der eigenständigen Planung und Umsetzung von Marketingmaßnahmen"
+     },
+     {
+      "requirement": "Ausbildung Tourismus oder Studium Tourismusmanagement, Marketing, Kommunikation",
+      "importance": "high",
+      "ad_wording": "abgeschlossene Ausbildung im Tourismus oder ein Studium im Bereich Tourismus-/Touristikmanagement, Marketing, Kommunikation"
+     },
+     {
+      "requirement": "Erfahrung mit Social Media, Content Marketing, digitaler Kommunikation",
+      "importance": "high",
+      "ad_wording": "Erfahrung mit Social Media, Content Marketing und digitaler Kommunikation"
+     },
+     {
+      "requirement": "Videoerstellung und Videoschnitt",
+      "importance": "meaningful",
+      "ad_wording": "praktische Kenntnisse in der Videoerstellung und im Videoschnitt"
+     },
+     {
+      "requirement": "Erfahrung mit Partnern, Kooperationen, Dienstleistern",
+      "importance": "meaningful",
+      "ad_wording": "Erfahrung im Umgang mit Partnern, Kooperationen oder externen Dienstleistern"
+     },
+     {
+      "requirement": "Budgetverantwortung, kaufmännisches Verständnis",
+      "importance": "meaningful",
+      "ad_wording": "sicheren Umgang mit Budgets und ein grundsätzliches kaufmännisches Verständnis"
+     },
+     {
+      "requirement": "Begeisterung für Reisen, Destinationskenntnis",
+      "importance": "meaningful",
+      "ad_wording": "echte Begeisterung für das Reisen"
+     },
+     {
+      "requirement": "Bereitschaft zu Abend-/Wochenendeinsätzen bei Events",
+      "importance": "meaningful",
+      "ad_wording": "auch einmal abends oder am Wochenende"
+     },
+     {
+      "requirement": "Kenntnisse der amerikanischen Community, US Military/NATO/Bundeswehr",
+      "importance": "preferred",
+      "ad_wording": "Kenntnisse der amerikanischen Community ... ausdrücklich von Vorteil"
+     }
+    ],
+    "tasks": [
+     "Mitentwicklung und Umsetzung der Marketingstrategie",
+     "Planung und Steuerung von Marketingkampagnen",
+     "Verwaltung des Marketingbudgets",
+     "Betreuung der Social-Media-Kanäle und Content-Plan",
+     "Newsletter und Marketing-Mailings",
+     "Erstellung und Schnitt von Video-Content",
+     "Betreuung und Aufbau von Kooperationen und Partnerschaften",
+     "Planung von Events, Presse- und Öffentlichkeitsarbeit"
+    ],
+    "injection_text": []
+   }
+  },
+  {
+   "ad": "33-baker-tilly-marketing-communications",
+   "expected": {
+    "title_filter": "pass",
+    "in_scope": true,
+    "role_type": "Internship",
+    "hard_mismatch": "location: Duesseldorf/Frankfurt",
+    "score": [
+     0,
+     45
+    ],
+    "german_required": "C1+",
+    "note": "Internship or working student at Duesseldorf, Frankfurt and other offices, none in Rhine-Neckar; SEO/SEA gaps."
+   },
+   "got": {
+    "in_scope": true,
+    "role_type": "Werkstudent",
+    "german_required": "C1+",
+    "subscores": {
+     "skills": 3,
+     "seniority": 4,
+     "language": 5,
+     "location": 0,
+     "hours": 3
+    },
+    "reasons": "This marketing and communications working-student role fits Lena's field: her social media, copywriting and KPI reporting are backed by the Campus Café campaign, the newsletter relaunch and her internship, and her native German and C1 English meet the \"sehr gute\" requirements. Gaps: the role is in Düsseldorf, outside the Rhine-Neckar area, with no remote option stated (a hard mismatch under her location rule); SEO and paid SEA/Social ads are skills she must not claim; hours, start and duration aren't stated; and the ad is from 2025-09-30, over a year old, so check that it is still open.",
+    "score": 16,
+    "hard_mismatch": "location"
+   },
+   "grades": {
+    "in_scope": true,
+    "german": true,
+    "role_type": false,
+    "hard_mismatch": true,
+    "score": true,
+    "tailor": true
+   },
+   "extract": {
+    "ad_extract_version": 1,
+    "id": "ba-12811-1941674-S",
+    "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12811-1941674-S",
+    "title": "Praktikant oder Werkstudent im Bereich Marketing & Communications (m/w/d)",
+    "company": "Baker Tilly",
+    "location": "40474 Düsseldorf",
+    "remote": "unknown",
+    "language": "de",
+    "role_type": "Werkstudent",
+    "closed": false,
+    "closed_evidence": null,
+    "german_required": "C1+",
+    "hours_per_week": {
+     "min": null,
+     "max": null
+    },
+    "start": null,
+    "duration_months": null,
+    "years_experience": null,
+    "enrolment_required": true,
+    "mandatory_internship_only": false,
+    "requirements": [
+     {
+      "requirement": "Sehr gute Deutschkenntnisse",
+      "importance": "critical",
+      "ad_wording": "sehr gute Deutsch- und Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Sehr gute Englischkenntnisse",
+      "importance": "critical",
+      "ad_wording": "sehr gute Deutsch- und Englischkenntnisse in Wort und Schrift"
+     },
+     {
+      "requirement": "Studium ab 3. Semester in Kommunikation, (Digital) Marketing, Journalismus oder Wirtschaftswissenschaften",
+      "importance": "high",
+      "ad_wording": "mindestens im 3. Semester Ihres Studiums mit Schwerpunkt Kommunikationswissenschaft oder -management, (Digital) Marketing, Journalismus oder Wirtschaftswissenschaften"
+     },
+     {
+      "requirement": "Journalistischer Schreibstil",
+      "importance": "high",
+      "ad_wording": "mit Ihrem journalistischen Schreibstil unsere Themen pointieren und kanalgerecht vermitteln"
+     },
+     {
+      "requirement": "Erste Praxiserfahrung in Unternehmenskommunikation, PR, Journalismus, Digital Marketing oder Social Media",
+      "importance": "meaningful",
+      "ad_wording": "durch erste praktische Erfahrungen im Bereich Unternehmenskommunikation, PR, Journalismus, Digital Marketing oder Social Media Management ... punkten"
+     },
+     {
+      "requirement": "Digitale Affinität",
+      "importance": "meaningful",
+      "ad_wording": "in der digitalen Welt zuhause"
+     },
+     {
+      "requirement": "Analytisches Denkvermögen",
+      "importance": "meaningful",
+      "ad_wording": "Ihr analytisches Denkvermögen"
+     },
+     {
+      "requirement": "Kommunikationsstärke, Kreativität, Teamfähigkeit",
+      "importance": "meaningful",
+      "ad_wording": "Kommunikationsstärke, Kreativität, Eigeninitiative und natürlich ausgeprägte Teamplayerqualitäten"
+     },
+     {
+      "requirement": "Strukturierte Arbeitsweise und Detailgenauigkeit",
+      "importance": "meaningful",
+      "ad_wording": "strukturierte Vorgehensweise und ein Auge fürs Detail"
+     }
+    ],
+    "tasks": [
+     "Planung, Koordination und Umsetzung von Marketing- und Kommunikationsmaßnahmen",
+     "Recherche und Entwicklung relevanter Themen",
+     "Erstellung von B2B-Content entlang der Customer Journey (Paid, Owned, Earned, Social)",
+     "Unterstützung bei der Beratung interner Stakeholder",
+     "Mitwirkung bei der Suchmaschinenoptimierung der Webseiten",
+     "Vermarktung von Themen über Paid-Maßnahmen (SEA und Social)",
+     "Erstellung von Auswertungen und Reportings anhand von KPIs"
+    ],
+    "injection_text": []
+   }
+  }
+ ],
+ "summary": {
+  "in_scope": [
+   29,
+   33
+  ],
+  "role_type": [
+   20,
+   21
+  ],
+  "hard_mismatch": [
+   20,
+   21
+  ],
+  "score": [
+   19,
+   21
+  ],
+  "tailor": [
+   30,
+   30
+  ],
+  "german": [
+   31,
+   33
+  ]
+ }
+}

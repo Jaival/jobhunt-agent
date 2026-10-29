@@ -12,12 +12,14 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-29: measurable judgment
+
 ### Added
 - Eval harness: `python tools/eval_run.py run` judges the 33 labelled ads in `tests/evals/ads/` the way the daily
   run judges a new job (one headless `claude -p` call per ad, no tools) and writes
   `tests/evals/baselines/v<version>.md` and `.json`: agreement with the labels per metric, the model used, the
   cost. `eval_run.py compare` shows what changed between two baselines and fails when a metric drops by more than
-  2 ads. The `v0.3.0` baseline is checked in (recorded before this sprint changed the scoring); the release
+  2 ads. The `v0.3.0` baseline (recorded before this sprint changed the scoring) and the `v0.4.0` one are checked in; the release
   checklist runs the eval before each release. For engine development only; the daily run doesn't use it.
 - Ad extracts: `templates/ad_extract.schema.json` (`ad_extract_version: 1`) lists the facts the routine takes
   from a job ad: title, company, location, remote, language, role type, closed flag with the words that show it,
@@ -49,8 +51,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Fit scores come from the rubric: the routine gives five 0-5 sub-scores and score.py computes the total,
   instead of the model choosing a 0-100 number. The same judgment now always gives the same score, but scores
   can move by several points against older runs, and a hard mismatch always lands below 60 (usually
-  below 40). The eval baseline
-  shows the effect on the labelled ads.
+  below 40). On the 33 labelled ads (`tests/evals/baselines/v0.4.0.md` against `v0.3.0.md`): German level
+  24 -> 31 agree, scores inside the labelled range 20 -> 19 (ad 02 scores 89 against [70, 88]; ad 19's location
+  is judged a hard mismatch, which now pulls its score to 16), every other metric unchanged. The same ad scored
+  twice stayed within 3 points.
 - The routine never reads ad text itself: it judges, scores and tailors from the extract, so instructions hidden
   in an ad can't reach the context that holds the CV and the tools. job.md links `ad.json` and `ad.txt` instead of
   holding the ad text. Injection attempts in the brief come from the extract's `injection_text`.
@@ -188,7 +192,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...next
+[0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Jaival/jobhunt-agent/releases/tag/v0.1.0
