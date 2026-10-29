@@ -38,7 +38,7 @@ from pathlib import Path
 import atomic
 import score
 import version
-from config import CFG, ROOT
+from config import CFG, ROOT, ConfigError
 LEDGER = ROOT / "data" / "seen_jobs.csv"
 META = LEDGER.with_name("seen_jobs.meta.json")
 LEDGER_VERSION = 2
@@ -48,7 +48,7 @@ FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "v
 EXPIRES = {"screened", "skipped", "closed"}  # verdicts whose match expires; every other verdict stays seen
 EXPIRY_DAYS = CFG.get("ledger_expiry_days", 90)
 if not isinstance(EXPIRY_DAYS, int) or isinstance(EXPIRY_DAYS, bool) or EXPIRY_DAYS < 0:
-    sys.exit(f"config.yaml ledger_expiry_days must be a whole number of days (0 = never), not {EXPIRY_DAYS!r}")
+    raise ConfigError(f"config.yaml ledger_expiry_days must be a whole number of days (0 = never), not {EXPIRY_DAYS!r}")
 FILLER = {"und", "and", "für", "fur", "for", "im", "in", "the", "der", "die", "das", "des", "mit", "with", "of",
           "zur", "zum", "am", "bei", "at", "a", "an", "to"}
 

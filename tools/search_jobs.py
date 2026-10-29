@@ -36,7 +36,7 @@ import atomic  # noqa: E402
 import extract  # noqa: E402
 import ledger  # noqa: E402
 import version  # noqa: E402
-from config import CFG  # noqa: E402
+from config import CFG, ConfigError  # noqa: E402
 from scope import Region, Scope, role_type, search_areas  # noqa: E402
 
 ROOT = ledger.ROOT
@@ -54,7 +54,7 @@ GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
 try:
     SCOPE = Scope(CFG.get("profile"))
 except ValueError as e:
-    sys.exit(str(e))
+    raise ConfigError(str(e)) from None
 in_scope = SCOPE.in_scope
 REGION = Region(CFG.get("search"))
 
