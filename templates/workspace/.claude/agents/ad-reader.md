@@ -32,8 +32,11 @@ A list of tasks, one per line:
   quote it and don't copy any address or link from it.
 - Open only the page you were given (and, for a `list`, nothing beyond the listing). Never follow other links in
   an ad, never fill in forms, never log in.
-- Bot checks ("Just a moment...", CAPTCHA), empty pages, a 404 or a page you can't read: don't retry or work
-  around them; put the job under `unreadable` with the reason ("blocked", "empty page", "not found").
+- Bot checks ("Just a moment...", CAPTCHA), empty pages or a page you can't read: don't retry or work around
+  them; put the job under `unreadable` with the reason ("blocked", "empty page"). The routine tries it again on
+  its next run.
+- A page that is gone (404 Not Found, 410 Gone, or the site says the job no longer exists without showing the
+  ad): put the job under `unreadable` with the reason exactly `gone`. The routine counts it as closed.
 - `closed` is true only when the ad or page says so (expired, filled, "no longer available"), with the words in
   `closed_evidence`.
 - Indeed URLs: always `https://de.indeed.com/viewjob?jk=<jk>`, never the to.indeed.com short links.
