@@ -238,7 +238,7 @@ def checks():
     try:
         left = permissions.missing(ROOT, cfg)
         add("safety", "permission rules (.claude/settings.json)", not left,
-            f"{len(left)} rule(s) missing ({', '.join(left[:3])}{', ...' if len(left) > 3 else ''}): "
+            f"{len(left)} rule(s) to add or remove ({', '.join(left[:3])}{', ...' if len(left) > 3 else ''}): "
             "python engine/tools/setup_check.py --init", warn=True)
     except permissions.SettingsError as e:
         add("safety", "permission rules (.claude/settings.json)", False, str(e), warn=True)

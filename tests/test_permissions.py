@@ -82,6 +82,22 @@ def test_install_merges_and_is_idempotent(tmp_path):
     assert permissions.missing(tmp_path, {"master_cv": "cv/Me_CV.docx"}) == []
 
 
+def test_install_removes_a_deny_for_agent_with_a_backup(tmp_path):
+    (tmp_path / ".claude").mkdir()
+    settings = tmp_path / ".claude" / "settings.json"
+    own = {"permissions": {"deny": ["Agent", "Agent(ad-reader)", "ListAgents", "mcp__*__reply", "Skill"]}}
+    settings.write_text(json.dumps(own), encoding="utf-8")
+    assert {"removed deny Agent", "removed deny Agent(ad-reader)"} <= set(permissions.missing(tmp_path))
+    added = permissions.install(tmp_path)
+    assert "removed deny Agent" in added and "removed deny Agent(ad-reader)" in added
+    deny = json.loads(settings.read_text(encoding="utf-8"))["permissions"]["deny"]
+    assert "Agent" not in deny and "Agent(ad-reader)" not in deny
+    assert {"ListAgents", "mcp__*__reply", "Skill"} <= set(deny)
+    backups = list(settings.parent.glob("settings.json.bak-*"))
+    assert len(backups) == 1 and json.loads(backups[0].read_text(encoding="utf-8")) == own
+    assert permissions.missing(tmp_path) == []
+
+
 def test_hooks_are_merged_by_command():
     want = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
     have = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python g.py"}]}]}}

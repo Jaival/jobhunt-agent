@@ -12,6 +12,7 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/upgrade.py migrate [--dry-run]  bring config.yaml to this engine's version; writes
                                                      cv/layout.yaml from the old CV settings when it's missing
                                                      and adds missing permission rules to .claude/settings.json
+                                                     (removes a deny rule for Agent, backup first)
     python engine/tools/upgrade.py compare [--max 5] build a test application (and up to 5 real ones) with the
                                                      saved old engine and the new one, and compare the documents
     python engine/tools/upgrade.py rollback          back to the old engine and config (local edits restored)
