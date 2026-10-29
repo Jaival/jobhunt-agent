@@ -12,6 +12,19 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Added
+- Grounding check in `build_application.py`: every number and every skill or tool term (the shipped list in
+  `tools/skills.txt` plus your `profile.score_bonus`) in a letter or the CV headline must appear in your master
+  CV, CLAUDE.md (not its "Gaps" section), projects.md, cv/variants.yaml or the job's `ad.json`, or the build fails
+  with the list. A percentage needs the same percentage; "1,200" and "1.200" are the same number. Terms only the
+  ad has pass with a "from the ad only" line. `grounding_ok: [term]` in application.md lets reviewed exceptions
+  through.
+
+### Behaviour changes
+- **Major:** letters that passed before can fail the build: an invented metric ("increased traffic by 40%"),
+  a number from nowhere, or a tool the candidate only lists under Gaps. The routine corrects the letter and
+  rebuilds; it never adds facts to your files to make a letter pass.
+
 ## [0.4.0] - 2026-10-29: measurable judgment
 
 ### Added
