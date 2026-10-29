@@ -12,6 +12,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Fixed
+- `guard.py --status` cut long paths in its "refused" lines after 80 characters, so in a workspace with a long path
+  the file name was lost (`...\e`). A long path now keeps its end, with `...` in front.
+
 ## [0.4.0] - 2026-10-29: measurable judgment
 
 ### Added

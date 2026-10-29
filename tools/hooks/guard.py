@@ -477,11 +477,15 @@ def text_of(content):
 
 
 def summary(inp):
-    """What a call was about: its path, command or URL, at most 80 characters."""
+    """What a call was about: its path, command or URL, at most 80 characters. A long path keeps its end (the
+    file name), a command or URL its start."""
     if isinstance(inp, dict):
         for key in ("file_path", "notebook_path", "path", "command", "url"):
             if isinstance(inp.get(key), str):
-                return " ".join(inp[key].split())[:80]
+                text = " ".join(inp[key].split())
+                if len(text) > 80 and key.endswith("path"):
+                    return "..." + text[-77:]
+                return text[:80]
     return ""
 
 
