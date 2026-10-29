@@ -25,6 +25,7 @@ for the rest, which you can post if you like.
 
 What each release changes in your workspace and daily run, what the update shows you, and how to check it:
 
+- [v0.3.0 to v0.4.0](docs/upgrading/v0.4.0.md): the ad reader, rubric scores, ledger expiry.
 - [v0.2.0 to v0.3.0](docs/upgrading/v0.3.0.md): permission rules and a guard for the daily run, no lost jobs.
 - [v0.1.0 to v0.2.0](docs/upgrading/v0.2.0.md): the first "update the engine", German letters. Also for
   workspaces from before v0.1.0.
