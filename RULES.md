@@ -21,6 +21,15 @@ CLAUDE.md. **Decisions recorded in CLAUDE.md override these defaults.**
    - Anything else unknown: write a sentence that works without it. List it in job.md and the brief so the candidate can adjust it.
 10. Attitude to convey (sincerely, no cliches): the candidate wants to start soon, is eager to learn the tools they don't know yet, and wants to take real work off the team's plate from early on.
 
+## On request
+These replace the daily routine for the conversation. Each is a skill in `.claude/skills/`; when the skill isn't
+installed yet, follow the file it points to.
+- "run the ATS review", "check my CV": skill `ats-review` (engine/ats-checklist.md).
+- "update the engine", "upgrade the engine": skill `update-engine` ("Steps for Claude" in engine/UPGRADING.md).
+- "remap my CV", after the candidate changed their master CV or letter: skill `remap-cv` ("Map the CV" in
+  engine/ONBOARDING.md round 5).
+- "set up my workspace", or setup_check.py reports TODO: skill `onboarding` (engine/ONBOARDING.md).
+
 ## Folder layout (workspace)
 - `engine/` this public repo: ROUTINE.md (the daily routine; the scheduled task points here), RULES.md, rubric.md (the fit-score anchors), career-ops-playbook.md, tools/, templates/. **Never edit files in engine/**: local edits block engine updates. Personal behaviour goes in CLAUDE.md (decisions) or config.yaml (settings); wishes the engine can't do yet go in `custom.md`.
 - `custom.md` wish list for the engine (never acted on by the routine); "update the engine" marks the wishes a new version covers and drafts an issue for the rest
