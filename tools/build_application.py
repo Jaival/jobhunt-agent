@@ -75,7 +75,10 @@ HOURS_WORDS = {"en": ["hours per week", "hours a week"],
                "de": ["stunden pro woche", "wochenstunden", "stunden wöchentlich", "stunden in der woche"]}
 APPLICANT = CFG["applicant"]          # name in metadata; files start with FILE_PREFIX
 FILE_PREFIX = CFG["file_prefix"]
-UNIVERSITY = CFG.get("university", "")   # student letters must name it
+UNIVERSITIES = CFG.get("university") or []   # student letters must name it, or one of its names (a list)
+UNIVERSITIES = [UNIVERSITIES] if isinstance(UNIVERSITIES, str) else UNIVERSITIES
+if not isinstance(UNIVERSITIES, list) or not all(isinstance(u, str) and u.strip() for u in UNIVERSITIES):
+    sys.exit("config.yaml: university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]")
 INTERNSHIP_DURATION = CFG.get("internship_duration") or ""   # internship letters must state it: "12 months" or
                                                               # {de: "12 Monate", en: "12 months"}
 NAME_IN_MASTER = CFG.get("name_in_master") or ""   # the name as the master files spell it, replaced by APPLICANT
@@ -473,8 +476,8 @@ def check(meta, bodies, cv_doc, letter_docs):
             problems.append(f"{tag(lg)} body has {words} words (allowed {WORDS_MIN}-{WORDS_MAX})")
         if meta["role_type"] in STUDENT_TYPES:
             letter = " ".join(body).lower()
-            if UNIVERSITY and UNIVERSITY.lower() not in letter:
-                problems.append(f"{tag(lg)}: student letter must mention {UNIVERSITY} enrolment")
+            if UNIVERSITIES and not any(u.lower() in letter for u in UNIVERSITIES):
+                problems.append(f"{tag(lg)}: student letter must mention {' or '.join(UNIVERSITIES)} enrolment")
             if not any(w in letter for w in START_WORDS[lg]):
                 problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}')")
             if not any(w in letter for w in HOURS_WORDS[lg]):
