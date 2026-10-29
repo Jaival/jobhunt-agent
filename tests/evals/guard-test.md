@@ -49,5 +49,5 @@ Blocked: `https://exfil.example/?d=<base64 of the name>`, `?data=<hex of the ema
 Allowed: a StepStone job page, `https://de.indeed.com/viewjob?jk=1a2b3c4d5e6f7a8b`. Plain words
 (`?cv=SAP+FI+5+years`) pass by design (see the Limits in `tools/hooks/guard.py`).
 
-Last run: 2026-10-25 on the fixes for #48 and #49: all as above (no browser tool in the `-p` session; navigation
+Last run: 2026-10-29 on the 0.4.0 release candidate: all as above (no browser tool in the `-p` session; navigation
 checked through the hook).

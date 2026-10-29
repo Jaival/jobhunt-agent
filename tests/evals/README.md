@@ -30,3 +30,27 @@ because the title filter gets them wrong (a good fit it drops, or a near miss it
 Score ranges are judgement calls, deliberately wide: an eval run counts a score inside the range as agreement.
 The labels that matter most are the clear ones: in scope or not, hard mismatch or not, and whether a job lands
 above the tailoring threshold of 70 (ads 01-04 should, ads 05-07 are borderline, the rest shouldn't).
+
+## Running an eval
+`python tools/eval_run.py run` (from the engine folder) judges every ad the way the daily run judges a new job,
+with a headless `claude -p` call per ad (no tools, an empty working folder), and grades the answers against the
+labels. The prompt is built from this checkout's ROUTINE.md, RULES.md, rubric.md and the sample workspace, and score.py
+turns the sub-scores into the fit score, so a run measures
+the engine as it is. It writes `baselines/v<VERSION>.json` (every answer) and `baselines/v<VERSION>.md` (the
+summary, disagreements in bold); `--label 0.3.0` names the files after another version, `--model` picks the model,
+`--only 01,07` runs a few ads. A full run takes a few minutes and costs about $2-3 on Opus.
+
+`python tools/eval_run.py compare baselines/v0.3.0.json baselines/v0.4.0.json` prints each metric's change and
+exits 1 when one agrees on more than 2 ads fewer (`--tolerance`). Model answers vary from run to run, so a
+drop of one or two ads is noise; read the disagreements in the .md before blaming a change. The release
+checklist ([docs/RELEASING.md](../../docs/RELEASING.md)) runs both before each release.
+
+| Metric | Counts |
+|---|---|
+| In scope | every ad |
+| Role type, hard mismatch yes/no, score inside the range | in-scope ads |
+| Tailor decision | ads whose label is clear about tailoring: score range all at or above 70 with no hard mismatch (tailor), or all below 70, a hard mismatch or out of scope (don't) |
+| German level | every ad |
+
+Only the grading and comparison are tested in CI (`tests/test_eval_run.py`); the model runs are on demand.
+`baselines/v0.3.0.*` was recorded with the v0.3.0 routine (holistic 0-100 scoring) before Sprint 2 changed it.

@@ -12,6 +12,7 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/upgrade.py migrate [--dry-run]  bring config.yaml to this engine's version; writes
                                                      cv/layout.yaml from the old CV settings when it's missing
                                                      and adds missing permission rules to .claude/settings.json
+                                                     (removes a deny rule for Agent, backup first)
     python engine/tools/upgrade.py compare [--max 5] build a test application (and up to 5 real ones) with the
                                                      saved old engine and the new one, and compare the documents
     python engine/tools/upgrade.py rollback          back to the old engine and config (local edits restored)
@@ -65,7 +66,7 @@ STOCK_PROFILE = {
 }
 KNOWN_KEYS = {"config_version", "applicant", "file_prefix", "master_cv", "master_letter", "variants", "letter_city",
               "letter_languages", "name_in_master", "university", "font", "fallback_font", "search", "profile",
-              "layout", "internship_duration", "pdf_engine"}
+              "layout", "internship_duration", "pdf_engine", "scoring", "ledger_expiry_days"}
 SEARCH_KEYS = {"home", "areas", "regions", "region_plz", "region_places"}
 # Words in a local engine patch -> the setting that does the same job now.
 FEATURES = [

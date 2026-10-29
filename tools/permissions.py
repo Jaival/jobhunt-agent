@@ -10,12 +10,16 @@ The rules only apply to a local Claude Code session whose project folder is the 
 task with "Only on this computer"); cloud and Cowork tasks ignore .claude/.
 
 install() merges, never overwrites: rules and hooks already in .claude/settings.json stay, missing ones are added.
+The one exception is a deny rule for a tool the engine needs (NEEDED: the ad-reader subagent runs through Agent):
+it is removed, after a copy of the file is saved as .claude/settings.json.bak-<date>.
 The other template files (.claude/hooks/jobhunt_guard.py, which starts engine/tools/hooks/guard.py) belong to the
 engine and are copied when missing or changed. setup_check.py --init and upgrade.py migrate call it;
 setup_check.py warns while something is missing.
 """
 import copy
+import datetime as dt
 import json
+import shutil
 from pathlib import Path
 
 import atomic
@@ -24,6 +28,7 @@ TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "workspace" / ".c
 FILES = [p for p in sorted(TEMPLATE.parent.rglob("*")) if p.is_file() and p != TEMPLATE and "__pycache__" not in p.parts]
 # config.yaml values that only appear in the template: no real master file to protect yet.
 TEMPLATE_MASTERS = {"cv/Your_Name_CV.docx", "cv/Your_Name_CoverLetter.docx"}
+NEEDED = {"Agent"}  # tools the routine can't run without; a deny rule for them ("Agent", "Agent(...)") is removed
 
 
 class SettingsError(Exception):
@@ -58,8 +63,13 @@ def load(root):
 
 
 def merge(have, want):
-    """have with everything from want added. Returns (merged, added) where added describes each new entry."""
+    """have with everything from want added and deny rules for NEEDED tools removed. Returns (merged, added) where
+    added describes each change."""
     out, added = copy.deepcopy(have), []
+    deny = out.get("permissions", {}).get("deny", [])
+    for rule in [r for r in deny if r.split("(")[0] in NEEDED]:
+        deny.remove(rule)
+        added.append(f"removed deny {rule}")
     for kind, rules in want.get("permissions", {}).items():
         cur = out.setdefault("permissions", {}).setdefault(kind, [])
         for rule in rules:
@@ -97,11 +107,15 @@ def missing(root, cfg=None):
 
 
 def install(root, cfg=None, dry_run=False):
-    """Add the missing rules to <root>/.claude/settings.json and copy the hook files. Returns what was added.
+    """Add the missing rules to <root>/.claude/settings.json, remove deny rules for NEEDED tools (backup first) and
+    copy the hook files. Returns what was added or removed.
     Raises SettingsError."""
     merged, added = merge(load(root), wanted(cfg))
     files = stale_files(root)
     if not dry_run:
+        backup = settings_path(root).with_name(f"settings.json.bak-{dt.date.today().isoformat()}")
+        if any(a.startswith("removed ") for a in added) and not backup.exists():
+            shutil.copy2(settings_path(root), backup)
         for src in files:  # the launcher first, so the hook entry never points at a missing file
             atomic.write_text(Path(root) / ".claude" / src.relative_to(TEMPLATE.parent),
                               src.read_text(encoding="utf-8"))
