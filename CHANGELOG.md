@@ -62,6 +62,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Fixed
 - `upgrade.py migrate` no longer lists `scoring:` in config.yaml as an unknown setting.
+- A deny rule for the `Agent` tool in `.claude/settings.json` kept the daily run from calling the ad reader, and
+  setup_check didn't notice. `upgrade.py migrate` and `setup_check.py --init` now remove it (and print
+  `removed deny Agent`) after saving the file as `.claude/settings.json.bak-<date>`; until then setup_check warns.
 
 ## [0.3.0] - 2026-10-25: safe & lossless
 
