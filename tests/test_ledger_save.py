@@ -13,7 +13,7 @@ def test_save_and_load(ledger_mod):
     ledger_mod.save(rows(ledger_mod, "Werkstudent Marketing", "Werkstudent Content"))
     assert [r["title"] for r in ledger_mod.load()] == ["Werkstudent Marketing", "Werkstudent Content"]
     assert ledger_mod.LEDGER.read_bytes().count(b"\r\n") == 3  # csv line endings, not doubled to \r\r\n
-    assert [p.name for p in ledger_mod.LEDGER.parent.iterdir()] == ["seen_jobs.csv"]
+    assert sorted(p.name for p in ledger_mod.LEDGER.parent.iterdir()) == ["seen_jobs.csv", "seen_jobs.meta.json"]
 
 
 def test_failed_save_keeps_old_ledger(ledger_mod, monkeypatch):
@@ -26,4 +26,4 @@ def test_failed_save_keeps_old_ledger(ledger_mod, monkeypatch):
     with pytest.raises(PermissionError):
         ledger_mod.save(rows(ledger_mod, "Werkstudent Content", "Werkstudent PR"))
     assert ledger_mod.LEDGER.read_bytes() == before
-    assert [p.name for p in ledger_mod.LEDGER.parent.iterdir()] == ["seen_jobs.csv"]
+    assert sorted(p.name for p in ledger_mod.LEDGER.parent.iterdir()) == ["seen_jobs.csv", "seen_jobs.meta.json"]

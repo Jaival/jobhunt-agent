@@ -86,6 +86,7 @@ Use the tracker, the daily briefs and the application folders:
 - Funnel: drafted -> sent -> replied -> interview -> offer, with counts.
 - Send rate: drafted vs sent this week and overall. If I sent fewer than half of the drafts, say so plainly and suggest tailoring fewer.
 - Score vs outcome: average fit score of replied/interview vs no reply vs rejection. Only call a segment bad when at least 2 outcomes are decided; silence is not rejection.
+- Sub-scores and versions vs outcome, from data/seen_jobs.csv (`subscores`, `engine_version`, `model`; rows from before these columns are blank and left out): the average of each sub-score per outcome, to show which criterion predicts replies, and the outcomes per engine version and model, so a scoring change shows up. Same 2-outcome rule.
 - By role type and by source: sent, replies, interviews.
 - Top blockers: the most common gaps in rejected or skipped jobs (German level, a missing tool, seniority) and one concrete step for the biggest one (a lab task, a certificate, a CV wording change).
 - With fewer than 10 decided outcomes, report the numbers as observations and don't recommend a new score threshold yet.

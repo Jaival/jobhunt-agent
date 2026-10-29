@@ -10,12 +10,17 @@ A match expires after config.yaml `ledger_expiry_days` (default 90; 0 = never) w
 skipped or closed: a job seen again after that counts as new, and `record` reuses its row (the note keeps the old
 date and verdict). Tailored, applied, rejected and interview never expire.
 
+Columns subscores (the five rubric sub-scores, "skills=4 seniority=5 ..."), engine_version and model came with
+ledger_version 2 (data/seen_jobs.meta.json, so the CSV stays plain). Older ledgers load with them blank and get the
+new header on the next save; `set` fills engine_version from engine/VERSION.
+
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
                                                   (verdict "screened"; "closed" when its page is gone; jobs the
                                                   reader couldn't read stay out, so the next run tries again)
     python engine/tools/ledger.py set <key|url|id> --verdict tailored|skipped|closed|applied|rejected|screened
-                               [--score 72] [--note "C1 German"]
+                               [--score 72] [--subscores skills=4 seniority=5 language=3 location=5 hours=4]
+                               [--model claude-opus-5-5] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
                                                   (NEW, SEEN, or NEW (seen ..., expired))
     python engine/tools/ledger.py backfill               seed from the tracker, application folders and daily briefs
@@ -31,10 +36,15 @@ import sys
 from pathlib import Path
 
 import atomic
+import score
+import version
 from config import CFG, ROOT
 LEDGER = ROOT / "data" / "seen_jobs.csv"
+META = LEDGER.with_name("seen_jobs.meta.json")
+LEDGER_VERSION = 2
 CANDIDATES = ROOT / "data" / "candidates.json"
-FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note"]
+FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note",
+          "subscores", "engine_version", "model"]
 EXPIRES = {"screened", "skipped", "closed"}  # verdicts whose match expires; every other verdict stays seen
 EXPIRY_DAYS = CFG.get("ledger_expiry_days", 90)
 if not isinstance(EXPIRY_DAYS, int) or isinstance(EXPIRY_DAYS, bool) or EXPIRY_DAYS < 0:
@@ -97,7 +107,7 @@ def load():
     if not LEDGER.exists():
         return []
     with LEDGER.open(encoding="utf-8", newline="") as f:
-        return list(csv.DictReader(f))
+        return [{k: r.get(k) or "" for k in FIELDS} for r in csv.DictReader(f)]  # older ledgers: new columns blank
 
 
 def save(rows):
@@ -107,6 +117,7 @@ def save(rows):
     w.writeheader()
     w.writerows(rows)
     atomic.write_text(LEDGER, buf.getvalue(), newline="")
+    atomic.write_text(META, json.dumps({"ledger_version": LEDGER_VERSION}) + "\n")
 
 
 class Index:
@@ -243,6 +254,8 @@ def main():
     s.add_argument("--verdict", required=True)
     s.add_argument("--score")
     s.add_argument("--note")
+    s.add_argument("--subscores", nargs=len(score.CRITERIA), metavar="CRITERION=N")
+    s.add_argument("--model")
     c = sub.add_parser("check")
     c.add_argument("company")
     c.add_argument("title")
@@ -290,6 +303,19 @@ def main():
         if not r:
             print(f"FAILED: '{a.which}' is not in the ledger", file=sys.stderr)
             return 1
+        if a.subscores:
+            try:
+                sub = score.parse(a.subscores)
+            except ValueError as e:
+                print(f"FAILED: {e}", file=sys.stderr)
+                return 1
+            if set(sub) != set(score.CRITERIA) or max(sub.values()) > 5:
+                print(f"FAILED: --subscores needs each of {', '.join(score.CRITERIA)} once, 0 to 5", file=sys.stderr)
+                return 1
+            r["subscores"] = " ".join(f"{k}={sub[k]}" for k in score.CRITERIA)
+        if a.model:
+            r["model"] = a.model
+        r["engine_version"] = version.version()
         r["verdict"] = a.verdict
         if a.score:
             r["score"] = a.score

@@ -26,6 +26,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Skills for the on-request workflows in `.claude/skills/`: `ats-review` ("run the ATS review", "check my CV"),
   `update-engine` ("update the engine"), `remap-cv` ("remap my CV") and `onboarding` (the setup interview). The
   same phrases work as before; RULES.md lists them, so they also work before the skills are installed.
+- Ledger columns `subscores` (the five rubric sub-scores), `engine_version` and `model`: `ledger.py set
+  --subscores skills=4 seniority=5 language=3 location=5 hours=4 --model <id>` stores them and every `set` stamps
+  the engine version. `data/seen_jobs.meta.json` holds `ledger_version: 2`. The Friday review (playbook H) compares
+  sub-scores and engine versions against outcomes.
 
 ### Changed
 - ROUTINE.md holds only the daily run; the on-request workflows moved to the skills and RULES.md "On request".
@@ -41,6 +45,7 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 ### Migration
 - `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` and the four skills
   in `.claude/skills/` into the workspace.
+- The seen-jobs ledger gets three new columns on its next save; older rows keep them blank. Nothing to do.
 
 ## [0.4.0] - 2026-10-29: measurable judgment
 

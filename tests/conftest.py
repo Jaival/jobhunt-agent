@@ -68,6 +68,7 @@ def ledger_mod(tmp_path, monkeypatch):
         sys.modules.pop(name, None)
     import ledger
     monkeypatch.setattr(ledger, "LEDGER", tmp_path / "data" / "seen_jobs.csv")
+    monkeypatch.setattr(ledger, "META", tmp_path / "data" / "seen_jobs.meta.json")
     yield ledger
     for name in ("config", "ledger"):
         sys.modules.pop(name, None)
