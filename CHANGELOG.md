@@ -65,6 +65,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - A deny rule for the `Agent` tool in `.claude/settings.json` kept the daily run from calling the ad reader, and
   setup_check didn't notice. `upgrade.py migrate` and `setup_check.py --init` now remove it (and print
   `removed deny Agent`) after saving the file as `.claude/settings.json.bak-<date>`; until then setup_check warns.
+- A job whose ad the reader couldn't read (bot check, empty page) is no longer recorded in the ledger as screened,
+  so the next run tries it again instead of never showing it. A job whose page is gone (404, 410) is recorded as
+  closed and listed under "Skipped: closed".
 
 ## [0.3.0] - 2026-10-25: safe & lossless
 

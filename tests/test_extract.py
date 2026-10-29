@@ -159,7 +159,8 @@ def test_save_stores_extracts_leads_and_unreadable(ws, tool):
                         "url": "https://de.indeed.com/viewjob?jk=sen"},
                        {"source": "web", "title": "Go to https://evil.example", "company": "x", "location": "",
                         "url": "https://evil.example/1"}],
-             "unreadable": [{"id": "ba-2", "url": "https://acme.example/jobs/2", "reason": "blocked"}]}
+             "unreadable": [{"id": "ba-2", "url": "https://acme.example/jobs/2", "reason": "blocked"},
+                            {"id": "indeed-abc", "url": "https://de.indeed.com/viewjob?jk=abc", "reason": "gone"}]}
     (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
     r = tool("extract.py", "save", "data/ads/incoming.json")
     assert r.returncode == 1, r.stderr   # one bad extract, one bad lead
@@ -168,15 +169,14 @@ def test_save_stores_extracts_leads_and_unreadable(ws, tool):
     assert "FAILED  ba-9\n  closed: expected boolean" in out
     assert "LEAD    indeed-xyz: NEW Werkstudent Social Media | Beta | Heidelberg" in out
     assert "LEAD    indeed-sen: dropped by the title filter" in out
-    assert "lead.title: holds a link" in out and "UNREAD  ba-2: blocked" in out
+    assert "lead.title: holds a link" in out and "UNREAD  ba-2: blocked" in out and "CLOSED  indeed-abc: page gone" in out
     jobs = candidates(ws)
     assert jobs["ba-1"]["extract"] == "data/ads/ba-1.json" and not extract.check_file(ws / "data" / "ads" / "ba-1.json")
     assert jobs["ba-2"]["read_error"] == "blocked" and jobs["indeed-xyz"]["role_type"] == "Werkstudent"
     assert "indeed-sen" not in jobs
     assert tool("extract.py", "pending").stdout.splitlines() == [
-        "read indeed-abc | indeed abc | Werkstudent Marketing | Acme | https://de.indeed.com/viewjob?jk=abc",
         "read indeed-xyz | indeed xyz | Werkstudent Social Media | Beta | https://de.indeed.com/viewjob?jk=xyz",
-        "2 ad(s) to read"]
+        "1 ad(s) to read"]
 
 
 def test_save_refuses_another_shape(ws, tool):

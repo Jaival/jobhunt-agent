@@ -12,7 +12,8 @@ date and verdict). Tailored, applied, rejected and interview never expire.
 
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
-                                                  (verdict "screened")
+                                                  (verdict "screened"; "closed" when its page is gone; jobs the
+                                                  reader couldn't read stay out, so the next run tries again)
     python engine/tools/ledger.py set <key|url|id> --verdict tailored|skipped|closed|applied|rejected|screened
                                [--score 72] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
@@ -263,20 +264,26 @@ def main():
         return 0
     if a.cmd == "record":
         cands = json.loads(CANDIDATES.read_text(encoding="utf-8"))
-        n = 0
+        n = unread = 0
         for j in cands["jobs"]:
+            error = j.get("read_error")
+            if error and error != "gone":  # the reader couldn't read it: not seen, the next run tries again
+                unread += 1
+                continue
+            verdict = "closed" if error else "screened"
             r = idx.match(j["company"], j["title"], j["url"], j["id"])
             if r and idx.expired(r):  # seen again after the expiry: the same row starts over
                 old = f"seen {r['first_seen']} {r['verdict']} {r['score']}".strip()
-                r.update(job_id=j["id"], url=j["url"], first_seen=f"{dt.date.today():%Y-%m-%d}", verdict="screened",
+                r.update(job_id=j["id"], url=j["url"], first_seen=f"{dt.date.today():%Y-%m-%d}", verdict=verdict,
                          score="", note=f"posted {j.get('posted') or '?'}; {old}")
                 n += 1
             elif not r:
                 idx.add(job_id=j["id"], source=j["source"], company=j["company"], title=j["title"], url=j["url"],
-                        verdict="screened", note=f"posted {j.get('posted') or '?'}")
+                        verdict=verdict, note=f"posted {j.get('posted') or '?'}")
                 n += 1
         save(idx.rows)
-        print(f"recorded {n} new jobs, {len(idx.rows)} in ledger")
+        print(f"recorded {n} new jobs, {len(idx.rows)} in ledger"
+              + (f"; {unread} unread job(s) left out, the next run tries them again" if unread else ""))
         return 0
     if a.cmd == "set":
         r = idx.by_key.get(a.which) or idx.by_url.get(a.which) or idx.by_id.get(a.which)

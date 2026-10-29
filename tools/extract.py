@@ -310,7 +310,8 @@ def cmd_save(a):
         job = next((j for j in cands["jobs"] if item["id"] in (j["id"], j["url"])), None)
         if job:
             job["read_error"] = item["reason"]
-        print(f"UNREAD  {item['id']}: {item['reason']}")
+        print(f"CLOSED  {item['id']}: page gone" if item["reason"] == "gone"
+              else f"UNREAD  {item['id']}: {item['reason']}")
     write_candidates(cands)
     return 1 if bad else 0
 
