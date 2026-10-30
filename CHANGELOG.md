@@ -12,6 +12,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-30: grounded & modular
+
 ### Added
 - Grounding check in `build_application.py`: every number and every skill or tool term (the shipped list in
   `tools/skills.txt` plus your `profile.score_bonus`) in a letter or the CV headline must appear in your master
@@ -45,6 +47,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Each tailored job is written by its own `tailor` subagent, one after the other, so no job's ad, letter or
   build errors carry over into the next one. The brief's format stays the same; outreach notes and the ledger
   are still written by the main run.
+- Scoring is unchanged: on the 33 labelled ads `tests/evals/baselines/v0.5.0.md` agrees with `v0.4.0.md` on every
+  metric (in scope 29, role type 20, hard mismatch 20, score inside the range 19, tailor decision 30, German 31).
 
 ### Fixed
 - `guard.py --status` cut long paths in its "refused" lines after 80 characters, so in a workspace with a long path
@@ -237,7 +241,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...next
+[0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.1.0...v0.2.0
