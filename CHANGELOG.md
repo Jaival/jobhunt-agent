@@ -49,6 +49,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 ### Fixed
 - `guard.py --status` cut long paths in its "refused" lines after 80 characters, so in a workspace with a long path
   the file name was lost (`...\e`). A long path now keeps its end, with `...` in front.
+- "update the engine" builds your recent applications with each job's `ad.json`, so the grounding check no longer
+  reports a letter as failing with the new engine because it names a term from the ad.
 
 ### Migration
 - `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` and the four skills
