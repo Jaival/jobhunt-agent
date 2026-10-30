@@ -585,19 +585,21 @@ def cmd_compare(a):
     except Exception as e:
         print(f"note: test application keeps the master order ({e})")
 
-    cases = [("engine update test", test_application(cfg, langs, orders), test_application(cfg, langs, {}))]
+    cases = [("engine update test", test_application(cfg, langs, orders), test_application(cfg, langs, {}), None)]
     real = sorted(ROOT.glob("applications/**/application.md"), key=lambda f: f.parent.name, reverse=True)
     for f in real[:a.max]:
-        cases.append((f.parent.name, f.read_text(encoding="utf-8"), None))
+        cases.append((f.parent.name, f.read_text(encoding="utf-8"), None, f.parent / "ad.json"))
 
     report, worse = [], 0
-    for name, text, fallback in cases:
+    for name, text, fallback, ad in cases:
         folder = re.sub(r"[^\w.-]+", "-", name)
         new_dir, old_dir = test / "new" / folder, ws_old / "applications" / folder
         results = {}
         for side, tools, root, d in (("old", old_tools, ws_old, old_dir), ("new", new_tools, ROOT, new_dir)):
             d.mkdir(parents=True)
             (d / "application.md").write_text(text, encoding="utf-8")
+            if ad and ad.exists():      # the grounding check accepts the ad's terms
+                shutil.copy2(ad, d / "ad.json")
             results[side] = build(tools, root, d)
         if results["old"][0] and fallback:      # the old engine may not know a section: headline only
             for side, tools, root, d in (("old", old_tools, ws_old, old_dir), ("new", new_tools, ROOT, new_dir)):
