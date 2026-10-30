@@ -35,6 +35,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Changed
 - ROUTINE.md holds only the daily run; the on-request workflows moved to the skills and RULES.md "On request".
+- `config.py` raises `ConfigError` instead of exiting, so code that imports a tool can catch a missing or
+  incomplete config.yaml. Running a tool prints the same message as before and exits with 1.
 
 ### Behaviour changes
 - **Major:** letters that passed before can fail the build: an invented metric ("increased traffic by 40%"),

@@ -48,7 +48,7 @@ import cv_map
 import pdf_export
 from cv_map import MapError, paragraphs
 
-from config import CFG, ROOT, path
+from config import CFG, ROOT, ConfigError, path
 
 MASTER_CV = path("master_cv")
 MASTER_LETTER = path("master_letter")
@@ -78,7 +78,7 @@ FILE_PREFIX = CFG["file_prefix"]
 UNIVERSITIES = CFG.get("university") or []   # student letters must name it, or one of its names (a list)
 UNIVERSITIES = [UNIVERSITIES] if isinstance(UNIVERSITIES, str) else UNIVERSITIES
 if not isinstance(UNIVERSITIES, list) or not all(isinstance(u, str) and u.strip() for u in UNIVERSITIES):
-    sys.exit("config.yaml: university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]")
+    raise ConfigError("config.yaml: university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]")
 INTERNSHIP_DURATION = CFG.get("internship_duration") or ""   # internship letters must state it: "12 months" or
                                                               # {de: "12 Monate", en: "12 months"}
 NAME_IN_MASTER = CFG.get("name_in_master") or ""   # the name as the master files spell it, replaced by APPLICANT
