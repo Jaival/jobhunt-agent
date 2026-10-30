@@ -46,6 +46,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   build errors carry over into the next one. The brief's format stays the same; outreach notes and the ledger
   are still written by the main run.
 
+### Fixed
+- `guard.py --status` cut long paths in its "refused" lines after 80 characters, so in a workspace with a long path
+  the file name was lost (`...\e`). A long path now keeps its end, with `...` in front.
+
 ### Migration
 - `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` and the four skills
   in `.claude/skills/` into the workspace.

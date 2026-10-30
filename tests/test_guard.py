@@ -192,6 +192,10 @@ def test_status_lists_calls_the_permission_rules_refused(guard, tmp_path):
     assert out[1] == "  refused Edit: C:\\ws\\engine\\ROUTINE.md (permission rule)"
     assert out[2].startswith("  refused Bash: curl -s https://example.com -o out/c.html") and len(out[2]) < 130
     assert out[3] == f"  refused {GMAIL_ID}send_message: - (auto mode)" and len(out) == 4
+    long = "D:\\" + "a long folder name\\" * 6 + "engine\\RULES.md"
+    transcript(t, ("use", "a", "Write", {"file_path": long, "content": "x"}), ("error", "a", rule, None))
+    out = run_status(guard.root).stdout.splitlines()
+    assert out[1] == f"  refused Write: ...{long[-77:]} (permission rule)" and out[1].endswith("\\engine\\RULES.md (permission rule)")
     transcript(t, *events, sid="other")   # lines of another session
     assert "refused" not in run_status(guard.root).stdout
 
