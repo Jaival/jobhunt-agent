@@ -32,7 +32,7 @@ First paragraph: the role, your enrolment (student roles), why this team.
 
 One paragraph per block. Blank lines separate paragraphs. Body must be 250-350 words.
 
-Student roles must mention your university (config.yaml), hours per week and "as soon as possible"; internships also the duration.
+Student roles must mention your university (config.yaml; any of its names if it's a list), hours per week and "as soon as possible"; internships also the duration.
 
 With two languages, put a line `<!-- de -->` before the German letter and `<!-- en -->` before the English one;
 each body must be 250-350 words (German student letters: "ab sofort", "Stunden pro Woche").

@@ -30,6 +30,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   --subscores skills=4 seniority=5 language=3 location=5 hours=4 --model <id>` stores them and every `set` stamps
   the engine version. `data/seen_jobs.meta.json` holds `ledger_version: 2`. The Friday review (playbook H) compares
   sub-scores and engine versions against outcomes.
+- config.yaml `university` accepts a list of names (`[Universität Mannheim, University of Mannheim]`); a student
+  letter passes when it names any of them.
 
 ### Changed
 - ROUTINE.md holds only the daily run; the on-request workflows moved to the skills and RULES.md "On request".

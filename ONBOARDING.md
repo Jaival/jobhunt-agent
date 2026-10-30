@@ -53,7 +53,8 @@ Write each answer into the file named in brackets right after the round.
    optional email, phone, LinkedIn, portfolio for the letter header. file_prefix = the name with underscores.
 2. **Studies and status** [config.yaml: university; CLAUDE.md "Who I am", "What I'm looking for"]
    Enrolled student? If yes: degree, university, focus. If not, skip the student questions in later rounds and
-   leave `university` empty. Work permit situation, only if they want it on the CV.
+   leave `university` empty. If letters in other languages name it differently (Universität Mannheim /
+   University of Mannheim), make `university` a list of those names. Work permit situation, only if they want it on the CV.
 3. **What you're looking for** [CLAUDE.md "What I'm looking for", "Routine settings"]
    Role types (multi-select, explain each with the glossary: working student / internship / research assistant
    (HiWi) / thesis / junior; students only see the student types if they are enrolled). Their field in their own
