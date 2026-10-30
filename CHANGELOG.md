@@ -19,11 +19,21 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   with the list. A percentage needs the same percentage; "1,200" and "1.200" are the same number. Terms only the
   ad has pass with a "from the ad only" line. `grounding_ok: [term]` in application.md lets reviewed exceptions
   through.
+- Tailor subagent: `.claude/agents/tailor.md` tailors one job in a fresh context (Read, Write, Edit, Glob, Grep
+  and Bash only: no web, mail, browser or agent tools). It attaches the extract, writes job.md and
+  application.md, builds the documents and replies with a fixed block (folder, build, pdfs, personalise,
+  grounding, actions) that the routine copies into the brief.
 
 ### Behaviour changes
 - **Major:** letters that passed before can fail the build: an invented metric ("increased traffic by 40%"),
   a number from nowhere, or a tool the candidate only lists under Gaps. The routine corrects the letter and
   rebuilds; it never adds facts to your files to make a letter pass.
+- Each tailored job is written by its own `tailor` subagent, one after the other, so no job's ad, letter or
+  build errors carry over into the next one. The brief's format stays the same; outreach notes and the ledger
+  are still written by the main run.
+
+### Migration
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` into the workspace.
 
 ## [0.4.0] - 2026-10-29: measurable judgment
 
