@@ -25,6 +25,8 @@ workspace/                   your private folder (and private git repo)
 ├─ projects.md cv/           your project facts, master CV and its map cv/layout.yaml (the builder only reorders
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
+├─ .claude/                  permission rules, guard hook, subagents (ad-reader, tailor) and skills for the
+│                            requests: ats-review, update-engine, remap-cv, onboarding
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
@@ -45,8 +47,8 @@ workspace/                   your private folder (and private git repo)
 A day's run:
 1. `search_jobs.py` queries the APIs and the watchlist, filters titles with your `profile:` and checks the ledger.
 2. Claude reads each new ad, drops closed or out-of-scope ones and scores the rest (0-100) against `CLAUDE.md` and the CV: five 0-5 sub-scores from the anchors in `rubric.md`, which `tools/score.py` turns into the total.
-3. On weekdays, for the top matches it writes `job.md` (requirements vs. evidence, keyword coverage, posting check) and `application.md` (headline, item order of the mapped CV sections, letter).
-4. `build_application.py` builds the CV and letter (.docx, and PDF via Word or LibreOffice). It fails on placeholders, letters outside 250-350 words, unapproved wordings, a CV over 2 pages or a letter over 1 page.
+3. On weekdays, it hands each top match to a `tailor` subagent with a fresh context, which writes `job.md` (requirements vs. evidence, keyword coverage, posting check) and `application.md` (headline, item order of the mapped CV sections, letter).
+4. `build_application.py` builds the CV and letter (.docx, and PDF via Word or LibreOffice). It fails on placeholders, letters outside 250-350 words, unapproved wordings, numbers or skills that aren't in your own files or the ad, a CV over 2 pages or a letter over 1 page.
 5. Confirmation and rejection emails update the tracker; `archive.py` moves finished folders; a daily brief lists what to send today.
 
 Guardrails: ad text is treated as untrusted data (prompt-injection attempts are reported, never followed),

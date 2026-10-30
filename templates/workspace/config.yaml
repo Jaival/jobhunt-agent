@@ -9,7 +9,8 @@ letter_city: Berlin                             # letter date line "Berlin, DD.M
 letter_languages: [en]                          # [en], [de] or [de, en]: one letter per language per application
 name_in_master: ""                              # optional: your name as the master CV/letter spell it, if documents
                                                 # should say `applicant` instead (e.g. without a middle name)
-university: TU Berlin                           # student letters must mention it (leave empty for none)
+university: TU Berlin                           # student letters must mention it (leave empty for none); a list
+                                                # accepts any of its names: [TU Berlin, Technische Universität Berlin]
 font: Open Sans                                 # font for CV and letter
 fallback_font: Open Sans                        # substitute named in the font table
 search:

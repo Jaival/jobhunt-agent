@@ -19,6 +19,12 @@ Every CV keeps all projects; cv.omit_projects only works together with cv.omit_a
 (the applicant's approval). After the PDF export (pdf_export.py, config pdf_engine) it fails if the CV is
 over 2 pages or the letter over 1.
 
+Grounding: every number and every skill or tool term (tools/skills.txt plus config.yaml profile.score_bonus) in a
+letter or the CV headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
+projects.md, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
+has pass with a warning. `grounding_ok: [term, ...]` in the frontmatter lets reviewed exceptions through. Numbers
+written as words ("three") and the context of a term (claimed or named as a gap) aren't checked.
+
 Output for ATS autofill: file names start with the applicant's name (parsers read names from file
 names), document metadata carries the applicant as author and a neutral title (Word copies it into
 the PDF), and every font is set to FONT with FALLBACK_FONT as the substitute named in the font table.
@@ -42,7 +48,7 @@ import cv_map
 import pdf_export
 from cv_map import MapError, paragraphs
 
-from config import CFG, ROOT, path
+from config import CFG, ROOT, ConfigError, path
 
 MASTER_CV = path("master_cv")
 MASTER_LETTER = path("master_letter")
@@ -69,7 +75,10 @@ HOURS_WORDS = {"en": ["hours per week", "hours a week"],
                "de": ["stunden pro woche", "wochenstunden", "stunden wöchentlich", "stunden in der woche"]}
 APPLICANT = CFG["applicant"]          # name in metadata; files start with FILE_PREFIX
 FILE_PREFIX = CFG["file_prefix"]
-UNIVERSITY = CFG.get("university", "")   # student letters must name it
+UNIVERSITIES = CFG.get("university") or []   # student letters must name it, or one of its names (a list)
+UNIVERSITIES = [UNIVERSITIES] if isinstance(UNIVERSITIES, str) else UNIVERSITIES
+if not isinstance(UNIVERSITIES, list) or not all(isinstance(u, str) and u.strip() for u in UNIVERSITIES):
+    raise ConfigError("config.yaml: university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]")
 INTERNSHIP_DURATION = CFG.get("internship_duration") or ""   # internship letters must state it: "12 months" or
                                                               # {de: "12 Monate", en: "12 months"}
 NAME_IN_MASTER = CFG.get("name_in_master") or ""   # the name as the master files spell it, replaced by APPLICANT
@@ -467,8 +476,8 @@ def check(meta, bodies, cv_doc, letter_docs):
             problems.append(f"{tag(lg)} body has {words} words (allowed {WORDS_MIN}-{WORDS_MAX})")
         if meta["role_type"] in STUDENT_TYPES:
             letter = " ".join(body).lower()
-            if UNIVERSITY and UNIVERSITY.lower() not in letter:
-                problems.append(f"{tag(lg)}: student letter must mention {UNIVERSITY} enrolment")
+            if UNIVERSITIES and not any(u.lower() in letter for u in UNIVERSITIES):
+                problems.append(f"{tag(lg)}: student letter must mention {' or '.join(UNIVERSITIES)} enrolment")
             if not any(w in letter for w in START_WORDS[lg]):
                 problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}')")
             if not any(w in letter for w in HOURS_WORDS[lg]):
@@ -477,6 +486,98 @@ def check(meta, bodies, cv_doc, letter_docs):
             if meta["role_type"] == "Internship" and months and months.lower() not in letter:
                 problems.append(f"{tag(lg)}: internship letter must mention the duration ({months})")
     return problems, counts
+
+
+# ---------- grounding ----------
+
+NUMBER = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)*)(?!\w)(\s*(?:%|prozent\b|percent\b|per cent\b))?", re.I)
+
+
+def numbers(text):
+    """The numbers in a text, normalised: "1,200" / "1.200" -> 1200, "2,5" -> 2.5, "18 Prozent" -> 18%; other
+    forms (dates) as written."""
+    found = set()
+    for n, percent in NUMBER.findall(text):
+        if re.fullmatch(r"\d{1,3}(?:[.,]\d{3})+", n):
+            n = re.sub(r"[.,]", "", n)
+        elif re.fullmatch(r"\d+[.,]\d+", n):
+            n = n.replace(",", ".")
+        found.add((str(int(n)) if n.isdigit() else n) + ("%" if percent else ""))
+    return found
+
+
+def grounded_number(n, sources):
+    """A percentage needs the same percentage in the sources; a plain number matches either form."""
+    return n in sources or (not n.endswith("%") and f"{n}%" in sources)
+
+
+def load_terms():
+    """Skill and tool terms from tools/skills.txt and config.yaml profile.score_bonus: (term, pattern) pairs."""
+    lines = (Path(__file__).with_name("skills.txt").read_text(encoding="utf-8").splitlines()
+             + [str(t) for t in (CFG.get("profile") or {}).get("score_bonus") or []])
+    terms = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        exact = line.startswith("=")
+        term = line.lstrip("=")
+        terms[term.lower()] = (term, re.compile(rf"(?<!\w){re.escape(term)}(?!\w)", 0 if exact else re.I))
+    return list(terms.values())
+
+
+def own_sources(variants):
+    """The candidate's own files as one text: the master CV, CLAUDE.md without its Gaps section, projects.md, the
+    master and approved texts of cv/variants.yaml, and the internship duration from config.yaml."""
+    parts = [doc_text(docx.Document(MASTER_CV)), str(INTERNSHIP_DURATION)]
+    claude = ROOT / "CLAUDE.md"
+    if claude.exists():
+        sections = re.split(r"^(?=## )", claude.read_text(encoding="utf-8"), flags=re.M)
+        parts += [s for s in sections if not re.match(r"## .*(gap|never claim|lücke)", s, re.I)]
+    projects = ROOT / "projects.md"
+    if projects.exists():
+        parts.append(projects.read_text(encoding="utf-8"))
+    for v in variants.values():
+        parts.append(v.get("master", ""))
+        parts += [alt.get("text", "") for alt in (v.get("variants") or {}).values() if alt.get("approved")]
+    return "\n".join(parts)
+
+
+def grounding(meta, bodies, variants, folder):
+    """Every number and every skill term (load_terms) in the letters and the CV headline must appear in the
+    candidate's own files or the job's ad.json. Returns (problems, warnings); warnings name terms only the ad has."""
+    own = own_sources(variants)
+    ad_file = folder / "ad.json"
+    ad = ad_file.read_text(encoding="utf-8") if ad_file.exists() else ""
+    own_numbers, ad_numbers = numbers(own), numbers(ad)
+    terms = load_terms()
+    ok = {str(t).lower() for t in meta.get("grounding_ok") or []}
+    ok |= {n for t in ok for n in numbers(t)}
+    texts = {f"letter {lg.upper()}" if len(bodies) > 1 else "letter": "\n".join(b) for lg, b in bodies.items()}
+    headline = (meta.get("cv") or {}).get("headline")
+    if headline:
+        texts["CV headline"] = str(headline)
+    problems, ad_only = [], set()
+    for name, text in texts.items():
+        missing = []
+        for n in sorted(numbers(text)):
+            if not (grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok):
+                missing.append(n)
+        for term, pattern in terms:
+            if pattern.search(text) and not pattern.search(own) and term.lower() not in ok:
+                if pattern.search(ad):
+                    ad_only.add(term)
+                else:
+                    missing.append(term)
+        if missing:
+            problems.append(f"{name}: not in your CV, CLAUDE.md, projects.md or the ad: {', '.join(missing)}")
+    if problems:
+        problems.append("Remove or correct these claims. Only a term the letter doesn't claim as the candidate's "
+                        "(a product of the company, a gap named as one) may go into grounding_ok: [...] in "
+                        "application.md, and job.md must say why.")
+    warnings = [f"from the ad only, not in your files: {', '.join(sorted(ad_only))} "
+                "(the letter may name them, never claim them)"] if ad_only else []
+    return problems, warnings
 
 
 def main():
@@ -510,6 +611,8 @@ def main():
         if NAME_IN_MASTER and NAME_IN_MASTER != APPLICANT and not renamed:
             raise BuildError(f"name_in_master '{NAME_IN_MASTER}' isn't in the master CV or letter (config.yaml)")
         problems, counts = check(meta, bodies, cv_doc, letter_docs)
+        grounding_problems, warnings = grounding(meta, bodies, variants, folder)
+        problems += grounding_problems
         if problems:
             raise BuildError("checks failed:\n  - " + "\n  - ".join(problems))
         tmp_cv.replace(cv_out)
@@ -522,7 +625,7 @@ def main():
         return 1
     print(f"OK {folder.name}: " + ", ".join(
         f"letter{' ' + lg.upper() if len(langs) > 1 else ''} {n} words" for lg, n in counts.items()))
-    for line in summary:
+    for line in summary + warnings:
         print(f"  {line}")
     if not a.no_pdf:
         try:

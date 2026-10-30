@@ -1,0 +1,32 @@
+{
+  "ad_extract_version": 1,
+  "id": "ba-10000-1234567890-S",
+  "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S",
+  "title": "Working Student Social Media Marketing (m/f/d)",
+  "company": "Example Company GmbH",
+  "location": "68159 Mannheim",
+  "remote": "hybrid",
+  "language": "en",
+  "role_type": "Werkstudent",
+  "closed": false,
+  "closed_evidence": null,
+  "german_required": "B2",
+  "hours_per_week": {"min": 16, "max": 20},
+  "start": "as soon as possible",
+  "duration_months": null,
+  "years_experience": null,
+  "enrolment_required": true,
+  "mandatory_internship_only": false,
+  "requirements": [
+    {"requirement": "Studies in marketing, media or communication", "importance": "critical", "ad_wording": "enrolled in marketing, media or communication studies"},
+    {"requirement": "Experience with Instagram and LinkedIn", "importance": "high", "ad_wording": "first experience with Instagram and LinkedIn"},
+    {"requirement": "Good German", "importance": "high", "ad_wording": "good German"},
+    {"requirement": "Interest in paid campaigns and SEO", "importance": "preferred", "ad_wording": "ideally first contact with paid campaigns and SEO"}
+  ],
+  "tasks": [
+    "Plan and publish posts for small local brands",
+    "Monthly reporting on reach and engagement",
+    "Support paid campaigns"
+  ],
+  "injection_text": []
+}

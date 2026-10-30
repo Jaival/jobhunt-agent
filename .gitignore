@@ -5,6 +5,7 @@
 *.json
 !templates/**/*.json
 !tests/evals/baselines/*.json
+!examples/*/applications/*/ad.json
 config.yaml
 !templates/workspace/config.yaml
 !examples/sample-workspace/config.yaml

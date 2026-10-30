@@ -1,0 +1,277 @@
+# Skill and tool terms the builder's grounding check looks for in letters and CV headlines (build_application.py).
+# A term the letter or headline names must also appear in the candidate's own files (master CV, CLAUDE.md without
+# its Gaps section, projects.md, approved CV variants) or in the job's ad.json; see "Grounding" in ROUTINE.md.
+# One term per line, matched as a whole word, ignoring case. A leading "=" matches the exact case only, for terms
+# that are also ordinary words ("=Slack" doesn't match "slack"). Add terms here, not in a workspace.
+
+# Office and collaboration
+=Excel
+PowerPoint
+Microsoft Office
+MS Office
+Microsoft 365
+Microsoft Teams
+=Outlook
+SharePoint
+Google Sheets
+Google Docs
+Google Workspace
+=Notion
+=Slack
+Jira
+Confluence
+Trello
+Asana
+Miro
+monday.com
+Airtable
+Zapier
+LaTeX
+
+# Marketing, content and design
+SEO
+=SEA
+=SEM
+Google Ads
+Google Analytics
+Google Analytics 4
+GA4
+Google Tag Manager
+Google Search Console
+Meta Ads
+Meta Business Suite
+Facebook Ads
+LinkedIn Ads
+TikTok Ads
+Instagram
+Facebook
+LinkedIn
+TikTok
+YouTube
+Pinterest
+Snapchat
+Twitch
+Mailchimp
+Brevo
+Klaviyo
+HubSpot
+Salesforce
+Marketo
+Pardot
+Hootsuite
+=Buffer
+Sprout Social
+Semrush
+Ahrefs
+Sistrix
+Hotjar
+Matomo
+Canva
+Figma
+=Sketch
+Adobe Creative Cloud
+Adobe Photoshop
+Photoshop
+Adobe Illustrator
+Adobe InDesign
+InDesign
+Adobe Premiere Pro
+Premiere Pro
+Adobe After Effects
+After Effects
+Adobe Lightroom
+Lightroom
+Adobe Express
+Final Cut Pro
+DaVinci Resolve
+CapCut
+Audacity
+WordPress
+Shopify
+Wix
+Webflow
+TYPO3
+Contentful
+
+# Software and data
+Python
+Java
+JavaScript
+TypeScript
+C++
+C#
+.NET
+Kotlin
+Scala
+=Ruby
+PHP
+Golang
+=Rust
+MATLAB
+Simulink
+LabVIEW
+VBA
+SQL
+MySQL
+PostgreSQL
+SQLite
+MongoDB
+Redis
+Elasticsearch
+=Oracle
+NoSQL
+GraphQL
+REST API
+HTML
+CSS
+=Sass
+Tailwind
+=React
+Next.js
+=Angular
+Vue
+Svelte
+Node.js
+Express.js
+Django
+Flask
+FastAPI
+Spring Boot
+Ruby on Rails
+Laravel
+Flutter
+React Native
+SwiftUI
+Android
+iOS
+Git
+GitHub
+GitLab
+Bitbucket
+Docker
+Kubernetes
+Terraform
+Ansible
+Jenkins
+GitHub Actions
+CI/CD
+Linux
+Bash
+PowerShell
+AWS
+Azure
+Google Cloud
+GCP
+Firebase
+Kafka
+Apache Spark
+Hadoop
+Apache Airflow
+dbt
+Snowflake
+Databricks
+BigQuery
+Redshift
+Power BI
+Tableau
+Looker
+Qlik
+pandas
+NumPy
+SciPy
+scikit-learn
+TensorFlow
+PyTorch
+Keras
+Hugging Face
+LangChain
+OpenCV
+Jupyter
+Selenium
+Cypress
+Playwright
+=Jest
+pytest
+JUnit
+=Postman
+OAuth
+Scrum
+Kanban
+=SAFe
+Prince2
+ITIL
+
+# Business, finance and HR
+SAP
+SAP S/4HANA
+S/4HANA
+SAP FI
+SAP CO
+SAP MM
+SAP SD
+SAP HCM
+SuccessFactors
+Workday
+Personio
+DATEV
+Lexware
+Oracle NetSuite
+Microsoft Dynamics
+Dynamics 365
+IFRS
+HGB
+US-GAAP
+Bloomberg
+Six Sigma
+Lean Six Sigma
+
+# Engineering
+ANSYS
+ANSYS Mechanical
+ANSYS Fluent
+Abaqus
+COMSOL
+Nastran
+HyperMesh
+LS-DYNA
+OpenFOAM
+STAR-CCM+
+SolidWorks
+CATIA
+CATIA V5
+Siemens NX
+Creo
+Autodesk Inventor
+AutoCAD
+Fusion 360
+Revit
+ArchiCAD
+=Rhino
+=Grasshopper
+Teamcenter
+Windchill
+FEM
+FEA
+CFD
+CAE
+CAD
+=CAM
+GD&T
+FMEA
+PLC
+TIA Portal
+Step 7
+CODESYS
+ROS
+Arduino
+Raspberry Pi
+Altium
+KiCad
+LTspice
+Verilog
+VHDL
+AUTOSAR
+CANoe
+CANalyzer
+dSPACE
+Minitab
