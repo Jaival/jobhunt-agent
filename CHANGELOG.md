@@ -23,6 +23,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   and Bash only: no web, mail, browser or agent tools). It attaches the extract, writes job.md and
   application.md, builds the documents and replies with a fixed block (folder, build, pdfs, personalise,
   grounding, actions) that the routine copies into the brief.
+- Skills for the on-request workflows in `.claude/skills/`: `ats-review` ("run the ATS review", "check my CV"),
+  `update-engine` ("update the engine"), `remap-cv` ("remap my CV") and `onboarding` (the setup interview). The
+  same phrases work as before; RULES.md lists them, so they also work before the skills are installed.
+
+### Changed
+- ROUTINE.md holds only the daily run; the on-request workflows moved to the skills and RULES.md "On request".
 
 ### Behaviour changes
 - **Major:** letters that passed before can fail the build: an invented metric ("increased traffic by 40%"),
@@ -33,7 +39,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   are still written by the main run.
 
 ### Migration
-- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` into the workspace.
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` and the four skills
+  in `.claude/skills/` into the workspace.
 
 ## [0.4.0] - 2026-10-29: measurable judgment
 
