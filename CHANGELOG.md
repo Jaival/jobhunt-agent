@@ -12,6 +12,55 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-30: grounded & modular
+
+### Added
+- Grounding check in `build_application.py`: every number and every skill or tool term (the shipped list in
+  `tools/skills.txt` plus your `profile.score_bonus`) in a letter or the CV headline must appear in your master
+  CV, CLAUDE.md (not its "Gaps" section), projects.md, cv/variants.yaml or the job's `ad.json`, or the build fails
+  with the list. A percentage needs the same percentage; "1,200" and "1.200" are the same number. Terms only the
+  ad has pass with a "from the ad only" line. `grounding_ok: [term]` in application.md lets reviewed exceptions
+  through.
+- Tailor subagent: `.claude/agents/tailor.md` tailors one job in a fresh context (Read, Write, Edit, Glob, Grep
+  and Bash only: no web, mail, browser or agent tools). It attaches the extract, writes job.md and
+  application.md, builds the documents and replies with a fixed block (folder, build, pdfs, personalise,
+  grounding, actions) that the routine copies into the brief.
+- Skills for the on-request workflows in `.claude/skills/`: `ats-review` ("run the ATS review", "check my CV"),
+  `update-engine` ("update the engine"), `remap-cv` ("remap my CV") and `onboarding` (the setup interview). The
+  same phrases work as before; RULES.md lists them, so they also work before the skills are installed.
+- Ledger columns `subscores` (the five rubric sub-scores), `engine_version` and `model`: `ledger.py set
+  --subscores skills=4 seniority=5 language=3 location=5 hours=4 --model <id>` stores them and every `set` stamps
+  the engine version. `data/seen_jobs.meta.json` holds `ledger_version: 2`. The Friday review (playbook H) compares
+  sub-scores and engine versions against outcomes.
+- config.yaml `university` accepts a list of names (`[Universität Mannheim, University of Mannheim]`); a student
+  letter passes when it names any of them.
+
+### Changed
+- ROUTINE.md holds only the daily run; the on-request workflows moved to the skills and RULES.md "On request".
+- `config.py` raises `ConfigError` instead of exiting, so code that imports a tool can catch a missing or
+  incomplete config.yaml. Running a tool prints the same message as before and exits with 1.
+
+### Behaviour changes
+- **Major:** letters that passed before can fail the build: an invented metric ("increased traffic by 40%"),
+  a number from nowhere, or a tool the candidate only lists under Gaps. The routine corrects the letter and
+  rebuilds; it never adds facts to your files to make a letter pass.
+- Each tailored job is written by its own `tailor` subagent, one after the other, so no job's ad, letter or
+  build errors carry over into the next one. The brief's format stays the same; outreach notes and the ledger
+  are still written by the main run.
+- Scoring is unchanged: on the 33 labelled ads `tests/evals/baselines/v0.5.0.md` agrees with `v0.4.0.md` on every
+  metric (in scope 29, role type 20, hard mismatch 20, score inside the range 19, tailor decision 30, German 31).
+
+### Fixed
+- `guard.py --status` cut long paths in its "refused" lines after 80 characters, so in a workspace with a long path
+  the file name was lost (`...\e`). A long path now keeps its end, with `...` in front.
+- "update the engine" builds your recent applications with each job's `ad.json`, so the grounding check no longer
+  reports a letter as failing with the new engine because it names a term from the ad.
+
+### Migration
+- `upgrade.py migrate` (and `setup_check.py --init`) copies `.claude/agents/tailor.md` and the four skills
+  in `.claude/skills/` into the workspace.
+- The seen-jobs ledger gets three new columns on its next save; older rows keep them blank. Nothing to do.
+
 ## [0.4.0] - 2026-10-29: measurable judgment
 
 ### Added
@@ -192,7 +241,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...next
+[0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.1.0...v0.2.0

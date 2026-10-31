@@ -2,7 +2,7 @@
 
 The routine runs this first (engine/ROUTINE.md step 0). When anything is "todo", it switches to the
 first-run interview in engine/ONBOARDING.md instead of searching. Unlike the other tools this one
-doesn't import config.py, because config.py stops when config.yaml is missing.
+doesn't import config.py, because config.py raises ConfigError when config.yaml is missing.
 
 Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py            list every check: ok / todo / warn

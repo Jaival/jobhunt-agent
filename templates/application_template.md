@@ -8,6 +8,8 @@ date: 2026-10-19            # letter date; defaults to today
 recipient: Company GmbH, City   # or one line each: [Company GmbH, Personalabteilung, Street 1, 12345 City]
 subject: "Application: <exact job title from the ad>"   # per language: {de: "Bewerbung als ...", en: "Application: ..."}
 greeting: Dear <Company> team,  # per language: {de: "Sehr geehrte Damen und Herren,", en: "Dear <Company> team,"}
+# grounding_ok: [SAP Ariba]  # reviewed exceptions to the grounding check: terms the letter names but doesn't claim
+#                           # (the company's product, a gap named as a gap); job.md says why
 # closing: Best regards     # needs letter.closing in cv/layout.yaml; with two languages the default is
 #                           # {de: Mit freundlichen Grüßen, en: Kind regards}
 cv:
@@ -30,7 +32,7 @@ First paragraph: the role, your enrolment (student roles), why this team.
 
 One paragraph per block. Blank lines separate paragraphs. Body must be 250-350 words.
 
-Student roles must mention your university (config.yaml), hours per week and "as soon as possible"; internships also the duration.
+Student roles must mention your university (config.yaml; any of its names if it's a list), hours per week and "as soon as possible"; internships also the duration.
 
 With two languages, put a line `<!-- de -->` before the German letter and `<!-- en -->` before the English one;
 each body must be 250-350 words (German student letters: "ab sofort", "Stunden pro Woche").
