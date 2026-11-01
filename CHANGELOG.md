@@ -20,6 +20,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Version stamps: the daily brief starts with `engine X.Y.Z (commit) · model <id>`, each job.md has an
   `- **Engine:**` line, and `ledger.py record --model <id>` stamps the engine version and model on every row it
   adds (as `set` already did). Your CV and letter files stay free of them: their metadata names only you.
+- Commands you can type in Claude Code, as skills in `.claude/skills/` (README "Commands"): `tailor <url>`
+  reads, scores and tailors one job you name; `why <job>` explains a score from its sub-scores; `sent <folder>`
+  adds the tracker row, moves the folder to `_sent/` and marks the job applied; `status` (or `/job-status`; Claude
+  Code's own `/status` is something else) shows drafts, follow-ups due and open actions. They use the daily run's
+  tools and checks. New tool commands for them: `extract.py add <url>` and `ledger.py show <job>`.
 
 ### Changed
 - "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
@@ -29,6 +34,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Migration
 - `upgrade.py migrate` adds `engine_channel: stable` to config.yaml when it has no channel.
+- `upgrade.py migrate` (and `setup_check.py --init`) copies the four command skills into `.claude/skills/`, and
+  the updated tailor subagent.
 
 ## [0.5.0] - 2026-10-30: grounded & modular
 

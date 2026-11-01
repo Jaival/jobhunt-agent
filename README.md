@@ -26,7 +26,8 @@ workspace/                   your private folder (and private git repo)
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
 ├─ .claude/                  permission rules, guard hook, subagents (ad-reader, tailor) and skills for the
-│                            requests: ats-review, update-engine, remap-cv, onboarding
+│                            requests: ats-review, update-engine, remap-cv, onboarding, and the commands
+│                            tailor, why, sent, job-status
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
@@ -56,6 +57,20 @@ every claim must come from the master CV or `CLAUDE.md`, and the routine never s
 part is enforced, not just asked for: permission rules in the workspace's `.claude/settings.json` and a guard hook
 (`tools/hooks/guard.py`) block sending, typing into pages, edits of `engine/` and the master files, and network
 calls to hosts other than the job sites. They apply to a local Code-tab task; the brief says whether the guard ran.
+
+## Commands
+
+Open your workspace in Claude Code (Claude Desktop's Code tab) and type a command, with or without the `/`.
+Each one uses the same tools and checks as the daily run, so it can't send anything or skip a check.
+
+| Command | What it does | Example |
+|---|---|---|
+| `tailor <url>` | Reads the ad through the ad reader, scores it with the rubric and, at 70+ (or on your OK), has the tailor subagent write and build the CV and letter | `tailor https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S` |
+| `why <job>` | Explains a job's score: the five sub-scores, hard mismatches, reasons and what would change it. Changes nothing | `why Acme Werkstudent Marketing` |
+| `sent <folder>` | Records that you sent it: tracker row, folder to `applications/_sent/`, ledger verdict, first follow-up date | `sent 2026-12-14_Acme_Werkstudent-Marketing --via Portal` |
+| `status` | Drafts to send, applications waiting for an answer, follow-ups due, interviews, open actions, engine version. Changes nothing | `status` |
+
+`/status` is Claude Code's own command; type `status` or `/job-status` for this one.
 
 ## Requirements
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)

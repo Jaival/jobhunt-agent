@@ -30,6 +30,13 @@ installed yet, follow the file it points to.
   engine/ONBOARDING.md round 5).
 - "set up my workspace", or setup_check.py reports TODO: skill `onboarding` (engine/ONBOARDING.md).
 
+Commands: one job or one question, with the same tools and checks as the daily run (they never send and never
+skip a check). Without the skill, follow the steps in engine/templates/workspace/.claude/skills/<name>/SKILL.md.
+- "tailor <url>": skill `tailor` (read, score and tailor that one job).
+- "why <job>": skill `why` (a job's score and sub-scores explained; read-only).
+- "sent <folder>": skill `sent` (tracker row, folder to applications/_sent/, ledger verdict applied).
+- "status": skill `job-status` (drafts, sent, follow-ups due, interviews, open actions; read-only).
+
 ## Folder layout (workspace)
 - `engine/` this public repo: ROUTINE.md (the daily routine; the scheduled task points here), RULES.md, rubric.md (the fit-score anchors), career-ops-playbook.md, tools/, templates/. **Never edit files in engine/**: local edits block engine updates. Personal behaviour goes in CLAUDE.md (decisions) or config.yaml (settings); wishes the engine can't do yet go in `custom.md`.
 - `custom.md` wish list for the engine (never acted on by the routine); "update the engine" marks the wishes a new version covers and drafts an issue for the rest

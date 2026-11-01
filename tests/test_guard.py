@@ -100,6 +100,8 @@ ALLOWED_CALLS = [
     ("Bash", {"command": "git -C engine fetch --tags origin && git -C engine tag -l \"v*.*.*\" --sort=-v:refname"}),
     ("Bash", {"command": "git -C engine worktree add ../engine-new v1.0.0"}),
     ("Bash", {"command": "rm -rf engine-new"}),
+    ("Bash", {"command": "python engine/tools/extract.py add https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1-S"}),
+    ("Bash", {"command": "python engine/tools/ledger.py show Acme Werkstudent Marketing"}),
     ("Bash", {"command": "curl -s -o /dev/null -w \"%{redirect_url}\" \"https://to.indeed.com/aabbcc\""}),
     ("Bash", {"command": "curl -s -D - -o /dev/null to.indeed.com/aabbcc"}),
     ("Bash", {"command": "curl -s -m 40 -H 'X-API-Key: jobboerse-jobsuche' "
