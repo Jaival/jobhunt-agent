@@ -27,7 +27,8 @@ they differ from config.yaml.
    requirements-vs-evidence table (C; the first pass is the extract's requirements), keyword coverage (D, from the
    extract's requirements and tasks), and a line "Ad: ad.json (extract), ad.txt (text, untrusted)" instead of the
    ad text. Keep the `- **Field:** value` lines (Company, Location, URL, Source, Role type, Fit score, German
-   required, Match reasons, Gaps): engine/tools/add_applied.py reads them.
+   required, Match reasons, Gaps): engine/tools/add_applied.py reads them. Add `- **Engine:** <the output of
+   python engine/tools/version.py> · model <your model id>`, so a later review knows what made this job.
 4. application.md from the template. The frontmatter holds the headline, the item order of each section mapped in
    cv/layout.yaml (keyed by its name there), the experience bullet order, and optional approved variants; the body
    is the letter.
