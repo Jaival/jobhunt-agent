@@ -102,6 +102,7 @@ ALLOWED_CALLS = [
     ("Bash", {"command": "rm -rf engine-new"}),
     ("Bash", {"command": "python engine/tools/extract.py add https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1-S"}),
     ("Bash", {"command": "python engine/tools/ledger.py show Acme Werkstudent Marketing"}),
+    ("Bash", {"command": "python engine/tools/decisions.py --no-tailor"}),
     ("Bash", {"command": "curl -s -o /dev/null -w \"%{redirect_url}\" \"https://to.indeed.com/aabbcc\""}),
     ("Bash", {"command": "curl -s -D - -o /dev/null to.indeed.com/aabbcc"}),
     ("Bash", {"command": "curl -s -m 40 -H 'X-API-Key: jobboerse-jobsuche' "

@@ -37,7 +37,7 @@ workspace/                   your private folder (and private git repo)
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions
    ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
@@ -71,6 +71,11 @@ Each one uses the same tools and checks as the daily run, so it can't send anyth
 | `status` | Drafts to send, applications waiting for an answer, follow-ups due, interviews, open actions, engine version. Changes nothing | `status` |
 
 `/status` is Claude Code's own command; type `status` or `/job-status` for this one.
+
+You can also decide in the brief itself. Each daily brief starts with a **Decisions** checklist: tailor a job that
+scored 60-69, mark today's drafts as sent, skip an old draft. Tick a box in the file (`- [x]`) and the next run
+does it with the same tools, and lists what it did under "Done from your decisions". A box you don't tick stays
+on the list for 7 days.
 
 ## Requirements
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)

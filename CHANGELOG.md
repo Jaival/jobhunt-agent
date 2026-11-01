@@ -25,6 +25,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   adds the tracker row, moves the folder to `_sent/` and marks the job applied; `status` (or `/job-status`; Claude
   Code's own `/status` is something else) shows drafts, follow-ups due and open actions. They use the daily run's
   tools and checks. New tool commands for them: `extract.py add <url>` and `ledger.py show <job>`.
+- Decision inbox: the daily brief starts with a "Decisions" checklist (tailor a job that scored 60-69, mark
+  today's drafts as sent, skip a draft 7-14 days old). Tick a box in the brief and the next run acts on it with the
+  same tools and confirms it under "Done from your decisions"; unticked boxes stay on the list for 7 days. New
+  tool: `decisions.py` reads the ticked boxes.
 
 ### Changed
 - "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
