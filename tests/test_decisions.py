@@ -49,6 +49,17 @@ def test_weekend_keeps_ticked_tailor_items_for_monday(tool, sample):
     assert "DO       skip 2026-10-20_Beta_Sales" in out
 
 
+def test_a_logged_action_isnt_done_twice(tool, sample):
+    """A run that acted but stopped before its brief: the next run sees DONE, not DO."""
+    brief(sample, "2026-10-30", BRIEF)
+    r = tool("decisions.py", "done", "2026-10-30", "sent", "2026-10-30_Acme_Marketing")
+    assert r.returncode == 0 and r.stdout.startswith("logged: sent")
+    out = tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
+    assert "DONE     sent 2026-10-30_Acme_Marketing" in out and "DO       skip 2026-10-20_Beta_Sales" in out
+    brief(sample, "2026-11-01", BRIEF)                     # the same tick in a later brief is a new decision
+    assert "DO       sent 2026-10-30_Acme_Marketing" in tool("decisions.py", "--today", "2026-11-02").stdout
+
+
 def test_unknown_action_stops_and_no_brief_is_no_decisions(tool, sample):
     assert tool("decisions.py").stdout.startswith("no decisions")
     brief(sample, "2026-10-30", "## Decisions\n- [x] Delete it `delete 2026-10-20_Beta_Sales`\n")

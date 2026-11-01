@@ -17,6 +17,7 @@ Today = the current local date. Work in this order. All tools run from the works
   - `DO tailor <url>`: tailor this job in step 5 first, whatever its score; it doesn't count toward the limit of 6. If it isn't in candidates.json, `python engine/tools/extract.py add <url>` puts it there (and on the ad reader's list in step 2 when it has no extract yet); score it in step 4 if the ledger has no score for it (`python engine/tools/ledger.py show <url>`).
   - `DO sent <folder>`: in step 7, `python engine/tools/add_applied.py applications/<folder> --date <today> --note "You ticked it as sent in the <date> brief"`, then `python engine/tools/ledger.py set <the URL in job.md> --verdict applied --model <your model id>`.
   - `DO skip <folder>`: in step 7, `python engine/tools/archive.py archive <folder> --reason "you skipped it in the <date> brief"`.
+  - After each `DO` action succeeds, run `python engine/tools/decisions.py done <brief date> <action> <target>` (the brief date is on decisions.py's first line). A `DONE` line was acted on by an earlier run that stopped before its brief: don't act again, list it under "Done from your decisions".
   - `KEEP` lines go unchanged into today's Decisions section; `EXPIRED` ones are dropped (list them once under Details).
   - `STOPPED` (a line with an unknown action): act on nothing from that brief and put the reason under "Your actions".
 

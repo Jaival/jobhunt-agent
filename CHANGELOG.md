@@ -28,7 +28,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Decision inbox: the daily brief starts with a "Decisions" checklist (tailor a job that scored 60-69, mark
   today's drafts as sent, skip a draft 7-14 days old). Tick a box in the brief and the next run acts on it with the
   same tools and confirms it under "Done from your decisions"; unticked boxes stay on the list for 7 days. New
-  tool: `decisions.py` reads the ticked boxes.
+  tool: `decisions.py` reads the ticked boxes and logs each one it acted on in `data/decisions_done.txt`, so a
+  run that stops halfway never acts on the same box twice.
 
 ### Changed
 - "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
