@@ -3,8 +3,11 @@
 The engine (this folder, `engine/` in your workspace) gets new features and fixes. Your own files (config.yaml,
 CLAUDE.md, your CV, applications) stay yours, and an update never changes them without showing you first.
 
-**How you hear about it:** when GitHub has a newer engine, the daily brief says "engine update available: say
-'update the engine'". Nothing is installed on its own.
+**How you hear about it:** when GitHub has a newer release, the daily brief says "engine update available
+(release vX.Y.Z): say 'update the engine'". Nothing is installed on its own.
+
+**Which updates you get:** `engine_channel` in config.yaml. `stable` (the default) gets tested releases only.
+`next` gets every change as soon as it is merged, before it is released: only for testers.
 
 **How to update:** open your workspace folder in Claude Code (Claude Desktop's **Code** tab, the same place your
 scheduled task runs) and say **update the engine**. Claude:
@@ -52,19 +55,22 @@ technical. Never edit files in engine/ yourself.
 0. **Can you run commands?** Run `git --version` and `python --version`. If this session can't run commands on
    the user's computer, stop: tell them to open the workspace folder in Claude Desktop's Code tab and say "update
    the engine" there. Don't work in a copy somewhere else.
-1. **Fetch the new engine next to the old one:** `git -C engine fetch origin`, then
-   `git -C engine worktree add ../engine-new origin/main` (engine-new/ sits in the workspace; remove a stale one
-   first with `git -C engine worktree remove --force ../engine-new`). Add `engine-new/` to .gitignore if the
-   workspace is a git repo.
-2. **Look:** `python engine-new/tools/upgrade.py status`. Summarise: engine version, how many new changes and what
-   they are (the commit titles), local edits in engine/, config version. If the workspace is a git repo with
+1. **Fetch the new engine next to the old one:** `git -C engine fetch --tags origin`. The new engine is the
+   newest release tag, the first line of `git -C engine tag -l "v*.*.*" --sort=-v:refname` (with
+   `engine_channel: next` in config.yaml: `origin/next`). Then `git -C engine worktree add ../engine-new <that tag>`
+   (engine-new/ sits in the workspace; remove a stale one first with
+   `git -C engine worktree remove --force ../engine-new`). Add `engine-new/` to .gitignore if the workspace is a
+   git repo. If the newest tag is the version engine/ already has, there is no update: say so and stop.
+2. **Look:** `python engine-new/tools/upgrade.py status`. Summarise: engine version, channel, the update and what
+   it changes (the commit titles; the release's section in CHANGELOG.md), local edits in engine/, config version. If the workspace is a git repo with
    uncommitted changes, say so and ask whether to continue.
 3. **Back up:** `python engine-new/tools/upgrade.py prepare`. If engine/ had local edits, read
    `backups/pre-upgrade-<date>/engine-local-changes.patch`. For every change, say which new setting does the same
    job (prepare lists the ones it recognises) or, if none does, draft a wish for custom.md (copy
    engine/templates/workspace/custom.md if the file doesn't exist) and show it. Ask: "Update now? Your edits are
    kept in the backup and in git, and 'rollback' brings them back." Continue only on a yes.
-4. **Update:** `python engine-new/tools/upgrade.py apply`.
+4. **Update:** `python engine-new/tools/upgrade.py apply`. On stable it checks out the release tag, so engine/ is
+   on that tag and not on a branch; that is expected.
 5. **Settings:** `python engine/tools/upgrade.py migrate`. It prints what it wrote, runs the CV map check and adds
    missing permission rules to `.claude/settings.json` (existing rules stay).
    - "permission rules: NOT INSTALLED": the file isn't valid JSON. Show the user the error, fix the file with

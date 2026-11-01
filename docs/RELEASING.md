@@ -4,8 +4,11 @@ How the engine is branched, versioned and released. Users get the engine through
 ([UPGRADING.md](../UPGRADING.md)), which follows `main`, so `main` only moves when a release is tagged.
 
 ## Branches
-- **`main` is stable:** it only moves when a release is merged and tagged. `upgrade.py` and the "update
-  available" check in `setup_check.py` follow it.
+- **`main` is stable:** it only moves when a release is merged and tagged. Users get the newest release tag
+  (`vX.Y.Z`): `upgrade.py apply` checks it out and the "update available" check in `setup_check.py` compares it
+  with engine/VERSION, so a commit on `main` without a tag reaches nobody.
+- **Channels:** `engine_channel: stable` (the default) in a workspace's config.yaml gets release tags only;
+  `engine_channel: next` follows `next`, for the maintainer and testers.
 - **`next`** collects the work for the next release. Every change is a feature branch named after its issue
   (`s1-4-details-crash`) and a PR into `next` that closes the issue.
 - **Release:** a release branch from `next` sets `VERSION` and the CHANGELOG heading, PR into `main`, merge,
