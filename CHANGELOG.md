@@ -17,11 +17,15 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   tag only; `engine_channel: next` follows the `next` branch, for testers. `upgrade.py status` shows the channel and
   the update it would get, and `setup_check.py` (so the daily brief) says "engine update available (release
   vX.Y.Z)" only for a newer release on stable.
+- Version stamps: the daily brief starts with `engine X.Y.Z (commit) · model <id>`, each job.md has an
+  `- **Engine:**` line, and `ledger.py record --model <id>` stamps the engine version and model on every row it
+  adds (as `set` already did). Your CV and letter files stay free of them: their metadata names only you.
 
 ### Changed
 - "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
   `main` branch) instead of pulling `main`. An engine that is ahead of the newest release, for example after
   testing on next, stays where it is until a newer release comes out.
+- The engine line of the daily brief moved from the Sources line in Details to the brief's first line.
 
 ### Migration
 - `upgrade.py migrate` adds `engine_channel: stable` to config.yaml when it has no channel.
