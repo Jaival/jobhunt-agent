@@ -237,6 +237,12 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+    top = history.toplevel(ROOT)
+    add("workspace", "workspace history (git)", top == ROOT.resolve(),
+        "git isn't installed, so the daily runs aren't committed: install git, then run "
+        "python engine/tools/setup_check.py --init" if not shutil.which("git") else
+        "no workspace history: python engine/tools/setup_check.py --init" if top is None else
+        f"the workspace is inside another repo ({top}), so the daily runs aren't committed", warn=True)
 
     try:
         left = permissions.missing(ROOT, cfg)

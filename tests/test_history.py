@@ -54,6 +54,24 @@ def test_a_workspace_inside_another_repo_isnt_committed(tool, sample):
     assert git(sample.parent, "rev-list", "--all") == ""
 
 
+def history_check(tool):
+    checks = json.loads(tool("setup_check.py", "--json").stdout)["checks"]
+    return next(c for c in checks if c["item"] == "workspace history (git)")
+
+
+def test_setup_check_warns_without_a_history(tool, sample):
+    c = history_check(tool)
+    assert c["status"] == "warn" and c["fix"] == "no workspace history: python engine/tools/setup_check.py --init"
+    tool("setup_check.py", "--init")
+    assert history_check(tool)["status"] == "ok"
+
+
+def test_setup_check_warns_inside_another_repo(tool, sample):
+    git(sample.parent, "init", "-q")
+    c = history_check(tool)
+    assert c["status"] == "warn" and "inside another repo" in c["fix"]
+
+
 def test_routine_commits_at_the_end():
     routine = (ENGINE / "ROUTINE.md").read_text(encoding="utf-8")
     assert routine.index("python engine/tools/history.py commit") > routine.index("8. Write daily/<today>.md")
