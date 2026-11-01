@@ -8,15 +8,17 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py            list every check: ok / todo / warn
     python engine/tools/setup_check.py --init     first copy the templates, create the folders and add the
                                                   permission rules to .claude/settings.json (never overwrites
-                                                  an existing file; settings are merged)
+                                                  an existing file; settings are merged), and start the
+                                                  workspace history (git init) unless it's a git repo already
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
 
 It prints the engine version first (engine/VERSION and the commit; the routine copies it into the daily brief).
 It also looks after the engine itself: a config.yaml from an older engine version is "todo" (say "update the
-engine"), local edits in engine/ are a warning (they block updates), and so is a newer engine on GitHub (it runs
-`git fetch`, never pull; set JOBHUNT_OFFLINE=1 to skip that).
+engine"), local edits in engine/ are a warning (they block updates), and so is a newer engine on GitHub: a newer
+release tag, or new commits on next with `engine_channel: next` (it runs `git fetch`, never pull; set
+JOBHUNT_OFFLINE=1 to skip that).
 """
 import argparse
 import importlib.util
@@ -28,6 +30,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import history
 import permissions
 import version
 from version import git
@@ -48,7 +51,6 @@ PLACEHOLDER = re.compile(r"<(?:Your Name|Name|city|Degree|university|focus|field
                          r"languages, tools[^>]*|e\.g\.[^>]*|as soon as possible|\.\.\.|role families[^>]*|"
                          r"preferences[^>]*|your [^>]*|degree|stack|url|year|one-line description|"
                          r"what it does[^>]*|anything that[^>]*|role types)>")
-GITIGNORE = "# Public engine repo, cloned here\nengine/\n# Build temp files and search output\n~build_*\n~$*\ndata/candidates.json\n"
 
 
 def read_config():
@@ -76,8 +78,9 @@ def init():
             (ROOT / name).mkdir(parents=True)
             done.append(f"created {name}/")
     if not (ROOT / ".gitignore").exists():
-        (ROOT / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
-        done.append("wrote .gitignore (keeps engine/ out of your private repo)")
+        (ROOT / ".gitignore").write_text("\n".join(history.IGNORE) + "\n", encoding="utf-8")
+        done.append("wrote .gitignore (keeps engine/ and backups/ out of your workspace history)")
+    done += history.init(ROOT)
     try:
         added = permissions.install(ROOT, read_config())
         if added:
@@ -111,12 +114,12 @@ def engine_edits():
     return [line[3:] for line in (out or "").splitlines() if line.strip()]
 
 
-def engine_behind():
-    """New commits on GitHub that engine/ doesn't have yet (0 when up to date or unknown)."""
-    if os.environ.get("JOBHUNT_OFFLINE") or git("fetch", "--quiet") is None:
-        return 0
-    n = (git("rev-list", "--count", "HEAD..@{u}") or "").strip()
-    return int(n) if n.isdigit() else 0
+def engine_update(chan):
+    """The update on this channel that GitHub has and engine/ doesn't (version.update), or None when up to date
+    or unknown (offline). Only fetches; never changes engine/."""
+    if os.environ.get("JOBHUNT_OFFLINE") or git("fetch", "--quiet", "--tags", timeout=60) is None:
+        return None
+    return version.update(chan)
 
 
 def guard_starts(launcher):
@@ -159,9 +162,9 @@ def checks():
     cfg = read_config()
     add("config.yaml", "file", cfg_path.exists(), "python engine/tools/setup_check.py --init")
     if cfg_path.exists():
-        version = cfg.get("config_version") or 1
-        add("config.yaml", "config version", version >= CONFIG_VERSION,
-            f"config.yaml is from an older engine (version {version}, this engine reads {CONFIG_VERSION}): open "
+        cfg_version = cfg.get("config_version") or 1
+        add("config.yaml", "config version", cfg_version >= CONFIG_VERSION,
+            f"config.yaml is from an older engine (version {cfg_version}, this engine reads {CONFIG_VERSION}): open "
             "this folder in Claude Code and say 'update the engine'")
         for key in CONFIG_KEYS:
             value = cfg.get(key)
@@ -234,6 +237,12 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+    top = history.toplevel(ROOT)
+    add("workspace", "workspace history (git)", top == ROOT.resolve(),
+        "git isn't installed, so the daily runs aren't committed: install git, then run "
+        "python engine/tools/setup_check.py --init" if not shutil.which("git") else
+        "no workspace history: python engine/tools/setup_check.py --init" if top is None else
+        f"the workspace is inside another repo ({top}), so the daily runs aren't committed", warn=True)
 
     try:
         left = permissions.missing(ROOT, cfg)
@@ -252,9 +261,14 @@ def checks():
         f"engine/ has local changes ({', '.join(edits[:4])}{', ...' if len(edits) > 4 else ''}): they block engine "
         "updates. Say 'update the engine' to keep them safely; write wishes for the engine in custom.md instead",
         warn=True)
-    behind = engine_behind()
-    add("engine", "engine is up to date", not behind,
-        f"an engine update is available ({behind} new change(s)): say 'update the engine'", warn=True)
+    try:
+        chan = version.channel(cfg)
+    except ValueError as e:
+        add("engine", "engine_channel", False, f"{e}: set it to stable (releases only) or next", warn=True)
+        chan = "stable"
+    found = engine_update(chan)
+    add("engine", f"engine is up to date ({chan} channel)", not found,
+        f"engine update available ({found and found[1]}): say 'update the engine'", warn=True)
 
     import pdf_export
     try:

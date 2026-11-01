@@ -12,10 +12,12 @@ date and verdict). Tailored, applied, rejected and interview never expire.
 
 Columns subscores (the five rubric sub-scores, "skills=4 seniority=5 ..."), engine_version and model came with
 ledger_version 2 (data/seen_jobs.meta.json, so the CSV stays plain). Older ledgers load with them blank and get the
-new header on the next save; `set` fills engine_version from engine/VERSION.
+new header on the next save. Every `record` and `set` stamps engine_version (engine/VERSION) on the rows it
+writes, and model when --model is given; backfill leaves them blank (it can't know which engine saw the job).
 
 Usage (from the JobHunt folder):
-    python engine/tools/ledger.py record                 add every job in data/candidates.json that isn't in the ledger
+    python engine/tools/ledger.py record [--model claude-opus-5-5]
+                                                  add every job in data/candidates.json that isn't in the ledger
                                                   (verdict "screened"; "closed" when its page is gone; jobs the
                                                   reader couldn't read stay out, so the next run tries again)
     python engine/tools/ledger.py set <key|url|id> --verdict tailored|skipped|closed|applied|rejected|screened
@@ -23,6 +25,8 @@ Usage (from the JobHunt folder):
                                [--model claude-opus-5-5] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
                                                   (NEW, SEEN, or NEW (seen ..., expired))
+    python engine/tools/ledger.py show <key|url|id|words>   one job's row (verdict, score, sub-scores, versions);
+                                                  words match company and title, every match is listed
     python engine/tools/ledger.py backfill               seed from the tracker, application folders and daily briefs
 """
 import argparse
@@ -248,7 +252,8 @@ def first_url(text):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("record")
+    rec = sub.add_parser("record")
+    rec.add_argument("--model")
     s = sub.add_parser("set")
     s.add_argument("which")
     s.add_argument("--verdict", required=True)
@@ -259,6 +264,8 @@ def main():
     c = sub.add_parser("check")
     c.add_argument("company")
     c.add_argument("title")
+    sh = sub.add_parser("show")
+    sh.add_argument("which", nargs="+")
     sub.add_parser("backfill")
     a = ap.parse_args()
     idx = Index(load())
@@ -269,6 +276,22 @@ def main():
             print(f"NEW (seen {r['first_seen']} {r['verdict']} {r['score']}, expired) {r['url']}")
         else:
             print(f"SEEN {r['first_seen']} {r['verdict']} {r['score']} {r['url']}" if r else "NEW")
+        return 0
+    if a.cmd == "show":
+        which = " ".join(a.which)
+        r = idx.by_key.get(which) or idx.by_url.get(which) or idx.by_id.get(which)
+        words = which.lower().split()
+        rows = [r] if r else [x for x in idx.rows if all(w in f"{x['company']} {x['title']}".lower() for w in words)]
+        for x in rows:
+            print(f"{x['company']} | {x['title']} | {x['url']}")
+            print(f"  first seen {x['first_seen']}, verdict {x['verdict']}, score {x['score'] or '-'}"
+                  f"{' (expired)' if idx.expired(x) else ''}")
+            print(f"  sub-scores {x['subscores'] or '-'}; engine {x['engine_version'] or '-'}, model {x['model'] or '-'}")
+            if x["note"]:
+                print(f"  note: {x['note']}")
+        if not rows:
+            print(f"NOT FOUND: no ledger row for '{which}'", file=sys.stderr)
+            return 1
         return 0
     if a.cmd == "backfill":
         n = backfill(idx)
@@ -284,15 +307,16 @@ def main():
                 unread += 1
                 continue
             verdict = "closed" if error else "screened"
+            stamp = {"engine_version": version.version(), "model": a.model or "", "subscores": ""}
             r = idx.match(j["company"], j["title"], j["url"], j["id"])
             if r and idx.expired(r):  # seen again after the expiry: the same row starts over
                 old = f"seen {r['first_seen']} {r['verdict']} {r['score']}".strip()
                 r.update(job_id=j["id"], url=j["url"], first_seen=f"{dt.date.today():%Y-%m-%d}", verdict=verdict,
-                         score="", note=f"posted {j.get('posted') or '?'}; {old}")
+                         score="", note=f"posted {j.get('posted') or '?'}; {old}", **stamp)
                 n += 1
             elif not r:
                 idx.add(job_id=j["id"], source=j["source"], company=j["company"], title=j["title"], url=j["url"],
-                        verdict=verdict, note=f"posted {j.get('posted') or '?'}")
+                        verdict=verdict, note=f"posted {j.get('posted') or '?'}", **stamp)
                 n += 1
         save(idx.rows)
         print(f"recorded {n} new jobs, {len(idx.rows)} in ledger"

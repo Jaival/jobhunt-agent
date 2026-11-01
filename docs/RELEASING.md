@@ -4,8 +4,11 @@ How the engine is branched, versioned and released. Users get the engine through
 ([UPGRADING.md](../UPGRADING.md)), which follows `main`, so `main` only moves when a release is tagged.
 
 ## Branches
-- **`main` is stable:** it only moves when a release is merged and tagged. `upgrade.py` and the "update
-  available" check in `setup_check.py` follow it.
+- **`main` is stable:** it only moves when a release is merged and tagged. Users get the newest release tag
+  (`vX.Y.Z`): `upgrade.py apply` checks it out and the "update available" check in `setup_check.py` compares it
+  with engine/VERSION, so a commit on `main` without a tag reaches nobody.
+- **Channels:** `engine_channel: stable` (the default) in a workspace's config.yaml gets release tags only;
+  `engine_channel: next` follows `next`, for the maintainer and testers.
 - **`next`** collects the work for the next release. Every change is a feature branch named after its issue
   (`s1-4-details-crash`) and a PR into `next` that closes the issue.
 - **Release:** a release branch from `next` sets `VERSION` and the CHANGELOG heading, PR into `main`, merge,
@@ -73,7 +76,12 @@ effect, not the function.
    git tag -a vX.Y.Z -m "vX.Y.Z" origin/main
    git push origin vX.Y.Z
    ```
-   Create the GitHub Release from the CHANGELOG section (by hand until the release workflow exists).
+   The tag push starts the release workflow (`.github/workflows/release.yml`): it checks that the tag is
+   `vX.Y.Z`, that `VERSION` on the tagged commit is `X.Y.Z` and that CHANGELOG.md has a non-empty
+   `## [X.Y.Z] - YYYY-MM-DD: <title>` section (`python tools/release_notes.py vX.Y.Z` runs the same check
+   locally), reruns the tests, and creates the GitHub Release "vX.Y.Z: <title>" with that section as its notes.
+   If it fails, read the "check" job's message, delete the tag (`git push origin :vX.Y.Z`, `git tag -d vX.Y.Z`),
+   fix main through a release PR, and tag again. Don't create the Release by hand first: the workflow then fails.
 8. PR `main` → `next` to bring the CHANGELOG section back, and in it set `VERSION` to the next `-dev` version
    (e.g. `0.4.0-dev`), so `next` never claims a release number.
 9. Update the maintainer's own workspace with "update the engine" and watch the next daily run.
@@ -84,3 +92,5 @@ effect, not the function.
 | `v0.1.0` | `2db97fa` | 2026-10-23 | Any field (PR #1), tagged retroactively |
 | `v0.2.0` | `62eca7d` | 2026-10-24 | Smoother updates, German letters (PR #2), tagged retroactively |
 | `v0.3.0` | `b566657` | 2026-10-25 | Safe & lossless (PR #53) |
+| `v0.4.0` | `b2b315d` | 2026-10-29 | Measurable judgment (PR #66) |
+| `v0.5.0` | `143dd3b` | 2026-10-31 | Grounded & modular (PR #73) |

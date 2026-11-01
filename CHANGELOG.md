@@ -12,6 +12,51 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-01: versioned & interactive
+
+### Added
+- Release channels: `engine_channel: stable` (the default) in config.yaml updates the engine to the newest release
+  tag only; `engine_channel: next` follows the `next` branch, for testers. `upgrade.py status` shows the channel and
+  the update it would get, and `setup_check.py` (so the daily brief) says "engine update available (release
+  vX.Y.Z)" only for a newer release on stable.
+- Version stamps: the daily brief starts with `engine X.Y.Z (commit) · model <id>`, each job.md has an
+  `- **Engine:**` line, and `ledger.py record --model <id>` stamps the engine version and model on every row it
+  adds (as `set` already did). Your CV and letter files stay free of them: their metadata names only you.
+- Commands you can type in Claude Code, as skills in `.claude/skills/` (README "Commands"): `tailor <url>`
+  reads, scores and tailors one job you name; `why <job>` explains a score from its sub-scores; `sent <folder>`
+  adds the tracker row, moves the folder to `_sent/` and marks the job applied; `status` (or `/job-status`; Claude
+  Code's own `/status` is something else) shows drafts, follow-ups due and open actions. They use the daily run's
+  tools and checks. New tool commands for them: `extract.py add <url>` and `ledger.py show <job>`.
+- Decision inbox: the daily brief starts with a "Decisions" checklist (tailor a job that scored 60-69, mark
+  today's drafts as sent, skip a draft 7-14 days old). Tick a box in the brief and the next run acts on it with the
+  same tools and confirms it under "Done from your decisions"; unticked boxes stay on the list for 7 days. New
+  tool: `decisions.py` reads the ticked boxes and logs each one it acted on in `data/decisions_done.txt`, so a
+  run that stops halfway never acts on the same box twice.
+- Workspace history: `setup_check.py --init` makes the workspace folder a local git repo (unless it is one already)
+  with a `.gitignore` that leaves out `engine/`, `backups/` and Office temp files. Each daily run ends with
+  `history.py commit` ("daily run 2026-12-14, engine v1.0.0"), so you can see or undo what a run changed. It never
+  adds a remote or pushes.
+
+### Changed
+- "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
+  `main` branch) instead of pulling `main`. An engine that is ahead of the newest release, for example after
+  testing on next, stays where it is until a newer release comes out.
+- The engine line of the daily brief moved from the Sources line in Details to the brief's first line.
+
+### Behaviour changes
+- Title filter (`profile.exclude_titles`): the seniority words `manager`, `staff`, `leiter` and `lead` now drop
+  only Junior and unlabelled titles, so "Werkstudent Produktmanagement" or "Praktikum Leiterplattendesign" is
+  kept. They still match inside a word ("Teamleiter", "Projektmanager"). Every other exclude word now matches at
+  the start of a word only: `art` drops "Art Direction" but no longer "Startup Marketing". On the 33 labelled
+  ads, no title changes result for either sample profile. `upgrade.py compare` lists the titles in your ledger
+  that the new filter treats differently.
+
+### Migration
+- `upgrade.py migrate` adds `engine_channel: stable` to config.yaml when it has no channel.
+- `upgrade.py migrate` (and `setup_check.py --init`) copies the four command skills into `.claude/skills/`, and
+  the updated tailor subagent.
+- "update the engine" runs `setup_check.py --init`, which starts the workspace history in an existing workspace.
+
 ## [0.5.0] - 2026-10-30: grounded & modular
 
 ### Added
@@ -241,7 +286,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...next
+[1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0

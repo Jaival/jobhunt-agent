@@ -9,7 +9,9 @@ ENGINE = permissions.TEMPLATE.parents[3]
 PHRASES = {"ats-review": ["run the ATS review", "check my CV"],
            "update-engine": ["update the engine", "upgrade the engine"],
            "remap-cv": ["remap my CV"],
-           "onboarding": ["setup_check.py reports anything as TODO"]}
+           "onboarding": ["setup_check.py reports anything as TODO"],
+           "tailor": ["tailor <url>"], "why": ["why <job>"], "sent": ["sent <folder>"],
+           "job-status": ['"status"', "job status"]}
 
 
 @pytest.mark.parametrize("name", PHRASES)
