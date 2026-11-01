@@ -12,6 +12,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-01: versioned & interactive
+
 ### Added
 - Release channels: `engine_channel: stable` (the default) in config.yaml updates the engine to the newest release
   tag only; `engine_channel: next` follows the `next` branch, for testers. `upgrade.py status` shows the channel and
@@ -284,7 +286,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...next
+[1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.2.0...v0.3.0
