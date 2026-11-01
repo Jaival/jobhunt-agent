@@ -4,6 +4,7 @@ on:
   pull_request:          # every PR, including PRs stacked on another feature branch
   push:
     branches: [next, main]
+  workflow_call:         # release.yml reruns the tests on a pushed tag
 
 permissions:
   contents: read
