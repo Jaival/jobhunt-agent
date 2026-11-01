@@ -126,4 +126,4 @@ Write each answer into the file named in brackets right after the round.
 - Ask them to read CLAUDE.md once: it's what every letter will be based on.
 - Tell them the next scheduled run will search, score and (on weekdays) draft. If they want results today,
   they can say "run the routine now".
-- If the workspace is a git repo, suggest committing; never push without asking.
+- The workspace is a local git repo (setup_check.py --init started it, unless it was one already): run `python engine/tools/history.py commit`; never push or add a remote.

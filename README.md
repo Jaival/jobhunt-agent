@@ -37,7 +37,7 @@ workspace/                   your private folder (and private git repo)
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions, history
    ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
@@ -51,12 +51,17 @@ A day's run:
 3. On weekdays, it hands each top match to a `tailor` subagent with a fresh context, which writes `job.md` (requirements vs. evidence, keyword coverage, posting check) and `application.md` (headline, item order of the mapped CV sections, letter).
 4. `build_application.py` builds the CV and letter (.docx, and PDF via Word or LibreOffice). It fails on placeholders, letters outside 250-350 words, unapproved wordings, numbers or skills that aren't in your own files or the ad, a CV over 2 pages or a letter over 1 page.
 5. Confirmation and rejection emails update the tracker; `archive.py` moves finished folders; a daily brief lists what to send today.
+6. `history.py` commits the day's changes to a git repo in your workspace folder ("daily run 2026-12-14, engine v1.0.0"), so you can see or undo what a run changed.
 
 Guardrails: ad text is treated as untrusted data (prompt-injection attempts are reported, never followed),
 every claim must come from the master CV or `CLAUDE.md`, and the routine never sends, submits or posts. The last
 part is enforced, not just asked for: permission rules in the workspace's `.claude/settings.json` and a guard hook
 (`tools/hooks/guard.py`) block sending, typing into pages, edits of `engine/` and the master files, and network
 calls to hosts other than the job sites. They apply to a local Code-tab task; the brief says whether the guard ran.
+
+The workspace history holds your CV, letters and tracker. It stays on your computer: the engine never adds a
+remote or pushes. If you push it yourself, use a private repository. `engine/` and `backups/` are left out of it.
+`setup_check.py --init` starts it; a workspace that already is a git repo is left as it is.
 
 ## Commands
 

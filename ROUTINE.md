@@ -112,4 +112,6 @@ Weekend briefs: decisions, summary, scored jobs (top half), your actions, and so
 - The pattern review from playbook H (funnel, send rate, score vs outcome, top blockers).
 - Every second Friday (or after 5+ rejections in a week): the master CV review from playbook I, saved in reviews/; link it in the brief and list its open questions under "Your actions".
 
-Finish by replying with a 3-line summary and the path of today's brief.
+Then run `python engine/tools/history.py commit`: it commits the run's changes to the workspace history ("daily run <today>, engine v<version>"; never pushed), so it runs after the brief is written. Do not edit the brief after it.
+
+Finish by replying with a 3-line summary, the path of today's brief and the line history.py printed.

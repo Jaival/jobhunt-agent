@@ -30,6 +30,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   same tools and confirms it under "Done from your decisions"; unticked boxes stay on the list for 7 days. New
   tool: `decisions.py` reads the ticked boxes and logs each one it acted on in `data/decisions_done.txt`, so a
   run that stops halfway never acts on the same box twice.
+- Workspace history: `setup_check.py --init` makes the workspace folder a local git repo (unless it is one already)
+  with a `.gitignore` that leaves out `engine/`, `backups/` and Office temp files. Each daily run ends with
+  `history.py commit` ("daily run 2026-12-14, engine v1.0.0"), so you can see or undo what a run changed. It never
+  adds a remote or pushes.
 
 ### Changed
 - "update the engine" on the stable channel checks out the release tag (engine/ is then on a tag, not on the
@@ -41,6 +45,7 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - `upgrade.py migrate` adds `engine_channel: stable` to config.yaml when it has no channel.
 - `upgrade.py migrate` (and `setup_check.py --init`) copies the four command skills into `.claude/skills/`, and
   the updated tailor subagent.
+- "update the engine" runs `setup_check.py --init`, which starts the workspace history in an existing workspace.
 
 ## [0.5.0] - 2026-10-30: grounded & modular
 
