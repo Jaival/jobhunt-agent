@@ -20,7 +20,9 @@ search:
   # region_plz: ['8', '90', '91', '92', '93', '94', '95', '96', '97']  # postcode starts, for ads without a region
   # region_places: [München, Nürnberg, Augsburg, Regensburg]          # place names, for other job sites
 profile:                                        # which job titles search_jobs.py keeps (engine/tools/scope.py)
-  # Each entry is a word (or regular-expression fragment) matched anywhere in the title, upper/lower case ignored.
+  # Each entry is a word (or regular-expression fragment), upper/lower case ignored. Include words match anywhere
+  # in the title; exclude words at the start of a word. manager, staff, leiter and lead drop only junior and
+  # unlabelled titles (anywhere in the word, so "Teamleiter" too), never a Werkstudent, HiWi, internship or thesis.
   # Onboarding fills this in from your answers; the examples below are for a marketing student.
   role_types: [Werkstudent, Internship, Junior]          # pick from Werkstudent, HiWi, Internship, Thesis, Junior
   include_titles: [your field]                            # e.g. [marketing, content, social media, kommunikation]

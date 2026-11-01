@@ -13,6 +13,9 @@ candidates.json records them (`extract`, or `read_error` when the reader couldn'
 
 Usage (from the workspace folder):
     python engine/tools/extract.py pending                the reader's task lines for every new job without an extract
+    python engine/tools/extract.py add <https://...>      one job the user named (the `tailor <url>` command): adds it
+        to candidates.json without the title filter (an Indeed job by its viewjob?jk= link), says whether the ledger
+        knows it, and prints its read task line, or where its extract is
     python engine/tools/extract.py save data/ads/incoming.json
         the reader's reply: saves valid extracts, adds its leads (Indeed, Gmail, web) to candidates.json with the
         title filter and ledger check, records unreadable ads; one line per item, exit 1 when one is invalid
@@ -207,6 +210,10 @@ def store(extract, cands):
     if job:
         job["extract"] = path.relative_to(ads_dir().parent.parent).as_posix()
         job.pop("read_error", None)
+        if not job["title"]:  # a job from `add`: the extract names it
+            import ledger
+            job.update({k: extract[k] for k in ("title", "company", "location", "role_type")})
+            job["key"] = ledger.make_key(job["company"], job["title"])
     inj = len(extract["injection_text"])
     return (f"OK      {extract['id']}: {extract['role_type']}, German {extract['german_required']}, "
             f"{'CLOSED' if extract['closed'] else 'open'}, {len(extract['requirements'])} requirements"
@@ -277,6 +284,30 @@ def cmd_pending(a):
     for j in todo:
         print(f"read {j['id']} | {how(j)} | {j['title']} | {j['company']} | {j['url']}")
     print(f"{len(todo)} ad(s) to read")
+    return 0
+
+
+def cmd_add(a):
+    import ledger
+    found = url_problems(a.url)
+    if found:
+        print(f"FAILED: {found[0]}", file=sys.stderr)
+        return 1
+    cands, job_id = load_candidates(), lead_id(a.url)
+    job = next((j for j in cands["jobs"] if a.url == j["url"] or job_id == j["id"]), None)
+    if not job:
+        job = dict(id=job_id, source="manual", title="", company="", location="", posted="", url=a.url, role_type="",
+                   key="", seen=False, seen_as="")
+        cands["jobs"].append(job)
+        write_candidates(cands)
+    idx = ledger.Index(ledger.load())
+    hit = idx.by_url.get(a.url) or idx.by_id.get(job["id"])   # by link only: the title isn't known yet
+    print(f"SEEN    {hit['first_seen']} {hit['verdict']} {hit['score']} {hit['company']} | {hit['title']}" if hit
+          else "NEW     not in the ledger")
+    if has_extract(job["id"]):
+        print(f"EXTRACT data/ads/{file_stem(job['id'])}.json")
+    else:
+        print(f"read {job['id']} | {how(job)} | {job['title'] or 'unknown'} | {job['company'] or 'unknown'} | {job['url']}")
     return 0
 
 
@@ -374,6 +405,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("pending")
+    ad = sub.add_parser("add")
+    ad.add_argument("url")
     s = sub.add_parser("save")
     s.add_argument("reply")
     r = sub.add_parser("read")
@@ -386,7 +419,7 @@ def main():
     c.add_argument("paths", nargs="+")
     a = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
-    return {"pending": cmd_pending, "save": cmd_save, "read": cmd_read, "attach": cmd_attach, "check": cmd_check}[a.cmd](a)
+    return {"pending": cmd_pending, "add": cmd_add, "save": cmd_save, "read": cmd_read, "attach": cmd_attach, "check": cmd_check}[a.cmd](a)
 
 
 if __name__ == "__main__":

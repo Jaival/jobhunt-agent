@@ -25,6 +25,8 @@ Usage (from the JobHunt folder):
                                [--model claude-opus-5-5] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
                                                   (NEW, SEEN, or NEW (seen ..., expired))
+    python engine/tools/ledger.py show <key|url|id|words>   one job's row (verdict, score, sub-scores, versions);
+                                                  words match company and title, every match is listed
     python engine/tools/ledger.py backfill               seed from the tracker, application folders and daily briefs
 """
 import argparse
@@ -262,6 +264,8 @@ def main():
     c = sub.add_parser("check")
     c.add_argument("company")
     c.add_argument("title")
+    sh = sub.add_parser("show")
+    sh.add_argument("which", nargs="+")
     sub.add_parser("backfill")
     a = ap.parse_args()
     idx = Index(load())
@@ -272,6 +276,22 @@ def main():
             print(f"NEW (seen {r['first_seen']} {r['verdict']} {r['score']}, expired) {r['url']}")
         else:
             print(f"SEEN {r['first_seen']} {r['verdict']} {r['score']} {r['url']}" if r else "NEW")
+        return 0
+    if a.cmd == "show":
+        which = " ".join(a.which)
+        r = idx.by_key.get(which) or idx.by_url.get(which) or idx.by_id.get(which)
+        words = which.lower().split()
+        rows = [r] if r else [x for x in idx.rows if all(w in f"{x['company']} {x['title']}".lower() for w in words)]
+        for x in rows:
+            print(f"{x['company']} | {x['title']} | {x['url']}")
+            print(f"  first seen {x['first_seen']}, verdict {x['verdict']}, score {x['score'] or '-'}"
+                  f"{' (expired)' if idx.expired(x) else ''}")
+            print(f"  sub-scores {x['subscores'] or '-'}; engine {x['engine_version'] or '-'}, model {x['model'] or '-'}")
+            if x["note"]:
+                print(f"  note: {x['note']}")
+        if not rows:
+            print(f"NOT FOUND: no ledger row for '{which}'", file=sys.stderr)
+            return 1
         return 0
     if a.cmd == "backfill":
         n = backfill(idx)

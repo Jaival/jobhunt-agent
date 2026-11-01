@@ -26,7 +26,8 @@ workspace/                   your private folder (and private git repo)
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
 ├─ .claude/                  permission rules, guard hook, subagents (ad-reader, tailor) and skills for the
-│                            requests: ats-review, update-engine, remap-cv, onboarding
+│                            requests: ats-review, update-engine, remap-cv, onboarding, and the commands
+│                            tailor, why, sent, job-status
 └─ engine/                   this repo
    ├─ ROUTINE.md             the daily routine the scheduled task runs
    ├─ ONBOARDING.md          the first-run setup interview
@@ -36,7 +37,7 @@ workspace/                   your private folder (and private git repo)
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version
+   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions, history
    ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
@@ -50,12 +51,36 @@ A day's run:
 3. On weekdays, it hands each top match to a `tailor` subagent with a fresh context, which writes `job.md` (requirements vs. evidence, keyword coverage, posting check) and `application.md` (headline, item order of the mapped CV sections, letter).
 4. `build_application.py` builds the CV and letter (.docx, and PDF via Word or LibreOffice). It fails on placeholders, letters outside 250-350 words, unapproved wordings, numbers or skills that aren't in your own files or the ad, a CV over 2 pages or a letter over 1 page.
 5. Confirmation and rejection emails update the tracker; `archive.py` moves finished folders; a daily brief lists what to send today.
+6. `history.py` commits the day's changes to a git repo in your workspace folder ("daily run 2026-12-14, engine v1.0.0"), so you can see or undo what a run changed.
 
 Guardrails: ad text is treated as untrusted data (prompt-injection attempts are reported, never followed),
 every claim must come from the master CV or `CLAUDE.md`, and the routine never sends, submits or posts. The last
 part is enforced, not just asked for: permission rules in the workspace's `.claude/settings.json` and a guard hook
 (`tools/hooks/guard.py`) block sending, typing into pages, edits of `engine/` and the master files, and network
 calls to hosts other than the job sites. They apply to a local Code-tab task; the brief says whether the guard ran.
+
+The workspace history holds your CV, letters and tracker. It stays on your computer: the engine never adds a
+remote or pushes. If you push it yourself, use a private repository. `engine/` and `backups/` are left out of it.
+`setup_check.py --init` starts it; a workspace that already is a git repo is left as it is.
+
+## Commands
+
+Open your workspace in Claude Code (Claude Desktop's Code tab) and type a command, with or without the `/`.
+Each one uses the same tools and checks as the daily run, so it can't send anything or skip a check.
+
+| Command | What it does | Example |
+|---|---|---|
+| `tailor <url>` | Reads the ad through the ad reader, scores it with the rubric and, at 70+ (or on your OK), has the tailor subagent write and build the CV and letter | `tailor https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S` |
+| `why <job>` | Explains a job's score: the five sub-scores, hard mismatches, reasons and what would change it. Changes nothing | `why Acme Werkstudent Marketing` |
+| `sent <folder>` | Records that you sent it: tracker row, folder to `applications/_sent/`, ledger verdict, first follow-up date | `sent 2026-12-14_Acme_Werkstudent-Marketing --via Portal` |
+| `status` | Drafts to send, applications waiting for an answer, follow-ups due, interviews, open actions, engine version. Changes nothing | `status` |
+
+`/status` is Claude Code's own command; type `status` or `/job-status` for this one.
+
+You can also decide in the brief itself. Each daily brief starts with a **Decisions** checklist: tailor a job that
+scored 60-69, mark today's drafts as sent, skip an old draft. Tick a box in the file (`- [x]`) and the next run
+does it with the same tools, and lists what it did under "Done from your decisions". A box you don't tick stays
+on the list for 7 days.
 
 ## Requirements
 - Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)

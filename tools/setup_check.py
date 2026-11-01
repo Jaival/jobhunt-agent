@@ -8,7 +8,8 @@ Usage (from the workspace folder, the one that contains engine/):
     python engine/tools/setup_check.py            list every check: ok / todo / warn
     python engine/tools/setup_check.py --init     first copy the templates, create the folders and add the
                                                   permission rules to .claude/settings.json (never overwrites
-                                                  an existing file; settings are merged)
+                                                  an existing file; settings are merged), and start the
+                                                  workspace history (git init) unless it's a git repo already
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
@@ -29,6 +30,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import history
 import permissions
 import version
 from version import git
@@ -49,7 +51,6 @@ PLACEHOLDER = re.compile(r"<(?:Your Name|Name|city|Degree|university|focus|field
                          r"languages, tools[^>]*|e\.g\.[^>]*|as soon as possible|\.\.\.|role families[^>]*|"
                          r"preferences[^>]*|your [^>]*|degree|stack|url|year|one-line description|"
                          r"what it does[^>]*|anything that[^>]*|role types)>")
-GITIGNORE = "# Public engine repo, cloned here\nengine/\n# Build temp files and search output\n~build_*\n~$*\ndata/candidates.json\n"
 
 
 def read_config():
@@ -77,8 +78,9 @@ def init():
             (ROOT / name).mkdir(parents=True)
             done.append(f"created {name}/")
     if not (ROOT / ".gitignore").exists():
-        (ROOT / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
-        done.append("wrote .gitignore (keeps engine/ out of your private repo)")
+        (ROOT / ".gitignore").write_text("\n".join(history.IGNORE) + "\n", encoding="utf-8")
+        done.append("wrote .gitignore (keeps engine/ and backups/ out of your workspace history)")
+    done += history.init(ROOT)
     try:
         added = permissions.install(ROOT, read_config())
         if added:
@@ -235,6 +237,12 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+    top = history.toplevel(ROOT)
+    add("workspace", "workspace history (git)", top == ROOT.resolve(),
+        "git isn't installed, so the daily runs aren't committed: install git, then run "
+        "python engine/tools/setup_check.py --init" if not shutil.which("git") else
+        "no workspace history: python engine/tools/setup_check.py --init" if top is None else
+        f"the workspace is inside another repo ({top}), so the daily runs aren't committed", warn=True)
 
     try:
         left = permissions.missing(ROOT, cfg)

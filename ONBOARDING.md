@@ -66,7 +66,8 @@ Write each answer into the file named in brackets right after the round.
    in their field, in English and German (marketing → marketing, content, social media, kommunikation, pr,
    kampagne); `junior_include_titles` if junior roles are narrower; `exclude_titles` = the template's seniority
    words plus fields they never want; `score_bonus` = 3-6 skills from their CV that should add points. Show the
-   lists as plain words, explain that a job is kept only when its title contains one of them, and let them edit.
+   lists as plain words, explain that a job is kept only when its title contains one of them (and that an
+   exclude word must start a word in the title), and let them edit.
    Run `setup_check.py`: it reports a word list that doesn't work.
 4. **Languages** [CLAUDE.md "Who I am", "My decisions on the rules"]
    English and German level (A1-C2 or native; explain the scale if needed), and any other languages. If German is below C1: should student roles that ask for
@@ -126,4 +127,4 @@ Write each answer into the file named in brackets right after the round.
 - Ask them to read CLAUDE.md once: it's what every letter will be based on.
 - Tell them the next scheduled run will search, score and (on weekdays) draft. If they want results today,
   they can say "run the routine now".
-- If the workspace is a git repo, suggest committing; never push without asking.
+- The workspace is a local git repo (setup_check.py --init started it, unless it was one already): run `python engine/tools/history.py commit`; never push or add a remote.
