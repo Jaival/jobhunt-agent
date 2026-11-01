@@ -76,7 +76,12 @@ effect, not the function.
    git tag -a vX.Y.Z -m "vX.Y.Z" origin/main
    git push origin vX.Y.Z
    ```
-   Create the GitHub Release from the CHANGELOG section (by hand until the release workflow exists).
+   The tag push starts the release workflow (`.github/workflows/release.yml`): it checks that the tag is
+   `vX.Y.Z`, that `VERSION` on the tagged commit is `X.Y.Z` and that CHANGELOG.md has a non-empty
+   `## [X.Y.Z] - YYYY-MM-DD: <title>` section (`python tools/release_notes.py vX.Y.Z` runs the same check
+   locally), reruns the tests, and creates the GitHub Release "vX.Y.Z: <title>" with that section as its notes.
+   If it fails, read the "check" job's message, delete the tag (`git push origin :vX.Y.Z`, `git tag -d vX.Y.Z`),
+   fix main through a release PR, and tag again. Don't create the Release by hand first: the workflow then fails.
 8. PR `main` → `next` to bring the CHANGELOG section back, and in it set `VERSION` to the next `-dev` version
    (e.g. `0.4.0-dev`), so `next` never claims a release number.
 9. Update the maintainer's own workspace with "update the engine" and watch the next daily run.
