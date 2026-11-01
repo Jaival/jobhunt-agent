@@ -94,3 +94,4 @@ effect, not the function.
 | `v0.3.0` | `b566657` | 2026-10-25 | Safe & lossless (PR #53) |
 | `v0.4.0` | `b2b315d` | 2026-10-29 | Measurable judgment (PR #66) |
 | `v0.5.0` | `143dd3b` | 2026-10-31 | Grounded & modular (PR #73) |
+| `v1.0.0` | `1d7384b` | 2026-11-01 | Versioned & interactive (PR #85) |
