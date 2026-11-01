@@ -57,6 +57,27 @@ def test_default_excludes():
     assert not s.in_scope("Initiativbewerbung")
 
 
+@pytest.mark.parametrize("title, keep", [
+    ("Werkstudent Produktmanagement", True),          # seniority words don't drop student roles
+    ("Praktikum Leiterplattendesign", True),
+    ("Werkstudent Staff Augmentation", True),
+    ("Werkstudent Senior Consulting", False),         # senior still drops every role type
+    ("Junior Product Manager", False),                # seniority drops a junior title
+    ("Teamleiter Logistik", False),                   # and an unlabelled one, also inside a compound
+    ("Junior Projektmanager", False),
+    ("Seniorberater Vertrieb", False),                # other words match at a word start, compounds too
+    ("Initiativbewerbung", False),
+])
+def test_exclude_words(title, keep):
+    assert Scope({"role_types": ["Werkstudent", "Internship", "Junior"]}).in_scope(title) is keep
+
+
+def test_exclude_words_match_at_a_word_start():
+    s = Scope({"role_types": ["Werkstudent"], "exclude_titles": ["art"]})
+    assert s.in_scope("Werkstudent Startup Marketing")
+    assert not s.in_scope("Werkstudent Art Direction")
+
+
 def test_bad_profiles():
     with pytest.raises(ValueError, match="no profile"):
         Scope(None)

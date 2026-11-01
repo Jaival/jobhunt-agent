@@ -1,7 +1,11 @@
 """Title filter and role-type guess, built from the `profile:` block of config.yaml (routine step 3).
 
-Every list entry is a word or a regular-expression fragment, matched case-insensitively anywhere in the
-title ("sales", "werkstudent", r"\bit\b"). Onboarding writes the profile; see
+Every list entry is a word or a regular-expression fragment, matched case-insensitively ("sales", "werkstudent",
+r"\bit\b"). Include words match anywhere in the title. Exclude words match at the start of a word only, so
+"art" drops "Art Direction" but not "Startup", and "senior" still drops "Seniorberater". The seniority words in
+SENIORITY (manager, staff, leiter, lead) drop only Junior and unlabelled titles, and match anywhere, as German
+compounds need ("Teamleiter", "Projektmanager"): "Werkstudent Produktmanagement" or "Praktikum
+Leiterplattendesign" stays. Onboarding writes the profile; see
 templates/workspace/config.yaml for the keys:
 
     role_types             which role types to keep: Werkstudent, HiWi, Internship, Thesis, Junior
@@ -25,6 +29,9 @@ STUDENT_TYPES = ("Werkstudent", "HiWi", "Internship", "Thesis")
 ALL_TYPES = STUDENT_TYPES + ("Junior",)
 DEFAULT_EXCLUDE = ["senior", r"\blead\b", "principal", "staff", "head of", "director", "manager", "leiter",
                    "ausbildung", "azubi", "unsolicited", "initiativ"]
+# Exclude entries that say a role leads others. A student role can carry them ("Werkstudent Produktmanager"), so
+# they drop only Junior and unlabelled titles.
+SENIORITY = {"manager", "staff", "leiter", "lead", r"\blead\b"}
 
 
 def role_type(title):
@@ -34,10 +41,11 @@ def role_type(title):
     return "Junior" if JUNIOR.search(title) else "Other"
 
 
-def _rx(words):
-    """One case-insensitive regex from a list of fragments, or None for an empty list."""
+def _rx(words, start=""):
+    """One case-insensitive regex from a list of fragments, or None for an empty list. start=r"\b" makes each
+    fragment match only at the start of a word."""
     words = [w for w in (words or []) if str(w).strip()]
-    return re.compile("|".join(f"(?:{w})" for w in words), re.I) if words else None
+    return re.compile("|".join(f"{start}(?:{w})" for w in words), re.I) if words else None
 
 
 class Scope:
@@ -50,9 +58,12 @@ class Scope:
         self.types = set(profile.get("role_types") or ALL_TYPES)
         self.include = _rx(profile.get("include_titles"))
         self.junior_include = _rx(profile.get("junior_include_titles")) or self.include
-        self.junior_exclude = _rx(profile.get("junior_exclude_titles"))
         excl = profile.get("exclude_titles")
-        self.exclude = _rx(DEFAULT_EXCLUDE if excl is None else excl)
+        excl = DEFAULT_EXCLUDE if excl is None else excl
+        senior = [w for w in excl if str(w).strip().lower() in SENIORITY]
+        self.exclude = _rx([w for w in excl if w not in senior], r"\b")
+        # German seniority titles are compounds (Teamleiter, Projektmanager): these match anywhere in the word.
+        self.junior_exclude = _rx(senior + list(profile.get("junior_exclude_titles") or []))
 
     def in_scope(self, title):
         if self.exclude and self.exclude.search(title):

@@ -41,6 +41,14 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   testing on next, stays where it is until a newer release comes out.
 - The engine line of the daily brief moved from the Sources line in Details to the brief's first line.
 
+### Behaviour changes
+- Title filter (`profile.exclude_titles`): the seniority words `manager`, `staff`, `leiter` and `lead` now drop
+  only Junior and unlabelled titles, so "Werkstudent Produktmanagement" or "Praktikum Leiterplattendesign" is
+  kept. They still match inside a word ("Teamleiter", "Projektmanager"). Every other exclude word now matches at
+  the start of a word only: `art` drops "Art Direction" but no longer "Startup Marketing". On the 33 labelled
+  ads, no title changes result for either sample profile. `upgrade.py compare` lists the titles in your ledger
+  that the new filter treats differently.
+
 ### Migration
 - `upgrade.py migrate` adds `engine_channel: stable` to config.yaml when it has no channel.
 - `upgrade.py migrate` (and `setup_check.py --init`) copies the four command skills into `.claude/skills/`, and
