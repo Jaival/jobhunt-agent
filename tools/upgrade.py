@@ -4,15 +4,19 @@ Claude runs these steps for "update the engine" (engine/UPGRADING.md, "Steps for
 what it did and what comes next; none deletes anything without its own command.
 
 Usage (from the workspace folder, the one that contains engine/):
-    python engine/tools/upgrade.py status            engine version, new changes on GitHub, local edits, config version
+    python engine/tools/upgrade.py status            engine version and channel, the update it would get, local edits,
+                                                     config version
     python engine/tools/upgrade.py prepare           back up config.yaml, CLAUDE.md, custom.md and cv/ to
                                                      backups/pre-upgrade-<date>/, save engine/ as it is (local edits
                                                      included) and list which edits the new engine has a setting for
-    python engine/tools/upgrade.py apply             put local edits aside (git stash) and pull the new engine
+    python engine/tools/upgrade.py apply             put local edits aside (git stash) and move engine/ to the update:
+                                                     the newest release tag (engine_channel: stable, the default) or
+                                                     the tip of next (engine_channel: next)
     python engine/tools/upgrade.py migrate [--dry-run]  bring config.yaml to this engine's version; writes
                                                      cv/layout.yaml from the old CV settings when it's missing
                                                      and adds missing permission rules to .claude/settings.json
-                                                     (removes a deny rule for Agent, backup first)
+                                                     (removes a deny rule for Agent, backup first); adds
+                                                     engine_channel: stable when config.yaml has no channel
     python engine/tools/upgrade.py compare [--max 5] build a test application (and up to 5 real ones) with the
                                                      saved old engine and the new one, and compare the documents
     python engine/tools/upgrade.py rollback          back to the old engine and config (local edits restored)
@@ -40,6 +44,7 @@ ROOT = Path(os.environ.get("JOBHUNT_ROOT") or TOOLS.parents[1])
 ENGINE = ROOT / "engine"
 sys.path.insert(0, str(TOOLS))
 import permissions  # noqa: E402
+import version  # noqa: E402
 from setup_check import CONFIG_VERSION  # noqa: E402
 
 # The stock title filter of engines before config_version 2 (search_jobs.py INFRA / SOFTWARE / DROP, with the
@@ -66,7 +71,7 @@ STOCK_PROFILE = {
 }
 KNOWN_KEYS = {"config_version", "applicant", "file_prefix", "master_cv", "master_letter", "variants", "letter_city",
               "letter_languages", "name_in_master", "university", "font", "fallback_font", "search", "profile",
-              "layout", "internship_duration", "pdf_engine", "scoring", "ledger_expiry_days"}
+              "layout", "internship_duration", "pdf_engine", "scoring", "ledger_expiry_days", "engine_channel"}
 SEARCH_KEYS = {"home", "areas", "regions", "region_plz", "region_places"}
 # Words in a local engine patch -> the setting that does the same job now.
 FEATURES = [
@@ -99,6 +104,20 @@ def git(*args, check=True, timeout=120):
     if check and r.returncode:
         raise UpgradeError(f"git {' '.join(args)} failed: {(r.stderr or r.stdout).strip()}")
     return r.stdout.rstrip() if args[:1] == ("status",) else r.stdout.strip()
+
+
+def channel():
+    """engine_channel from config.yaml (stable when it's missing)."""
+    try:
+        return version.channel(read_cfg()[1])
+    except ValueError as e:
+        raise UpgradeError(f"{e}; set it to stable (releases only) or next") from None
+
+
+def fetch():
+    """Fetch branches and tags; False when offline."""
+    return subprocess.run(["git", "-C", str(ENGINE), "fetch", "--quiet", "--tags"], capture_output=True,
+                          timeout=300).returncode == 0
 
 
 def edits():
@@ -216,16 +235,19 @@ def cmd_status(a):
     if not (ENGINE / ".git").exists():
         raise UpgradeError("engine/ isn't a git clone; clone github.com/Jaival/jobhunt-agent there first")
     v = (ENGINE / "VERSION").read_text(encoding="utf-8-sig").strip() if (ENGINE / "VERSION").exists() else "no VERSION"
-    print(f"engine: {v}, {git('log', '-1', '--format=%h %s')} "
-          f"(branch {git('rev-parse', '--abbrev-ref', 'HEAD')})")
-    fetched = subprocess.run(["git", "-C", str(ENGINE), "fetch", "--quiet"], capture_output=True).returncode == 0
-    behind = git("rev-list", "--count", "HEAD..@{u}", check=False) if fetched else ""
-    print(f"new changes on GitHub: {behind or 'unknown (offline, or no upstream branch)'}")
-    if behind and behind != "0":
-        remote = git("show", "@{u}:VERSION", check=False).strip()
-        print(f"engine version on GitHub: {remote or 'unknown (no VERSION file there yet)'}")
-    if behind and behind != "0":
-        print("  " + "\n  ".join(git("log", "--format=%h %s", "HEAD..@{u}").splitlines()[:15]))
+    at = git("describe", "--tags", "--exact-match", check=False) or f"branch {git('rev-parse', '--abbrev-ref', 'HEAD')}"
+    print(f"engine: {v}, {git('log', '-1', '--format=%h %s')} ({at})")
+    chan = channel()
+    print(f"channel: {chan} ({'release tags only' if chan == 'stable' else 'every change on next'})")
+    if not fetch():
+        print("update: unknown (offline)")
+    elif not (found := version.update(chan, ENGINE)):
+        print(f"update: none (newest release {version.newest_tag(ENGINE) or 'unknown'})")
+    else:
+        ref, text = found
+        print(f"update: {text}, engine version there: {git('show', f'{ref}:VERSION', check=False) or 'unknown'}")
+        log = git("log", "--format=%h %s", f"HEAD..{ref}").splitlines()
+        print(f"  {len(log)} new commit(s)" + "".join(f"\n  {line}" for line in log[:15]))
     e = edits()
     print(f"local edits in engine/: {len(e)}" + "".join(f"\n  {x}" for x in e))
     _, cfg = read_cfg()
@@ -292,13 +314,22 @@ def cmd_apply(a):
         git("stash", "push", "--include-untracked", "-m", f"jobhunt upgrade {state['date']}")
         state["stash"] = git("rev-parse", "stash@{0}")
         print("local edits put aside (git stash; 'rollback' brings them back)")
-    if state["old_branch"] == "HEAD":
-        git("checkout", "main")
-    git("pull", "--ff-only", timeout=300)
+    chan = channel()
+    if not fetch():
+        raise UpgradeError("git fetch failed: check the internet connection and try again")
+    found = version.update(chan, ENGINE)
+    if not found:
+        raise UpgradeError(f"no update on the {chan} channel (newest release {version.newest_tag(ENGINE)}); "
+                           "nothing changed, run 'upgrade.py finish'")
+    if chan == "stable":
+        git("checkout", "--detach", found[0])             # main only moves at releases; the tag is the release
+    else:
+        git("checkout", "next")                           # creates the local branch from origin/next if needed
+        git("pull", "--ff-only", "origin", "next", timeout=300)
     state["new_commit"] = git("rev-parse", "HEAD")
     state["steps"].append("apply")
     save_state(p, state)
-    print(f"engine: {state['old_commit'][:7]} -> {state['new_commit'][:7]}")
+    print(f"engine: {state['old_commit'][:7]} -> {state['new_commit'][:7]} ({found[1]}, {chan} channel)")
     print("  " + "\n  ".join(git("log", "--format=%h %s", f"{state['old_commit']}..HEAD").splitlines()[:20]))
     print("next: python engine/tools/upgrade.py migrate")
     return 0
@@ -465,6 +496,10 @@ def cmd_migrate(a):
         lines.insert(at, f"config_version: {version}                               # set by the engine; "
                          "\"update the engine\" migrates older files\n")
         text = "".join(lines)
+    if "engine_channel" not in (yaml.safe_load(text) or {}):
+        text = set_key(text, "engine_channel", "stable", "stable = release tags only; next = every change on the "
+                       "next branch (for testers)")
+        notes.append("engine_channel: stable (updates come from release tags only)")
     cfg = yaml.safe_load(text) or {}
     unknown = sorted(set(cfg) - KNOWN_KEYS) + [f"search.{k}" for k in sorted(set(cfg.get("search") or {}) - SEARCH_KEYS)]
     if a.dry_run:

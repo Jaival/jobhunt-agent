@@ -97,6 +97,8 @@ ALLOWED_CALLS = [
     ("Bash", {"command": "cat engine/RULES.md | head -20 && ls engine/"}),
     ("Bash", {"command": "cp engine/templates/application_template.md applications/X/application.md"}),
     ("Bash", {"command": "git -C engine fetch origin && git -C engine worktree add ../engine-new origin/main"}),
+    ("Bash", {"command": "git -C engine fetch --tags origin && git -C engine tag -l \"v*.*.*\" --sort=-v:refname"}),
+    ("Bash", {"command": "git -C engine worktree add ../engine-new v1.0.0"}),
     ("Bash", {"command": "rm -rf engine-new"}),
     ("Bash", {"command": "curl -s -o /dev/null -w \"%{redirect_url}\" \"https://to.indeed.com/aabbcc\""}),
     ("Bash", {"command": "curl -s -D - -o /dev/null to.indeed.com/aabbcc"}),
