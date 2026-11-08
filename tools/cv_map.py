@@ -67,6 +67,21 @@ def paragraphs(d):
     return out
 
 
+def match_variants(paras, variants):
+    """Find each cv/variants.yaml bullet in the CV by its master text (the start of exactly one paragraph, without
+    the '- ' bullet prefix). Returns ({id: paragraph}, [ids not found exactly once])."""
+    key = lambda s: norm(s).lstrip("- ")
+    found, stale = {}, []
+    for vid, v in variants.items():
+        start = key(str(v.get("master") or ""))[:60]
+        hits = [p for p in paras if start and key(p.text).startswith(start)]
+        if len(hits) == 1:
+            found[vid] = hits[0]
+        else:
+            stale.append(vid)
+    return found, stale
+
+
 def container(p):
     """Short label of where a paragraph sits: body, table cell (t1 r2 c1) or text box."""
     el = p._p
@@ -319,6 +334,13 @@ def main():
                      path("master_cv"), path("master_letter"))
     for p in problems:
         print(f"PROBLEM {p}")
+    variants_path = path("variants") if CFG.get("variants") else None
+    if variants_path and variants_path.is_file():
+        _, stale = match_variants(paragraphs(docx.Document(str(path("master_cv")))),
+                                  yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {})
+        if stale:
+            print(f"WARNING cv/variants.yaml: master text not in the master CV: {', '.join(stale)} (builds that use "
+                  "them fail; update their master text)")
     print("OK" if not problems else f"{len(problems)} problem(s)")
     return 1 if problems else 0
 
