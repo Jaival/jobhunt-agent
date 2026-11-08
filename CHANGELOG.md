@@ -12,6 +12,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Added
+- `font: keep` in config.yaml: the builder keeps the master CV's and letter's own fonts instead of setting every
+  font to one family, so a two-font design (for example a sans text font and a mono font for headings and dates)
+  survives tailoring, and the PDF export and page check can stay on. `fallback_font` may now be a map from font
+  to substitute (`{Inter: Arial, JetBrains Mono: Consolas}`); a single name still applies to every font.
+
 ## [1.0.0] - 2026-11-01: versioned & interactive
 
 ### Added
