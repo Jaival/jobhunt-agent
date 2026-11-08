@@ -19,6 +19,21 @@
       "mcp__*__browser_set_*",
       "mcp__*__browser_upload*",
       "mcp__*__form_input",
+      "SuggestPluginInstall",
+      "SearchPlugins",
+      "ListPlugins",
+      "EnterWorktree",
+      "ExitWorktree",
+      "mcp__terminal",
+      "mcp__ccd_session",
+      "mcp__ccd_session_mgmt",
+      "mcp__ccd_sidebar",
+      "mcp__ccd_view",
+      "mcp__ccd_window",
+      "mcp__ccd_directory",
+      "mcp__ccd_connectors",
+      "mcp__mcp-registry",
+      "mcp__claude-in-chrome",
       "Edit(/engine/**)",
       "Edit(/.claude/**)"
     ]
@@ -31,6 +46,18 @@
           {
             "type": "command",
             "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jobhunt_guard.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "ad-reader",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/reader_reply.py\"",
             "timeout": 15
           }
         ]

@@ -12,8 +12,9 @@ anything. This replaces the daily routine for this conversation. Run everything 
    - `SEEN`: tell the user the earlier verdict, score and date (`python engine/tools/ledger.py show <url>`), and
      ask whether to tailor it again. Stop on a no.
 3. If it printed a `read ...` line, call the ad-reader subagent (Agent tool, subagent_type `ad-reader`) with that
-   line only. Write its reply unchanged to data/ads/incoming.json and run
-   `python engine/tools/extract.py save data/ads/incoming.json`. `UNREAD` or `CLOSED`: tell the user and stop.
+   line only, `run_in_background: false`. A hook saves its reply: run
+   `python engine/tools/extract.py save data/ads/incoming/`. Only if that prints "no reader replies", write the
+   reply unchanged to data/ads/incoming.json and save that file instead. `UNREAD` or `CLOSED`: tell the user and stop.
    `FAILED`: send the task once more, then stop. Without the ad-reader subagent, stop: say "ad reader missing:
    run setup_check.py --init".
 4. Score it as ROUTINE.md step 4: five sub-scores against engine/rubric.md from data/ads/<id>.json, then

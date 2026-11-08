@@ -16,9 +16,11 @@ Usage (from the workspace folder):
     python engine/tools/extract.py add <https://...>      one job the user named (the `tailor <url>` command): adds it
         to candidates.json without the title filter (an Indeed job by its viewjob?jk= link), says whether the ledger
         knows it, and prints its read task line, or where its extract is
-    python engine/tools/extract.py save data/ads/incoming.json
-        the reader's reply: saves valid extracts, adds its leads (Indeed, Gmail, web) to candidates.json with the
-        title filter and ledger check, records unreadable ads; one line per item, exit 1 when one is invalid
+    python engine/tools/extract.py save data/ads/incoming/ | data/ads/incoming.json
+        the reader's replies (the folder: one file per reader call, saved by the SubagentStop hook; each file is
+        deleted once it saved cleanly) or one reply: saves valid extracts, adds its leads (Indeed, Gmail, web) to
+        candidates.json with the title filter and ledger check, records unreadable ads; one line per item, exit 1
+        when one is invalid or the folder is empty
     python engine/tools/extract.py read [<id> ...] [--model M]
         fallback without the subagent: reads the pending ad files with a headless `claude -p` call (no tools)
     python engine/tools/extract.py attach <id> applications/<folder>   copy the extract and ad text (ad.json, ad.txt)
@@ -312,7 +314,29 @@ def cmd_add(a):
 
 
 def cmd_save(a):
-    data = json.loads(Path(a.reply).read_text(encoding="utf-8"))
+    path = Path(a.reply)
+    if path.suffix == ".json":
+        return save_reply(path)
+    # the folder: missing until the hook saved a first reply
+    files = sorted(path.glob("*.json"), key=lambda f: f.stat().st_mtime)
+    if not files:
+        print(f"no reader replies in {path.as_posix()}/")
+        return 1
+    bad = 0
+    for f in files:  # one file per reader call, saved by .claude/hooks/reader_reply.py
+        print(f"== {f.name}")
+        failed = save_reply(f)
+        bad += failed
+        if not failed:
+            f.unlink()  # a failed reply stays, so the task can be sent again and the file checked
+    return 1 if bad else 0
+
+
+def save_reply(path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        data = None
     if not isinstance(data, dict) or set(data) - {"extracts", "leads", "unreadable"}:
         print("FAILED  the reply must be one JSON object with extracts, leads and unreadable", file=sys.stderr)
         return 1

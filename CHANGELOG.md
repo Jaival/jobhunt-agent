@@ -20,6 +20,16 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   every call.
 - The ad reader puts a job under `unreadable` with the reason `connector error` when Indeed's `get_job_details`
   fails, instead of retrying. The tailor stops at once on a guard block or permission refusal.
+- The workspace permission template denies Desktop tools that no run or session in a workspace has used (plugin
+  install and search, worktrees, the terminal, session, sidebar, window and connector tools, the Chrome
+  extension), so their schemas no longer load on every call. Tools you use yourself in the workspace (the Claude
+  browser, file sending, widgets, scheduled tasks) stay. Migration: `setup_check.py --init` or "update the engine"
+  adds the rules to `.claude/settings.json`.
+- The ad reader's replies are saved by a hook (`.claude/hooks/reader_reply.py`, SubagentStop) to
+  `data/ads/incoming/`, and `extract.py save data/ads/incoming/` stores all of them; a reply that saved cleanly is
+  deleted, a failed one stays. The daily run and the `tailor <url>` command no longer copy each reply into
+  incoming.json themselves (397k characters re-typed in 10 runs). Without the hook they fall back to the old way
+  and say so. Migration: `setup_check.py --init` or "update the engine" installs the hook.
 
 ## [1.1.0] - 2026-11-08: your own design
 

@@ -74,6 +74,9 @@ def test_install_merges_and_is_idempotent(tmp_path):
     assert "jobhunt_guard.py" in data["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
     assert (tmp_path / ".claude" / "hooks" / "jobhunt_guard.py").is_file()
     assert "file .claude/hooks/jobhunt_guard.py" in added
+    reader = data["hooks"]["SubagentStop"][0]
+    assert reader["matcher"] == "ad-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
+    assert (tmp_path / ".claude" / "hooks" / "reader_reply.py").is_file()
     assert data["permissions"]["allow"] == ["Bash(git status)", "Bash(python engine/tools/*)"]
     assert data["permissions"]["deny"].count("mcp__*__reply") == 1
     assert set(DENY) | {"Edit(/cv/Me_CV.docx)"} == set(data["permissions"]["deny"])
@@ -144,3 +147,30 @@ def test_migrate_adds_rules_to_existing_settings(tool_de, sample_de):
     assert (sample_de / ".claude" / "settings.local.json").read_text(encoding="utf-8") == \
         '{"permissions": {"allow": ["Bash(ls)"]}}'
     assert "permission rules: all in place" in tool_de("upgrade.py", "migrate").stdout
+
+
+# Tools the daily run, the skills or the candidate's own sessions in a workspace call (transcripts 2026-09-28 to
+# 2026-11-08). A tool-name deny removes the tool from every session in the workspace, so none may match these.
+USED = ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "Agent", "Skill", "ToolSearch", "WebFetch", "WebSearch",
+        "Monitor", "TaskStop", "AskUserQuestion", "SendUserFile", "SuggestSkills", "ListSkills", "SearchSkills",
+        "SendMessage", "SubagentHandback", "mcp__ccd_turn__update_plan", "mcp__ccd_turn__wrap_up",
+        "mcp__ccd_pr__get_status", "mcp__obscura__browser_navigate", "mcp__obscura__browser_markdown",
+        "mcp__Claude_Browser__navigate", "mcp__visualize__show_widget", "mcp__scheduled-tasks__list_scheduled_tasks",
+        "mcp__claude_ai_Gmail__search_threads", "mcp__claude_ai_Gmail__get_thread", "mcp__claude_ai_Indeed__search_jobs"]
+
+
+def removes(rule, tool):
+    """A bare tool-name deny: a name or glob for the whole name, or an MCP server (mcp__<server>)."""
+    return fnmatch.fnmatchcase(tool, rule) or (rule.count("__") == 1 and tool.startswith(rule + "__"))
+
+
+@pytest.mark.parametrize("tool", USED)
+def test_no_deny_rule_removes_a_tool_in_use(tool):
+    assert not [r for r in TOOL_RULES if removes(r, tool)]
+
+
+def test_unused_desktop_tools_are_denied():
+    """Their schemas loaded on every call of the daily run (docs/research/token-usage-2026-11-08.md)."""
+    assert {"SuggestPluginInstall", "SearchPlugins", "mcp__terminal", "mcp__ccd_session", "mcp__claude-in-chrome"} <= set(DENY)
+    assert removes("mcp__ccd_session", "mcp__ccd_session__spawn_task")
+    assert not removes("mcp__ccd_session", "mcp__ccd_session_mgmt__get_session")
