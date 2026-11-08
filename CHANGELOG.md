@@ -24,6 +24,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The letter's tagline line can be tailored: map it as `letter: headline:` in cv/layout.yaml; the builder fills it
   from `letter_headline:` in application.md (one text or `{de: ..., en: ...}`), else from `cv.headline`. A set
   `letter_headline` is grounded like the CV headline. (#90)
+- Project pool: a section in cv/layout.yaml with `max: N` and `further: {starts_with: "..."}` keeps the first N
+  items in the job's order as full blocks and names the others at the front of the list after ': ' on the
+  further line, so the master can hold more projects than fit on 2 pages. (#91)
 
 ### Fixed
 - One stale cv/variants.yaml entry (its master text no longer in the master CV) stopped every build. Now only
