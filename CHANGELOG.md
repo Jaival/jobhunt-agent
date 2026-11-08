@@ -12,6 +12,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-08: your own design
+
 ### Added
 - `font: keep` in config.yaml: the builder keeps the master CV's and letter's own fonts instead of setting every
   font to one family, so a two-font design (for example a sans text font and a mono font for headings and dates)
@@ -31,6 +33,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 ### Fixed
 - One stale cv/variants.yaml entry (its master text no longer in the master CV) stopped every build. Now only
   builds that pick or reorder it stop; the others print a warning, and `cv_map.py check` lists stale entries. (#89)
+
+### Migration
+- Config version 2, unchanged. The new settings (`font: keep`, `never_write`, `grounding_number_words`,
+  `letter_headline`, a project pool) are all optional: without them the documents stay the same
+  (`upgrade.py compare`: SAME DOCUMENTS on both sample workspaces).
+- `upgrade.py migrate` updates `.claude/agents/tailor.md` (it orders a project pool).
 
 ## [1.0.0] - 2026-11-01: versioned & interactive
 
@@ -306,7 +314,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...next
+[1.1.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0
