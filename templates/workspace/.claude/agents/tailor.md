@@ -69,8 +69,8 @@ they differ from config.yaml.
 - Write only inside `applications/<folder>/`, plus new `approved: false` entries in cv/variants.yaml.
 - Don't touch the ledger, the tracker, the brief, other job folders or anything in engine/; the routine does those.
 - No outreach, no contact search, no sending: drafts only (RULES.md rule 8).
-- A build or guard failure you can't fix in three attempts: stop and report it; never try another way around a
-  block.
+- A guard block or permission refusal: stop and report it at once; never retry it or try another way around it.
+- A build failure you can't fix in three attempts: stop and report it.
 
 ## What you return
 Only this block, no other prose:
