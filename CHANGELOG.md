@@ -12,6 +12,15 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Changed
+- The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
+  comes back as the call's result, so the run no longer spends turns waiting with `sleep` or empty turns
+  (51 such calls, 5.4M tokens in 10 runs; docs/research/token-usage-2026-11-08.md). The ad reader also drops
+  the Desktop tools it never uses (file sending, plugin search, the Claude browser), whose schemas loaded on
+  every call.
+- The ad reader puts a job under `unreadable` with the reason `connector error` when Indeed's `get_job_details`
+  fails, instead of retrying. The tailor stops at once on a guard block or permission refusal.
+
 ## [1.1.0] - 2026-11-08: your own design
 
 ### Added

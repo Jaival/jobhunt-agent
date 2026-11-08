@@ -224,3 +224,11 @@ def test_the_agent_has_no_write_bash_or_claude_md():
     denied = {t.strip() for t in front["disallowedTools"].split(",")}
     assert {"Write", "Edit", "Bash", "PowerShell", "Agent", "NotebookEdit"} <= denied
     assert front["name"] == "ad-reader" and front["omitClaudeMd"] is True and "tools" not in front
+
+
+def test_the_agent_drops_tools_it_never_uses():
+    """In the foreground a subagent inherits more built-in tools; their schemas would load on every call."""
+    front = yaml.safe_load(extract.AGENT_FILE.read_text(encoding="utf-8").split("---\n", 2)[1])
+    denied = {t.strip() for t in front["disallowedTools"].split(",")}
+    assert {"SendUserFile", "SuggestPluginInstall", "SearchPlugins", "SuggestSkills", "mcp__Claude_Browser"} <= denied
+    assert not denied & {"Read", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__obscura"}
