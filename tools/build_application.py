@@ -27,7 +27,8 @@ written as words ("three") and the context of a term (claimed or named as a gap)
 
 Output for ATS autofill: file names start with the applicant's name (parsers read names from file
 names), document metadata carries the applicant as author and a neutral title (Word copies it into
-the PDF), and every font is set to FONT with FALLBACK_FONT as the substitute named in the font table.
+the PDF), and every font is set to FONT (config.yaml `font`; `font: keep` keeps the master's fonts) with its
+fallback_font as the substitute named in the font table (one name, or a map from font to substitute).
 
 Usage (from the JobHunt folder):
     python engine/tools/build_application.py applications/<folder> [--no-pdf]   (a bare folder name also works)
@@ -82,8 +83,13 @@ if not isinstance(UNIVERSITIES, list) or not all(isinstance(u, str) and u.strip(
 INTERNSHIP_DURATION = CFG.get("internship_duration") or ""   # internship letters must state it: "12 months" or
                                                               # {de: "12 Monate", en: "12 months"}
 NAME_IN_MASTER = CFG.get("name_in_master") or ""   # the name as the master files spell it, replaced by APPLICANT
-FONT = CFG.get("font", "Open Sans")                # font for CV and letter
-FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when FONT isn't installed on the reader's machine
+FONT = CFG.get("font", "Open Sans")                # font for CV and letter; "keep" keeps the master's fonts
+KEEP_FONTS = str(FONT).strip().lower() == "keep"
+FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when a font isn't installed on the reader's
+                                                        # machine: one name, or {font: substitute} per font
+if not (isinstance(FALLBACK_FONT, str) or isinstance(FALLBACK_FONT, dict) and all(
+        isinstance(k, str) and isinstance(v, str) and v.strip() for k, v in FALLBACK_FONT.items())):
+    raise ConfigError("config.yaml: fallback_font must be a font name or a map, e.g. {Inter: Arial, JetBrains Mono: Consolas}")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
@@ -369,8 +375,14 @@ def build_letter(meta, body, lang, langs, layout, out):
 
 # ---------- fonts and metadata ----------
 
+def fallback_for(font):
+    """The substitute config.yaml names for this font, or None."""
+    return FALLBACK_FONT.get(font) if isinstance(FALLBACK_FONT, dict) else FALLBACK_FONT
+
+
 def apply_fonts(d):
-    """Set every explicit font (runs, styles, defaults, numbering) to FONT and name FALLBACK_FONT as its substitute."""
+    """Set every explicit font (runs, styles, defaults, numbering) to FONT, or keep them all with font: keep, and
+    name each font's fallback_font as its substitute in the font table."""
     parts = [d.element, d.styles.element]
     numbering = getattr(d.part, "numbering_part", None)
     try:
@@ -378,30 +390,40 @@ def apply_fonts(d):
             parts.append(numbering.element)
     except Exception:
         pass
+    fonts = set() if KEEP_FONTS else {FONT}
     for root in parts:
         for rf in root.iter(f"{W}rFonts"):
+            if KEEP_FONTS:
+                fonts |= {rf.get(f"{W}{a}") for a in ("ascii", "hAnsi", "cs", "eastAsia")}
+                continue
             for attr in ("asciiTheme", "hAnsiTheme", "cstheme", "eastAsiaTheme"):
                 rf.attrib.pop(f"{W}{attr}", None)
             for attr in ("ascii", "hAnsi", "cs", "eastAsia"):
                 rf.set(f"{W}{attr}", FONT)
-    defaults = d.styles.element.find(f"{W}docDefaults/{W}rPrDefault/{W}rPr")
-    if defaults is not None and defaults.find(f"{W}rFonts") is None:
-        rf = defaults.makeelement(f"{W}rFonts", {f"{W}{a}": FONT for a in ("ascii", "hAnsi", "cs", "eastAsia")})
-        defaults.insert(0, rf)
+    fonts.discard(None)
+    if not KEEP_FONTS:
+        defaults = d.styles.element.find(f"{W}docDefaults/{W}rPrDefault/{W}rPr")
+        if defaults is not None and defaults.find(f"{W}rFonts") is None:
+            rf = defaults.makeelement(f"{W}rFonts", {f"{W}{a}": FONT for a in ("ascii", "hAnsi", "cs", "eastAsia")})
+            defaults.insert(0, rf)
     font_table = next((rel.target_part for rel in d.part.rels.values() if rel.reltype.endswith("/fontTable")), None)
-    if font_table is not None:
-        from lxml import etree
-        root = etree.fromstring(font_table.blob)
-        entry = next((f for f in root.iter(f"{W}font") if f.get(f"{W}name") == FONT), None)
+    if font_table is None:
+        return
+    from lxml import etree
+    root = etree.fromstring(font_table.blob)
+    for font in sorted(fonts):
+        fallback = fallback_for(font)
+        if not fallback:
+            continue
+        entry = next((f for f in root.iter(f"{W}font") if f.get(f"{W}name") == font), None)
         if entry is None:  # a complete entry; a bare one made Word hang when opening the letter
-            entry = etree.SubElement(root, f"{W}font", {f"{W}name": FONT})
+            entry = etree.SubElement(root, f"{W}font", {f"{W}name": font})
             for tag, val in (("charset", "00"), ("family", "swiss"), ("pitch", "variable")):
                 etree.SubElement(entry, f"{W}{tag}", {f"{W}val": val})
         for old in entry.findall(f"{W}altName"):
             entry.remove(old)
-        alt = etree.Element(f"{W}altName", {f"{W}val": FALLBACK_FONT})
-        entry.insert(0, alt)
-        font_table._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+        entry.insert(0, etree.Element(f"{W}altName", {f"{W}val": fallback}))
+    font_table._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
 def documents(d):
