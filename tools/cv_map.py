@@ -18,6 +18,7 @@ candidate keeps their own design. Every part is optional: what isn't mapped simp
           name_split: ","                    # optional: the item's name is the text before this (or before the first of
                                              # a list, e.g. ["\t", ","]); default: the whole line
     letter:
+      headline: {after: "Jane Doe"}          # optional: a tagline line, from letter_headline (else cv.headline)
       date: {starts_with: "Berlin,"}         # replaced by "<letter_city>, DD.MM.YYYY"
       recipient: {starts_with: "Acme GmbH"}  # the address block: this line and the lines after it, up to an empty
                                              # line or the next mapped part (company, street, postcode, ...)
@@ -46,7 +47,7 @@ import yaml
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 ITEM_RULES = ("blank_line", "bold", "colon", "no_dash", "not_list")
-LETTER_PARTS = ("date", "recipient", "subject", "greeting", "closing")
+LETTER_PARTS = ("headline", "date", "recipient", "subject", "greeting", "closing")
 
 
 class MapError(Exception):
@@ -230,7 +231,7 @@ def siblings(p):
 
 
 def letter_parts(d, lmap):
-    """{part: paragraph} for date, subject, greeting and closing, plus
+    """{part: paragraph} for headline, date, subject, greeting and closing, plus
     'recipient' = the address block (a list of one or more paragraphs),
     'body' = the body paragraphs and 'body_all' = every paragraph from the first to the last of them,
     'spacer' = an empty paragraph between body paragraphs in the master, if there is one."""
