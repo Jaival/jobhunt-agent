@@ -50,6 +50,18 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "ad-reader",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/reader_reply.py\"",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }

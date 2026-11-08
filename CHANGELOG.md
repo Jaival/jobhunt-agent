@@ -25,6 +25,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   extension), so their schemas no longer load on every call. Tools you use yourself in the workspace (the Claude
   browser, file sending, widgets, scheduled tasks) stay. Migration: `setup_check.py --init` or "update the engine"
   adds the rules to `.claude/settings.json`.
+- The ad reader's replies are saved by a hook (`.claude/hooks/reader_reply.py`, SubagentStop) to
+  `data/ads/incoming/`, and `extract.py save data/ads/incoming/` stores all of them; a reply that saved cleanly is
+  deleted, a failed one stays. The daily run and the `tailor <url>` command no longer copy each reply into
+  incoming.json themselves (397k characters re-typed in 10 runs). Without the hook they fall back to the old way
+  and say so. Migration: `setup_check.py --init` or "update the engine" installs the hook.
 
 ## [1.1.0] - 2026-11-08: your own design
 

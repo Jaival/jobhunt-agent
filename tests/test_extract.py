@@ -2,13 +2,16 @@
 import argparse
 import copy
 import json
+import os
+import shutil
+import subprocess
 import sys
 
 import pytest
 import yaml
 
 import extract
-from conftest import runner
+from conftest import ENGINE, TOOLS, runner
 
 GOOD = {
     "ad_extract_version": 1, "id": "ba-10001-1003664495-S",
@@ -177,6 +180,47 @@ def test_save_stores_extracts_leads_and_unreadable(ws, tool):
     assert tool("extract.py", "pending").stdout.splitlines() == [
         "read indeed-xyz | indeed xyz | Werkstudent Social Media | Beta | https://de.indeed.com/viewjob?jk=xyz",
         "1 ad(s) to read"]
+
+
+def test_save_a_folder_deletes_clean_replies_and_keeps_failed_ones(ws, tool):
+    incoming = ws / "data" / "ads" / "incoming"
+    assert tool("extract.py", "save", "data/ads/incoming/").stdout.startswith("no reader replies")   # no folder yet
+    incoming.mkdir()
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert r.returncode == 1 and r.stdout.startswith("no reader replies")
+    (incoming / "a1.json").write_text(json.dumps({"extracts": [{**GOOD, "id": "ba-1", "url": JOB["url"]}]}),
+                                      encoding="utf-8")
+    (incoming / "a2.json").write_text("Here is the JSON: {", encoding="utf-8")   # prose instead of the object
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert r.returncode == 1
+    assert "== a1.json\nOK      ba-1" in r.stdout and "== a2.json" in r.stdout and "FAILED" in r.stderr
+    assert not (incoming / "a1.json").exists() and (incoming / "a2.json").exists()
+    assert candidates(ws)["ba-1"]["extract"] == "data/ads/ba-1.json"
+
+
+def test_reader_reply_hook_saves_only_the_ad_readers_reply(sample, tmp_path):
+    hook = ENGINE / "templates" / "workspace" / ".claude" / "hooks" / "reader_reply.py"
+    ws = tmp_path / "ws"
+    (ws / ".claude" / "hooks").mkdir(parents=True)
+    shutil.copy(hook, ws / ".claude" / "hooks")
+    env = {k: v for k, v in os.environ.items() if k not in ("JOBHUNT_ROOT", "CLAUDE_PROJECT_DIR")}
+
+    def run(event):
+        return subprocess.run([sys.executable, str(ws / ".claude" / "hooks" / "reader_reply.py")],
+                              input=json.dumps(event), capture_output=True, text=True, env=env)
+
+    reply = {"hook_event_name": "SubagentStop", "agent_type": "ad-reader", "agent_id": "a7/../x",
+             "last_assistant_message": '{"extracts": []}'}
+    assert run(reply).returncode == 0                    # no engine (an old one after a rollback): does nothing
+    assert not (ws / "data").exists()
+    shutil.copytree(TOOLS, ws / "engine" / "tools", ignore=shutil.ignore_patterns("__pycache__"))
+    assert run({**reply, "agent_type": "tailor"}).returncode == 0
+    assert not (ws / "data").exists()                    # other agents' replies stay out
+    assert run(reply).returncode == 0
+    assert (ws / "data" / "ads" / "incoming" / "a7x.json").read_text(encoding="utf-8") == '{"extracts": []}'
+    r = subprocess.run([sys.executable, str(ws / ".claude" / "hooks" / "reader_reply.py")], input="not json",
+                       capture_output=True, text=True, env=env)
+    assert r.returncode == 0 and "reader_reply:" in r.stderr   # never exit 2: that would keep the reader running
 
 
 def test_save_refuses_another_shape(ws, tool):
