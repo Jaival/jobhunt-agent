@@ -19,8 +19,9 @@ Usage (from the workspace folder):
     python engine/tools/extract.py save data/ads/incoming/ | data/ads/incoming.json
         the reader's replies (the folder: one file per reader call, saved by the SubagentStop hook; each file is
         deleted once it saved cleanly) or one reply: saves valid extracts, adds its leads (Indeed, Gmail, web) to
-        candidates.json with the title filter and ledger check, records unreadable ads; one line per item, exit 1
-        when one is invalid or the folder is empty
+        candidates.json with the title filter and ledger check, records unreadable ads, prints a `MAIL` line per
+        reply to an application (from a `list mail` task; nothing is stored); one line per item, exit 1 when one is
+        invalid or the folder is empty
     python engine/tools/extract.py read [<id> ...] [--model M]
         fallback without the subagent: reads the pending ad files with a headless `claude -p` call (no tools)
     python engine/tools/extract.py attach <id> applications/<folder>   copy the extract and ad text (ad.json, ad.txt)
@@ -52,6 +53,15 @@ LEAD = {"type": "object", "additionalProperties": False, "required": ["source", 
         "properties": {"source": {"type": "string", "maxLength": 60}, "title": {"type": "string", "maxLength": 200},
                        "company": {"type": "string", "maxLength": 200}, "location": {"type": "string", "maxLength": 200},
                        "url": {"type": "string", "maxLength": 500}}}
+# One reply to an application, from the reader's `list mail` task: the routine's step 7 matches these to folders.
+MAIL = {"type": "object", "additionalProperties": False,
+        "required": ["kind", "company", "role", "date", "interview_date", "via"],
+        "properties": {"kind": {"enum": ["sent", "rejection", "interview"]},
+                       "company": {"type": "string", "maxLength": 200}, "role": {"type": "string", "maxLength": 200},
+                       "date": {"type": "string", "maxLength": 10}, "interview_date": {"type": ["string", "null"],
+                                                                                       "maxLength": 16},
+                       "via": {"type": "string", "maxLength": 60}}}
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 UNREADABLE = {"type": "object", "additionalProperties": False, "required": ["id", "url", "reason"],
               "properties": {"id": {"type": "string", "maxLength": 500}, "url": {"type": "string", "maxLength": 500},
                              "reason": {"type": "string", "maxLength": 200}}}
@@ -142,6 +152,21 @@ def lead_problems(lead):
     if not isinstance(lead, dict):
         return ["the lead isn't a JSON object"]
     return validate(lead, LEAD, "lead") + url_problems(lead.get("url"), "lead.url") + text_problems(lead, "lead.")
+
+
+def mail_problems(mail):
+    if not isinstance(mail, dict):
+        return ["the mail item isn't a JSON object"]
+    found = validate(mail, MAIL, "mail") + text_problems(mail, "mail.")
+    for key in ("date", "interview_date"):
+        if isinstance(mail.get(key), str) and not DATE.match(mail[key]):
+            found.append(f"mail.{key}: must start with YYYY-MM-DD")
+    return found
+
+
+def mail_line(mail):
+    return (f"MAIL    {mail['kind']} | {mail['company']} | {mail['role'] or '-'} | {mail['date']} | via {mail['via']}"
+            + (f" | interview {mail['interview_date']}" if mail["interview_date"] else ""))
 
 
 def check_file(path):
@@ -337,10 +362,14 @@ def save_reply(path):
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         data = None
-    if not isinstance(data, dict) or set(data) - {"extracts", "leads", "unreadable"}:
-        print("FAILED  the reply must be one JSON object with extracts, leads and unreadable", file=sys.stderr)
+    if not isinstance(data, dict) or set(data) - {"extracts", "leads", "unreadable", "mail"}:
+        print("FAILED  the reply must be one JSON object with extracts, leads, unreadable and mail", file=sys.stderr)
         return 1
     cands, bad = load_candidates(), 0
+    for mail in data.get("mail") or []:
+        found = mail_problems(mail)
+        bad += bool(found)
+        print("\n".join(["FAILED  mail"] + [f"  {x}" for x in found]) if found else mail_line(mail))
     for ext in data.get("extracts") or []:
         found = problems(ext)
         if found:
