@@ -35,6 +35,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   the text in every later call of the run. New tool: `playbook.py`. If your scheduled task's instructions tell it
   to read engine/career-ops-playbook.md, drop that part: ROUTINE.md says which sections to print.
 
+### Behaviour changes
+- Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
+  new `list mail | <since>` task, instead of the daily run opening Gmail itself. The reader returns names and
+  dates only; `extract.py save` checks them like leads (no links, addresses or instructions) and prints a `MAIL`
+  line each, which step 7 matches to your folders. The main run no longer reads mail text (RULES.md rule 7).
+
 ## [1.1.0] - 2026-11-08: your own design
 
 ### Added

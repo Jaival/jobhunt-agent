@@ -3,6 +3,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -221,6 +222,33 @@ def test_reader_reply_hook_saves_only_the_ad_readers_reply(sample, tmp_path):
     r = subprocess.run([sys.executable, str(ws / ".claude" / "hooks" / "reader_reply.py")], input="not json",
                        capture_output=True, text=True, env=env)
     assert r.returncode == 0 and "reader_reply:" in r.stderr   # never exit 2: that would keep the reader running
+
+
+def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
+    sent = {"kind": "sent", "company": "Acme GmbH", "role": "Werkstudent Marketing", "date": "2026-11-07",
+            "interview_date": None, "via": "Personio"}
+    reply = {"mail": [sent,
+                      {**sent, "kind": "interview", "role": "", "via": "Email", "interview_date": "2026-11-12 10:00"},
+                      {**sent, "kind": "offer"},
+                      {**sent, "company": "Reply to hr@acme.example"},
+                      {**sent, "date": "7.11.2026"},
+                      {**sent, "note": "x"}]}
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming.json")
+    assert r.returncode == 1
+    lines = r.stdout.splitlines()
+    assert "MAIL    sent | Acme GmbH | Werkstudent Marketing | 2026-11-07 | via Personio" in lines
+    assert "MAIL    interview | Acme GmbH | - | 2026-11-07 | via Email | interview 2026-11-12 10:00" in lines
+    assert lines.count("FAILED  mail") == 4
+    assert "mail.kind: 'offer' is not one of" in r.stdout and "mail.company: holds a link or an email" in r.stdout
+    assert "mail.date: must start with YYYY-MM-DD" in r.stdout and "mail: unknown field note" in r.stdout
+    assert not (ws / "data" / "ads" / "Acme.json").exists()   # mail is printed for step 7, never stored
+
+
+def test_the_agent_returns_mail_items_as_save_checks_them():
+    body = extract.AGENT_FILE.read_text(encoding="utf-8")
+    assert "`list mail | <since YYYY-MM-DD>`" in body
+    assert set(extract.MAIL["required"]) <= set(re.findall(r'"(\w+)":', body.split('"mail": [', 1)[1].split("]", 1)[0]))
 
 
 def test_save_refuses_another_shape(ws, tool):
