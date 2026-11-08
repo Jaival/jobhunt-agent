@@ -1,4 +1,4 @@
-Run the job-application routine in the workspace folder (the folder that contains `engine/`). Read CLAUDE.md first and follow all its rules (it imports engine/RULES.md; decisions recorded in CLAUDE.md override RULES.md). Also read engine/career-ops-playbook.md; the steps below point to its sections (A-I).
+Run the job-application routine in the workspace folder (the folder that contains `engine/`). Read CLAUDE.md first and follow all its rules (it imports engine/RULES.md; decisions recorded in CLAUDE.md override RULES.md). Also print the playbook sections the run uses with `python engine/tools/playbook.py A B E F G` (Fridays: `A B E F G H I`); the steps below point to its sections. Don't read the whole engine/career-ops-playbook.md: sections C and D are the tailor's.
 This file is the only copy of the routine; the scheduled task just points here. Personal settings (target roles, skills to score against, location, daily plan) live in the "Routine settings" section of CLAUDE.md.
 
 This file is only the daily run. The on-request workflows (ATS review, updating the engine, remapping the CV, the setup interview) are skills in .claude/skills/ (RULES.md "On request").

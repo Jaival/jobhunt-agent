@@ -30,6 +30,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   deleted, a failed one stays. The daily run and the `tailor <url>` command no longer copy each reply into
   incoming.json themselves (397k characters re-typed in 10 runs). Without the hook they fall back to the old way
   and say so. Migration: `setup_check.py --init` or "update the engine" installs the hook.
+- The daily run and the tailor print only the playbook sections they use (`python engine/tools/playbook.py A B E F
+  G`, Fridays also H and I; the tailor B C D) instead of reading the whole career-ops-playbook.md: about half
+  the text in every later call of the run. New tool: `playbook.py`. If your scheduled task's instructions tell it
+  to read engine/career-ops-playbook.md, drop that part: ROUTINE.md says which sections to print.
 
 ## [1.1.0] - 2026-11-08: your own design
 
