@@ -11,8 +11,12 @@ name_in_master: ""                              # optional: your name as the mas
                                                 # should say `applicant` instead (e.g. without a middle name)
 university: TU Berlin                           # student letters must mention it (leave empty for none); a list
                                                 # accepts any of its names: [TU Berlin, Technische Universität Berlin]
-font: Open Sans                                 # font for CV and letter
-fallback_font: Open Sans                        # substitute named in the font table
+font: Open Sans                                 # font for CV and letter; `keep` keeps the master's fonts (two-font designs)
+fallback_font: Open Sans                        # substitute named in the font table; per font with keep:
+                                                # {Inter: Arial, JetBrains Mono: Consolas}
+never_write: []                                 # phrases or regexes a CV or letter must never contain; a match fails
+                                                # the build, e.g. ["3 products", 'stopped deploying\s+by hand']
+grounding_number_words: warn                    # numbers written as words ("three") not in your files: warn | fail
 search:
   home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)
   # areas: [{wo: München, umkreis: 50}, {wo: Nürnberg, umkreis: 50}]   # optional: these passes instead of nationwide

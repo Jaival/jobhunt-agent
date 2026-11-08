@@ -85,7 +85,7 @@ Write each answer into the file named in brackets right after the round.
    `python engine/tools/cv_map.py outline <master_cv>` and the same for the letter. Write cv/layout.yaml: the
    headline line under the name, a "City, date" line if the CV has one, the sections whose items may be
    reordered per job (projects, skill groups, ... with the rule that splits them into items) and the letter's
-   date, recipient (the first line of the address block), subject, greeting and closing lines. Use anchor text that appears only once and won't change per job. Run `python engine/tools/cv_map.py
+   date, recipient (the first line of the address block), subject, greeting and closing lines, and a tagline line under the name if the letter has one (`headline`). Use anchor text that appears only once and won't change per job. Run `python engine/tools/cv_map.py
    check` until it says OK, then show the candidate in plain words what will change per job (the headline, the
    order of those items, the letter text) and that everything else stays exactly as they designed it.
    If the CV can't be mapped (no .docx, text boxes the scan flagged and they want to keep), set `layout: none`

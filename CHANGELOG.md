@@ -12,6 +12,34 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-08: your own design
+
+### Added
+- `font: keep` in config.yaml: the builder keeps the master CV's and letter's own fonts instead of setting every
+  font to one family, so a two-font design (for example a sans text font and a mono font for headings and dates)
+  survives tailoring, and the PDF export and page check can stay on. `fallback_font` may now be a map from font
+  to substitute (`{Inter: Arial, JetBrains Mono: Consolas}`); a single name still applies to every font.
+- `never_write:` in config.yaml: phrases or regexes that must never appear in a CV or letter (for example a
+  fact your CLAUDE.md forbids); a match fails the build. (#88)
+- The grounding check also reads numbers written as words ("three", "twenty-five", "zwölf"; not "one"/"ein").
+  One that isn't in your files or the ad is a warning; `grounding_number_words: fail` makes it an error. (#88)
+- The letter's tagline line can be tailored: map it as `letter: headline:` in cv/layout.yaml; the builder fills it
+  from `letter_headline:` in application.md (one text or `{de: ..., en: ...}`), else from `cv.headline`. A set
+  `letter_headline` is grounded like the CV headline. (#90)
+- Project pool: a section in cv/layout.yaml with `max: N` and `further: {starts_with: "..."}` keeps the first N
+  items in the job's order as full blocks and names the others at the front of the list after ': ' on the
+  further line, so the master can hold more projects than fit on 2 pages. (#91)
+
+### Fixed
+- One stale cv/variants.yaml entry (its master text no longer in the master CV) stopped every build. Now only
+  builds that pick or reorder it stop; the others print a warning, and `cv_map.py check` lists stale entries. (#89)
+
+### Migration
+- Config version 2, unchanged. The new settings (`font: keep`, `never_write`, `grounding_number_words`,
+  `letter_headline`, a project pool) are all optional: without them the documents stay the same
+  (`upgrade.py compare`: SAME DOCUMENTS on both sample workspaces).
+- `upgrade.py migrate` updates `.claude/agents/tailor.md` (it orders a project pool).
+
 ## [1.0.0] - 2026-11-01: versioned & interactive
 
 ### Added
@@ -286,7 +314,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...next
+[1.1.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.3.0...v0.4.0

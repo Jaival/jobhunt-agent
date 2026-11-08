@@ -6,7 +6,8 @@ application.md = YAML frontmatter (CV choices, letter header) + the letter body 
 The master CV and master cover letter stay the templates (CLAUDE.md rule 5): the builder only
 changes the headline (and a mapped "City, date" line), reorders the items of the sections named in the CV map
 (cv/layout.yaml, see cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. In the letter
-it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body.
+it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body,
+and a mapped tagline line (letter_headline, else cv.headline).
 It fails before writing anything if a check breaks.
 
 Letters in German and/or English: `languages: [de, en]` in the frontmatter (default: config.yaml
@@ -15,19 +16,24 @@ recipient / subject / greeting / closing may be {de: ..., en: ...}; the mapped c
 closing. One letter per language: <prefix>_Cover_Letter_<short>_DE.docx / _EN.docx (one language keeps the plain
 name). config.yaml `name_in_master`: the name as the master files spell it, replaced by `applicant` in every
 document (for example a middle name you leave out).
-Every CV keeps all projects; cv.omit_projects only works together with cv.omit_approved: <date>
+Every CV keeps all projects: as a block, or for a pool section (cv/layout.yaml `max: N` + `further`) the first N
+in the job's order as blocks and the others by name on the further line. cv.omit_projects only works together with
+cv.omit_approved: <date>
 (the applicant's approval). After the PDF export (pdf_export.py, config pdf_engine) it fails if the CV is
 over 2 pages or the letter over 1.
 
 Grounding: every number and every skill or tool term (tools/skills.txt plus config.yaml profile.score_bonus) in a
-letter or the CV headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
+letter, the CV headline or the letter headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
 projects.md, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
 has pass with a warning. `grounding_ok: [term, ...]` in the frontmatter lets reviewed exceptions through. Numbers
-written as words ("three") and the context of a term (claimed or named as a gap) aren't checked.
+written as words ("three", "zwölf") are checked too: a warning by default, an error with config.yaml
+`grounding_number_words: fail`. The context of a term (claimed or named as a gap) isn't checked. config.yaml
+`never_write: [phrase or regex, ...]` fails the build when any of them appears in the CV or a letter.
 
 Output for ATS autofill: file names start with the applicant's name (parsers read names from file
 names), document metadata carries the applicant as author and a neutral title (Word copies it into
-the PDF), and every font is set to FONT with FALLBACK_FONT as the substitute named in the font table.
+the PDF), and every font is set to FONT (config.yaml `font`; `font: keep` keeps the master's fonts) with its
+fallback_font as the substitute named in the font table (one name, or a map from font to substitute).
 
 Usage (from the JobHunt folder):
     python engine/tools/build_application.py applications/<folder> [--no-pdf]   (a bare folder name also works)
@@ -82,8 +88,23 @@ if not isinstance(UNIVERSITIES, list) or not all(isinstance(u, str) and u.strip(
 INTERNSHIP_DURATION = CFG.get("internship_duration") or ""   # internship letters must state it: "12 months" or
                                                               # {de: "12 Monate", en: "12 months"}
 NAME_IN_MASTER = CFG.get("name_in_master") or ""   # the name as the master files spell it, replaced by APPLICANT
-FONT = CFG.get("font", "Open Sans")                # font for CV and letter
-FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when FONT isn't installed on the reader's machine
+FONT = CFG.get("font", "Open Sans")                # font for CV and letter; "keep" keeps the master's fonts
+KEEP_FONTS = str(FONT).strip().lower() == "keep"
+FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when a font isn't installed on the reader's
+                                                        # machine: one name, or {font: substitute} per font
+if not (isinstance(FALLBACK_FONT, str) or isinstance(FALLBACK_FONT, dict) and all(
+        isinstance(k, str) and isinstance(v, str) and v.strip() for k, v in FALLBACK_FONT.items())):
+    raise ConfigError("config.yaml: fallback_font must be a font name or a map, e.g. {Inter: Arial, JetBrains Mono: Consolas}")
+NEVER_WRITE = CFG.get("never_write") or []       # phrases or regexes that must never appear in a CV or letter
+if not isinstance(NEVER_WRITE, list) or not all(isinstance(x, str) and x.strip() for x in NEVER_WRITE):
+    raise ConfigError('config.yaml: never_write must be a list of phrases or regexes, e.g. ["3 products", "no BA approval"]')
+try:
+    NEVER_WRITE = [(x, re.compile(x, re.I)) for x in NEVER_WRITE]
+except re.error as e:
+    raise ConfigError(f"config.yaml: never_write has an invalid regex: {e}")
+NUMBER_WORDS_MODE = str(CFG.get("grounding_number_words") or "warn")   # number words: warn (default) | fail
+if NUMBER_WORDS_MODE not in ("warn", "fail"):
+    raise ConfigError("config.yaml: grounding_number_words must be warn or fail")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
@@ -182,6 +203,42 @@ def reorder_blocks(blocks, order, names, what):
     return final
 
 
+def show_pool(d, name, spec, names, blocks, order):
+    """A pool section (max: N in cv/layout.yaml): the first N items in this job's order stay as blocks; the names of
+    the others go to the front of the list after ': ' on the `further` line, so every item stays on the CV.
+    Returns (the kept names in document order, the dropped names)."""
+    n = spec["max"]
+    if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+        raise BuildError(f"section {name}: max must be a whole number of at least 1 (cv/layout.yaml)")
+    if not spec.get("further"):
+        raise BuildError(f"section {name}: max needs further: {{starts_with: \"...\"}}, the line that names the other "
+                         "items (cv/layout.yaml)")
+    unknown = [x for x in order or [] if x not in blocks]
+    if unknown:
+        raise BuildError(f"unknown {name} item: {unknown}; known: {names}")
+    final = list(order or []) + [x for x in names if x not in (order or [])]
+    dropped = final[n:]
+    if not dropped:
+        return names, []
+    try:
+        line = cv_map.find(paragraphs(d), spec["further"], f"section {name} further")
+    except MapError as e:
+        raise BuildError(str(e))
+    i = next((i for i, r in enumerate(line.runs) if ": " in r.text), None)
+    if i is None:
+        raise BuildError(f"section {name}: the further line needs ': ' before its list (in one formatting run)")
+    run = line.runs[i]
+    head, _, tail = run.text.partition(": ")
+    rest = (tail + "".join(r.text for r in line.runs[i + 1:])).strip()
+    # Names already listed get ", "; text that doesn't start with a word ("· github.com/...") gets a space.
+    sep = ", " if re.match(r"\w", rest) else " " if rest else ""
+    run.text = f"{head}: {', '.join(dropped)}{sep}{tail.lstrip()}"
+    for x in dropped:
+        for e in blocks.pop(x):
+            e.getparent().remove(e)
+    return [x for x in names if x in blocks], dropped
+
+
 def load_layout():
     if LAYOUT.lower() == "none":
         raise BuildError("config.yaml has layout: none, so the CV isn't mapped and documents can't be built; "
@@ -219,19 +276,23 @@ def build_cv(meta, variants, layout, out):
         except MapError as e:
             raise BuildError(str(e))
 
-    # Variants and bullet order use ids from cv/variants.yaml, located by their master text.
-    by_id = {}
-    paras = paragraphs(d)
-    for vid, v in variants.items():
-        hits = [p for p in paras if key(p.text) and key(p.text).startswith(key(v["master"])[:60])]
-        if len(hits) != 1:
-            raise BuildError(f"variant '{vid}': master text found {len(hits)} times in the master CV")
-        by_id[vid] = hits[0]
+    # Variants and bullet order use ids from cv/variants.yaml, located by their master text. Only the ids this
+    # application uses must be found; the others only warn, so one stale entry doesn't stop every build.
+    by_id, stale = cv_map.match_variants(paragraphs(d), variants)
     picks = {vid: v["default"] for vid, v in variants.items() if v.get("default")}
     for vid in cvm.get("variants") or {}:
         if vid not in variants:
             raise BuildError(f"unknown variant id '{vid}'")
     picks.update(cvm.get("variants") or {})
+    groups = cvm.get("bullets") or {}
+    used = {vid for vid, pick in picks.items() if pick != "master"}
+    used |= {vid for vid, v in variants.items() if v.get("group") in groups}
+    broken = [vid for vid in stale if vid in used]
+    if broken:
+        raise BuildError(f"variant(s) {broken}: master text not found exactly once in the master CV; update their "
+                         "master text in cv/variants.yaml")
+    if stale:
+        summary.append(f"warning: cv/variants.yaml entries not in the master CV (unused here): {', '.join(stale)}")
     for vid, pick in picks.items():
         if pick == "master":
             continue
@@ -277,9 +338,15 @@ def build_cv(meta, variants, layout, out):
                     e.getparent().remove(e)
                 names.remove(n)
             summary.append(f"omitted projects (approved {approved}): {', '.join(omit)}")
-        if cvm.get(name):
-            reorder_blocks(blocks, cvm[name], names, f"{name} item")
-            summary.append(f"{name}: {', '.join(cvm[name])}")
+        order = cvm.get(name)
+        if (spec or {}).get("max"):
+            names, dropped = show_pool(d, name, spec, names, blocks, order)
+            order = [n for n in order or [] if n in blocks]
+            if dropped:
+                summary.append(f"{name}: named on the further line only: {', '.join(dropped)}")
+        if order:
+            reorder_blocks(blocks, order, names, f"{name} item")
+            summary.append(f"{name}: {', '.join(order)}")
 
     d.save(out)
     return d, summary
@@ -292,11 +359,6 @@ def letter_date(meta):
 
 def norm(s):
     return re.sub(r"\s+", " ", s).strip().lower()
-
-
-def key(s):
-    """Match text without the '- ' bullet prefix."""
-    return norm(s).lstrip("- ")
 
 
 # ---------- letter ----------
@@ -326,6 +388,13 @@ def fill_recipient(block, value):
         p._p.getparent().remove(p._p)
 
 
+def letter_headline(meta, lang):
+    """The letter's tagline: letter_headline (one text, or {de: ..., en: ...}), else cv.headline, else None."""
+    if meta.get("letter_headline"):
+        return pick_lang(meta["letter_headline"], lang, "letter_headline")
+    return (meta.get("cv") or {}).get("headline")
+
+
 def build_letter(meta, body, lang, langs, layout, out):
     d = docx.Document(MASTER_LETTER)
     if not layout.get("letter"):
@@ -339,6 +408,11 @@ def build_letter(meta, body, lang, langs, layout, out):
                        ("greeting", pick_lang(meta["greeting"], lang, "greeting"))):
         if part in parts:
             set_text(parts[part], text)
+    headline = letter_headline(meta, lang)
+    if "headline" in parts and headline:
+        set_text(parts["headline"], headline)
+    elif meta.get("letter_headline"):
+        raise BuildError("letter_headline is set but cv/layout.yaml maps no letter headline")
     if "recipient" in parts:
         fill_recipient(parts["recipient"], pick_lang(meta["recipient"], lang, "recipient"))
     # The closing line keeps the master text unless application.md sets one or there are several languages.
@@ -369,8 +443,14 @@ def build_letter(meta, body, lang, langs, layout, out):
 
 # ---------- fonts and metadata ----------
 
+def fallback_for(font):
+    """The substitute config.yaml names for this font, or None."""
+    return FALLBACK_FONT.get(font) if isinstance(FALLBACK_FONT, dict) else FALLBACK_FONT
+
+
 def apply_fonts(d):
-    """Set every explicit font (runs, styles, defaults, numbering) to FONT and name FALLBACK_FONT as its substitute."""
+    """Set every explicit font (runs, styles, defaults, numbering) to FONT, or keep them all with font: keep, and
+    name each font's fallback_font as its substitute in the font table."""
     parts = [d.element, d.styles.element]
     numbering = getattr(d.part, "numbering_part", None)
     try:
@@ -378,30 +458,40 @@ def apply_fonts(d):
             parts.append(numbering.element)
     except Exception:
         pass
+    fonts = set() if KEEP_FONTS else {FONT}
     for root in parts:
         for rf in root.iter(f"{W}rFonts"):
+            if KEEP_FONTS:
+                fonts |= {rf.get(f"{W}{a}") for a in ("ascii", "hAnsi", "cs", "eastAsia")}
+                continue
             for attr in ("asciiTheme", "hAnsiTheme", "cstheme", "eastAsiaTheme"):
                 rf.attrib.pop(f"{W}{attr}", None)
             for attr in ("ascii", "hAnsi", "cs", "eastAsia"):
                 rf.set(f"{W}{attr}", FONT)
-    defaults = d.styles.element.find(f"{W}docDefaults/{W}rPrDefault/{W}rPr")
-    if defaults is not None and defaults.find(f"{W}rFonts") is None:
-        rf = defaults.makeelement(f"{W}rFonts", {f"{W}{a}": FONT for a in ("ascii", "hAnsi", "cs", "eastAsia")})
-        defaults.insert(0, rf)
+    fonts.discard(None)
+    if not KEEP_FONTS:
+        defaults = d.styles.element.find(f"{W}docDefaults/{W}rPrDefault/{W}rPr")
+        if defaults is not None and defaults.find(f"{W}rFonts") is None:
+            rf = defaults.makeelement(f"{W}rFonts", {f"{W}{a}": FONT for a in ("ascii", "hAnsi", "cs", "eastAsia")})
+            defaults.insert(0, rf)
     font_table = next((rel.target_part for rel in d.part.rels.values() if rel.reltype.endswith("/fontTable")), None)
-    if font_table is not None:
-        from lxml import etree
-        root = etree.fromstring(font_table.blob)
-        entry = next((f for f in root.iter(f"{W}font") if f.get(f"{W}name") == FONT), None)
+    if font_table is None:
+        return
+    from lxml import etree
+    root = etree.fromstring(font_table.blob)
+    for font in sorted(fonts):
+        fallback = fallback_for(font)
+        if not fallback:
+            continue
+        entry = next((f for f in root.iter(f"{W}font") if f.get(f"{W}name") == font), None)
         if entry is None:  # a complete entry; a bare one made Word hang when opening the letter
-            entry = etree.SubElement(root, f"{W}font", {f"{W}name": FONT})
+            entry = etree.SubElement(root, f"{W}font", {f"{W}name": font})
             for tag, val in (("charset", "00"), ("family", "swiss"), ("pitch", "variable")):
                 etree.SubElement(entry, f"{W}{tag}", {f"{W}val": val})
         for old in entry.findall(f"{W}altName"):
             entry.remove(old)
-        alt = etree.Element(f"{W}altName", {f"{W}val": FALLBACK_FONT})
-        entry.insert(0, alt)
-        font_table._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+        entry.insert(0, etree.Element(f"{W}altName", {f"{W}val": fallback}))
+    font_table._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
 def documents(d):
@@ -469,6 +559,10 @@ def check(meta, bodies, cv_doc, letter_docs):
             problems.append(f"{name}: contains '[' or ']' (placeholder?)")
         low = txt.lower()
         problems += [f"{name}: banned phrase '{b}'" for b in BANNED if b in low]
+        for phrase, pattern in NEVER_WRITE:
+            m = pattern.search(txt)
+            if m:
+                problems.append(f"{name}: never_write '{phrase}' matches '{m.group(0)}' (config.yaml)")
     counts = {}
     for lg, body in bodies.items():
         words = counts[lg] = sum(len(p.split()) for p in body)
@@ -503,6 +597,32 @@ def numbers(text):
         elif re.fullmatch(r"\d+[.,]\d+", n):
             n = n.replace(",", ".")
         found.add((str(int(n)) if n.isdigit() else n) + ("%" if percent else ""))
+    return found
+
+
+# Number words, so "three products" is checked like "3 products". "one"/"ein" are left out: they are also
+# ordinary words ("one of", "ein Team").
+_UNITS_EN = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+             "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+_TENS_EN = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+_UNITS_DE = ["zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf",
+             "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"]
+_TENS_DE = ["zwanzig", "dreißig", "vierzig", "fünfzig", "sechzig", "siebzig", "achtzig", "neunzig"]
+NUMBER_WORDS = {**{w: i + 2 for i, w in enumerate(_UNITS_EN)}, **{w: i + 2 for i, w in enumerate(_UNITS_DE)},
+                **{w: 20 + 10 * i for i, w in enumerate(_TENS_EN)}, **{w: 20 + 10 * i for i, w in enumerate(_TENS_DE)}}
+_SMALL_EN = ["one"] + _UNITS_EN[:8]
+NUMBER_WORD = re.compile(r"(?<!\w)(" + "|".join(sorted(NUMBER_WORDS, key=len, reverse=True))
+                         + r")(?:-(" + "|".join(_SMALL_EN) + r"))?(?!\w)", re.I)
+
+
+def word_numbers(text):
+    """The numbers written as words in a text, as digits: "three" -> 3, "twenty-five" -> 25, "zwölf" -> 12."""
+    found = set()
+    for word, unit in NUMBER_WORD.findall(text):
+        n = NUMBER_WORDS[word.lower()]
+        if unit and n >= 20:
+            n += _SMALL_EN.index(unit.lower()) + 1
+        found.add(str(n))
     return found
 
 
@@ -549,20 +669,27 @@ def grounding(meta, bodies, variants, folder):
     own = own_sources(variants)
     ad_file = folder / "ad.json"
     ad = ad_file.read_text(encoding="utf-8") if ad_file.exists() else ""
-    own_numbers, ad_numbers = numbers(own), numbers(ad)
+    own_numbers, ad_numbers = numbers(own) | word_numbers(own), numbers(ad) | word_numbers(ad)
     terms = load_terms()
     ok = {str(t).lower() for t in meta.get("grounding_ok") or []}
-    ok |= {n for t in ok for n in numbers(t)}
+    ok |= {n for t in ok for n in numbers(t) | word_numbers(t)}
     texts = {f"letter {lg.upper()}" if len(bodies) > 1 else "letter": "\n".join(b) for lg, b in bodies.items()}
     headline = (meta.get("cv") or {}).get("headline")
     if headline:
         texts["CV headline"] = str(headline)
-    problems, ad_only = [], set()
+    for lg in bodies:
+        if meta.get("letter_headline"):
+            texts[f"letter headline{' ' + lg.upper() if len(bodies) > 1 else ''}"] = str(letter_headline(meta, lg))
+    problems, ad_only, word_warnings = [], set(), []
+    grounded = lambda n: grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok
     for name, text in texts.items():
-        missing = []
-        for n in sorted(numbers(text)):
-            if not (grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok):
-                missing.append(n)
+        missing = [n for n in sorted(numbers(text)) if not grounded(n)]
+        words = sorted(n for n in word_numbers(text) - numbers(text) if not grounded(n))
+        if words and NUMBER_WORDS_MODE == "fail":
+            missing += [f"{n} (as a word)" for n in words]
+        elif words:
+            word_warnings.append(f"{name}: numbers written as words not in your files or the ad: {', '.join(words)} "
+                                 "(grounding_number_words: fail makes this an error)")
         for term, pattern in terms:
             if pattern.search(text) and not pattern.search(own) and term.lower() not in ok:
                 if pattern.search(ad):
@@ -577,7 +704,7 @@ def grounding(meta, bodies, variants, folder):
                         "application.md, and job.md must say why.")
     warnings = [f"from the ad only, not in your files: {', '.join(sorted(ad_only))} "
                 "(the letter may name them, never claim them)"] if ad_only else []
-    return problems, warnings
+    return problems, warnings + word_warnings
 
 
 def main():

@@ -17,7 +17,10 @@ candidate keeps their own design. Every part is optional: what isn't mapped simp
           title_marker: "|"                  # optional: also starts an item at a line followed by a line containing this
           name_split: ","                    # optional: the item's name is the text before this (or before the first of
                                              # a list, e.g. ["\t", ","]); default: the whole line
+          max: 3                             # optional pool: the first 3 in the job's order stay as blocks, and
+          further: {starts_with: "Further"}  # the others are named on this line, after its ': ' (needs max)
     letter:
+      headline: {after: "Jane Doe"}          # optional: a tagline line, from letter_headline (else cv.headline)
       date: {starts_with: "Berlin,"}         # replaced by "<letter_city>, DD.MM.YYYY"
       recipient: {starts_with: "Acme GmbH"}  # the address block: this line and the lines after it, up to an empty
                                              # line or the next mapped part (company, street, postcode, ...)
@@ -46,7 +49,7 @@ import yaml
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 ITEM_RULES = ("blank_line", "bold", "colon", "no_dash", "not_list")
-LETTER_PARTS = ("date", "recipient", "subject", "greeting", "closing")
+LETTER_PARTS = ("headline", "date", "recipient", "subject", "greeting", "closing")
 
 
 class MapError(Exception):
@@ -65,6 +68,21 @@ def paragraphs(d):
             continue
         out.append(docx.text.paragraph.Paragraph(p, d._body))
     return out
+
+
+def match_variants(paras, variants):
+    """Find each cv/variants.yaml bullet in the CV by its master text (the start of exactly one paragraph, without
+    the '- ' bullet prefix). Returns ({id: paragraph}, [ids not found exactly once])."""
+    key = lambda s: norm(s).lstrip("- ")
+    found, stale = {}, []
+    for vid, v in variants.items():
+        start = key(str(v.get("master") or ""))[:60]
+        hits = [p for p in paras if start and key(p.text).startswith(start)]
+        if len(hits) == 1:
+            found[vid] = hits[0]
+        else:
+            stale.append(vid)
+    return found, stale
 
 
 def container(p):
@@ -215,7 +233,7 @@ def siblings(p):
 
 
 def letter_parts(d, lmap):
-    """{part: paragraph} for date, subject, greeting and closing, plus
+    """{part: paragraph} for headline, date, subject, greeting and closing, plus
     'recipient' = the address block (a list of one or more paragraphs),
     'body' = the body paragraphs and 'body_all' = every paragraph from the first to the last of them,
     'spacer' = an empty paragraph between body paragraphs in the master, if there is one."""
@@ -275,6 +293,9 @@ def check(layout_path, cv_path, letter_path, out=print):
         try:
             names, _ = section(d, name, spec or {})
             out(f"section {name}: {names}")
+            if (spec or {}).get("max"):
+                further = find(paragraphs(d), spec.get("further") or {}, f"section {name} further")
+                out(f"section {name}: shows {spec['max']} as blocks, names the rest on: {further.text.strip()[:70]}")
         except MapError as e:
             problems.append(str(e))
     if m.get("letter"):
@@ -319,6 +340,13 @@ def main():
                      path("master_cv"), path("master_letter"))
     for p in problems:
         print(f"PROBLEM {p}")
+    variants_path = path("variants") if CFG.get("variants") else None
+    if variants_path and variants_path.is_file():
+        _, stale = match_variants(paragraphs(docx.Document(str(path("master_cv")))),
+                                  yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {})
+        if stale:
+            print(f"WARNING cv/variants.yaml: master text not in the master CV: {', '.join(stale)} (builds that use "
+                  "them fail; update their master text)")
     print("OK" if not problems else f"{len(problems)} problem(s)")
     return 1 if problems else 0
 

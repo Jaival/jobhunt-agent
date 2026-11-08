@@ -96,16 +96,13 @@ def placeholders(path):
 
 
 def unmatched_variants(cv_path, variants_path):
-    """Ids in variants.yaml whose master text isn't found exactly once in the CV (the builder stops on these)."""
+    """Ids in variants.yaml whose master text isn't found exactly once in the CV (builds that use them stop)."""
     import docx
     import yaml
     sys.path.insert(0, str(ENGINE / "tools"))
-    from cv_map import paragraphs
-    key = lambda s: re.sub(r"\s+", " ", s).strip().lower().lstrip("- ")
-    paras = [key(p.text) for p in paragraphs(docx.Document(str(cv_path)))]
+    from cv_map import match_variants, paragraphs
     variants = yaml.safe_load(variants_path.read_text(encoding="utf-8")) or {}
-    return [vid for vid, v in variants.items()
-            if sum(1 for p in paras if p and p.startswith(key(v.get("master") or "")[:60])) != 1]
+    return match_variants(paragraphs(docx.Document(str(cv_path))), variants)[1]
 
 
 def engine_edits():

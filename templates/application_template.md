@@ -10,6 +10,8 @@ subject: "Application: <exact job title from the ad>"   # per language: {de: "Be
 greeting: Dear <Company> team,  # per language: {de: "Sehr geehrte Damen und Herren,", en: "Dear <Company> team,"}
 # grounding_ok: [SAP Ariba]  # reviewed exceptions to the grounding check: terms the letter names but doesn't claim
 #                           # (the company's product, a gap named as a gap); job.md says why
+# letter_headline: Marketing Student | Social Media   # needs letter.headline in cv/layout.yaml; default: cv.headline
+#                           # per language: {de: ..., en: ...}
 # closing: Best regards     # needs letter.closing in cv/layout.yaml; with two languages the default is
 #                           # {de: Mit freundlichen Grüßen, en: Kind regards}
 cv:
@@ -17,7 +19,8 @@ cv:
   # One list per section mapped in cv/layout.yaml, keyed by its name there (cv_map.py check shows the item names).
   # Every list is optional; leave one out to keep the master order.
   # Anything you don't list keeps its place after the listed ones.
-  # order by the job ad using projects.md; every CV keeps all projects
+  # order by the job ad using projects.md; every CV keeps all projects (a pool, max: N in cv/layout.yaml,
+  # shows the first N as blocks and names the rest on its further line)
   projects: [Project A, Project B, Project C]
   skills: [Skill group A, Skill group B]
   # only with my approval: leave a project out of this one CV

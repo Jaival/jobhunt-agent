@@ -28,6 +28,8 @@ for the rest, which you can post if you like.
 
 What each release changes in your workspace and daily run, what the update shows you, and how to check it:
 
+- [v1.0.0 to v1.1.0](docs/upgrading/v1.1.0.md): keep your CV's own fonts, never-write phrases, a tailored letter
+  tagline, a project pool.
 - [v0.5.0 to v1.0.0](docs/upgrading/v1.0.0.md): release tags only, the Decisions checklist, commands, workspace
   history.
 - [v0.4.0 to v0.5.0](docs/upgrading/v0.5.0.md): grounded letters, one tailor per job, skills.
