@@ -17,6 +17,8 @@ candidate keeps their own design. Every part is optional: what isn't mapped simp
           title_marker: "|"                  # optional: also starts an item at a line followed by a line containing this
           name_split: ","                    # optional: the item's name is the text before this (or before the first of
                                              # a list, e.g. ["\t", ","]); default: the whole line
+          max: 3                             # optional pool: the first 3 in the job's order stay as blocks, and
+          further: {starts_with: "Further"}  # the others are named on this line, after its ': ' (needs max)
     letter:
       headline: {after: "Jane Doe"}          # optional: a tagline line, from letter_headline (else cv.headline)
       date: {starts_with: "Berlin,"}         # replaced by "<letter_city>, DD.MM.YYYY"
@@ -291,6 +293,9 @@ def check(layout_path, cv_path, letter_path, out=print):
         try:
             names, _ = section(d, name, spec or {})
             out(f"section {name}: {names}")
+            if (spec or {}).get("max"):
+                further = find(paragraphs(d), spec.get("further") or {}, f"section {name} further")
+                out(f"section {name}: shows {spec['max']} as blocks, names the rest on: {further.text.strip()[:70]}")
         except MapError as e:
             problems.append(str(e))
     if m.get("letter"):

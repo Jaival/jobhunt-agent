@@ -19,7 +19,8 @@ cv:
   # One list per section mapped in cv/layout.yaml, keyed by its name there (cv_map.py check shows the item names).
   # Every list is optional; leave one out to keep the master order.
   # Anything you don't list keeps its place after the listed ones.
-  # order by the job ad using projects.md; every CV keeps all projects
+  # order by the job ad using projects.md; every CV keeps all projects (a pool, max: N in cv/layout.yaml,
+  # shows the first N as blocks and names the rest on its further line)
   projects: [Project A, Project B, Project C]
   skills: [Skill group A, Skill group B]
   # only with my approval: leave a project out of this one CV

@@ -33,7 +33,8 @@ they differ from config.yaml.
    cv/layout.yaml (keyed by its name there), the experience bullet order, and optional approved variants; the body
    is the letter.
    - Projects: every CV keeps all projects. Order `cv.projects` from the ad, using "Best for" and the suggested
-     orders in projects.md, and mention the most relevant project in the letter. Keep the headline to one line
+     orders in projects.md (with a pool, `max: N` in cv/layout.yaml, the first N become full blocks and the rest
+     are named on the further line, so put the N that fit the ad first), and mention the most relevant project in the letter. Keep the headline to one line
      (about 72 characters); a wrapped headline can push the CV over 2 pages.
    - CV edits stay surgical (RULES.md rule 5): headline, order, and approved variants only. Never add anything not
      in the master CV or CLAUDE.md. If a better wording is needed, propose it in cv/variants.yaml with

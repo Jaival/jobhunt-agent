@@ -16,7 +16,9 @@ recipient / subject / greeting / closing may be {de: ..., en: ...}; the mapped c
 closing. One letter per language: <prefix>_Cover_Letter_<short>_DE.docx / _EN.docx (one language keeps the plain
 name). config.yaml `name_in_master`: the name as the master files spell it, replaced by `applicant` in every
 document (for example a middle name you leave out).
-Every CV keeps all projects; cv.omit_projects only works together with cv.omit_approved: <date>
+Every CV keeps all projects: as a block, or for a pool section (cv/layout.yaml `max: N` + `further`) the first N
+in the job's order as blocks and the others by name on the further line. cv.omit_projects only works together with
+cv.omit_approved: <date>
 (the applicant's approval). After the PDF export (pdf_export.py, config pdf_engine) it fails if the CV is
 over 2 pages or the letter over 1.
 
@@ -201,6 +203,40 @@ def reorder_blocks(blocks, order, names, what):
     return final
 
 
+def show_pool(d, name, spec, names, blocks, order):
+    """A pool section (max: N in cv/layout.yaml): the first N items in this job's order stay as blocks; the names of
+    the others go to the front of the list after ': ' on the `further` line, so every item stays on the CV.
+    Returns (the kept names in document order, the dropped names)."""
+    n = spec["max"]
+    if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+        raise BuildError(f"section {name}: max must be a whole number of at least 1 (cv/layout.yaml)")
+    if not spec.get("further"):
+        raise BuildError(f"section {name}: max needs further: {{starts_with: \"...\"}}, the line that names the other "
+                         "items (cv/layout.yaml)")
+    unknown = [x for x in order or [] if x not in blocks]
+    if unknown:
+        raise BuildError(f"unknown {name} item: {unknown}; known: {names}")
+    final = list(order or []) + [x for x in names if x not in (order or [])]
+    dropped = final[n:]
+    if not dropped:
+        return names, []
+    try:
+        line = cv_map.find(paragraphs(d), spec["further"], f"section {name} further")
+    except MapError as e:
+        raise BuildError(str(e))
+    i = next((i for i, r in enumerate(line.runs) if ": " in r.text), None)
+    if i is None:
+        raise BuildError(f"section {name}: the further line needs ': ' before its list (in one formatting run)")
+    run = line.runs[i]
+    head, _, tail = run.text.partition(": ")
+    listed = (tail + "".join(r.text for r in line.runs[i + 1:])).strip()
+    run.text = f"{head}: {', '.join(dropped)}{', ' if listed else ''}{tail}"
+    for x in dropped:
+        for e in blocks.pop(x):
+            e.getparent().remove(e)
+    return [x for x in names if x in blocks], dropped
+
+
 def load_layout():
     if LAYOUT.lower() == "none":
         raise BuildError("config.yaml has layout: none, so the CV isn't mapped and documents can't be built; "
@@ -300,9 +336,15 @@ def build_cv(meta, variants, layout, out):
                     e.getparent().remove(e)
                 names.remove(n)
             summary.append(f"omitted projects (approved {approved}): {', '.join(omit)}")
-        if cvm.get(name):
-            reorder_blocks(blocks, cvm[name], names, f"{name} item")
-            summary.append(f"{name}: {', '.join(cvm[name])}")
+        order = cvm.get(name)
+        if (spec or {}).get("max"):
+            names, dropped = show_pool(d, name, spec, names, blocks, order)
+            order = [n for n in order or [] if n in blocks]
+            if dropped:
+                summary.append(f"{name}: named on the further line only: {', '.join(dropped)}")
+        if order:
+            reorder_blocks(blocks, order, names, f"{name} item")
+            summary.append(f"{name}: {', '.join(order)}")
 
     d.save(out)
     return d, summary
