@@ -23,7 +23,9 @@ Grounding: every number and every skill or tool term (tools/skills.txt plus conf
 letter or the CV headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
 projects.md, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
 has pass with a warning. `grounding_ok: [term, ...]` in the frontmatter lets reviewed exceptions through. Numbers
-written as words ("three") and the context of a term (claimed or named as a gap) aren't checked.
+written as words ("three", "zwölf") are checked too: a warning by default, an error with config.yaml
+`grounding_number_words: fail`. The context of a term (claimed or named as a gap) isn't checked. config.yaml
+`never_write: [phrase or regex, ...]` fails the build when any of them appears in the CV or a letter.
 
 Output for ATS autofill: file names start with the applicant's name (parsers read names from file
 names), document metadata carries the applicant as author and a neutral title (Word copies it into
@@ -90,6 +92,16 @@ FALLBACK_FONT = CFG.get("fallback_font", "Open Sans")  # substitute when a font 
 if not (isinstance(FALLBACK_FONT, str) or isinstance(FALLBACK_FONT, dict) and all(
         isinstance(k, str) and isinstance(v, str) and v.strip() for k, v in FALLBACK_FONT.items())):
     raise ConfigError("config.yaml: fallback_font must be a font name or a map, e.g. {Inter: Arial, JetBrains Mono: Consolas}")
+NEVER_WRITE = CFG.get("never_write") or []       # phrases or regexes that must never appear in a CV or letter
+if not isinstance(NEVER_WRITE, list) or not all(isinstance(x, str) and x.strip() for x in NEVER_WRITE):
+    raise ConfigError('config.yaml: never_write must be a list of phrases or regexes, e.g. ["3 products", "no BA approval"]')
+try:
+    NEVER_WRITE = [(x, re.compile(x, re.I)) for x in NEVER_WRITE]
+except re.error as e:
+    raise ConfigError(f"config.yaml: never_write has an invalid regex: {e}")
+NUMBER_WORDS_MODE = str(CFG.get("grounding_number_words") or "warn")   # number words: warn (default) | fail
+if NUMBER_WORDS_MODE not in ("warn", "fail"):
+    raise ConfigError("config.yaml: grounding_number_words must be warn or fail")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
@@ -491,6 +503,10 @@ def check(meta, bodies, cv_doc, letter_docs):
             problems.append(f"{name}: contains '[' or ']' (placeholder?)")
         low = txt.lower()
         problems += [f"{name}: banned phrase '{b}'" for b in BANNED if b in low]
+        for phrase, pattern in NEVER_WRITE:
+            m = pattern.search(txt)
+            if m:
+                problems.append(f"{name}: never_write '{phrase}' matches '{m.group(0)}' (config.yaml)")
     counts = {}
     for lg, body in bodies.items():
         words = counts[lg] = sum(len(p.split()) for p in body)
@@ -525,6 +541,32 @@ def numbers(text):
         elif re.fullmatch(r"\d+[.,]\d+", n):
             n = n.replace(",", ".")
         found.add((str(int(n)) if n.isdigit() else n) + ("%" if percent else ""))
+    return found
+
+
+# Number words, so "three products" is checked like "3 products". "one"/"ein" are left out: they are also
+# ordinary words ("one of", "ein Team").
+_UNITS_EN = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+             "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+_TENS_EN = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+_UNITS_DE = ["zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf",
+             "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"]
+_TENS_DE = ["zwanzig", "dreißig", "vierzig", "fünfzig", "sechzig", "siebzig", "achtzig", "neunzig"]
+NUMBER_WORDS = {**{w: i + 2 for i, w in enumerate(_UNITS_EN)}, **{w: i + 2 for i, w in enumerate(_UNITS_DE)},
+                **{w: 20 + 10 * i for i, w in enumerate(_TENS_EN)}, **{w: 20 + 10 * i for i, w in enumerate(_TENS_DE)}}
+_SMALL_EN = ["one"] + _UNITS_EN[:8]
+NUMBER_WORD = re.compile(r"(?<!\w)(" + "|".join(sorted(NUMBER_WORDS, key=len, reverse=True))
+                         + r")(?:-(" + "|".join(_SMALL_EN) + r"))?(?!\w)", re.I)
+
+
+def word_numbers(text):
+    """The numbers written as words in a text, as digits: "three" -> 3, "twenty-five" -> 25, "zwölf" -> 12."""
+    found = set()
+    for word, unit in NUMBER_WORD.findall(text):
+        n = NUMBER_WORDS[word.lower()]
+        if unit and n >= 20:
+            n += _SMALL_EN.index(unit.lower()) + 1
+        found.add(str(n))
     return found
 
 
@@ -571,20 +613,24 @@ def grounding(meta, bodies, variants, folder):
     own = own_sources(variants)
     ad_file = folder / "ad.json"
     ad = ad_file.read_text(encoding="utf-8") if ad_file.exists() else ""
-    own_numbers, ad_numbers = numbers(own), numbers(ad)
+    own_numbers, ad_numbers = numbers(own) | word_numbers(own), numbers(ad) | word_numbers(ad)
     terms = load_terms()
     ok = {str(t).lower() for t in meta.get("grounding_ok") or []}
-    ok |= {n for t in ok for n in numbers(t)}
+    ok |= {n for t in ok for n in numbers(t) | word_numbers(t)}
     texts = {f"letter {lg.upper()}" if len(bodies) > 1 else "letter": "\n".join(b) for lg, b in bodies.items()}
     headline = (meta.get("cv") or {}).get("headline")
     if headline:
         texts["CV headline"] = str(headline)
-    problems, ad_only = [], set()
+    problems, ad_only, word_warnings = [], set(), []
+    grounded = lambda n: grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok
     for name, text in texts.items():
-        missing = []
-        for n in sorted(numbers(text)):
-            if not (grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok):
-                missing.append(n)
+        missing = [n for n in sorted(numbers(text)) if not grounded(n)]
+        words = sorted(n for n in word_numbers(text) - numbers(text) if not grounded(n))
+        if words and NUMBER_WORDS_MODE == "fail":
+            missing += [f"{n} (as a word)" for n in words]
+        elif words:
+            word_warnings.append(f"{name}: numbers written as words not in your files or the ad: {', '.join(words)} "
+                                 "(grounding_number_words: fail makes this an error)")
         for term, pattern in terms:
             if pattern.search(text) and not pattern.search(own) and term.lower() not in ok:
                 if pattern.search(ad):
@@ -599,7 +645,7 @@ def grounding(meta, bodies, variants, folder):
                         "application.md, and job.md must say why.")
     warnings = [f"from the ad only, not in your files: {', '.join(sorted(ad_only))} "
                 "(the letter may name them, never claim them)"] if ad_only else []
-    return problems, warnings
+    return problems, warnings + word_warnings
 
 
 def main():

@@ -88,3 +88,51 @@ def test_numbers_normalise(monkeypatch):
     import build_application as b
     assert b.numbers("1,200 and 1.200, 2,5 or 2.5, 031, 18 % and 18 Prozent") == {"1200", "2.5", "31", "18%"}
     assert b.numbers("CATIA V5, GA4 and B2") == set()
+
+
+def set_config(root, **values):
+    import yaml
+    path = root / "config.yaml"
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    cfg.update(values)
+    path.write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
+
+
+def test_word_numbers():
+    import build_application as B
+    assert B.word_numbers("three posts for twenty-five clients, an eight-week campaign, zwölf Monate") == \
+        {"3", "25", "8", "12"}
+    assert B.word_numbers("one of the team, ein Team, someone, threesome") == set()
+
+
+def test_never_write_fails_the_build(tool, sample):
+    set_config(sample, never_write=["four clients", r"stopped deploying\s+by hand"])
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode == 1
+    assert "letter: never_write 'four clients' matches 'four clients' (config.yaml)" in r.stderr
+
+
+def test_never_write_bad_regex_is_a_config_error(tool, sample):
+    set_config(sample, never_write=["(unclosed"])
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode != 0 and "never_write has an invalid regex" in r.stderr
+
+
+def test_number_word_warns_by_default(tool, sample):
+    edit(sample, APP, "for four clients", "for seventeen clients")
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode == 0, r.stderr
+    assert "numbers written as words not in your files or the ad: 17" in r.stdout
+
+
+def test_number_word_fails_when_set(tool, sample):
+    set_config(sample, grounding_number_words="fail")
+    edit(sample, APP, "for four clients", "for seventeen clients")
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode == 1 and "17 (as a word)" in r.stderr
+
+
+def test_grounded_number_word_passes_in_fail_mode(tool, sample):
+    set_config(sample, grounding_number_words="fail")      # the sample letter's "three", "four", "eight" are grounded
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode == 0, r.stderr
