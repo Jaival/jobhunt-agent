@@ -6,7 +6,8 @@ application.md = YAML frontmatter (CV choices, letter header) + the letter body 
 The master CV and master cover letter stay the templates (CLAUDE.md rule 5): the builder only
 changes the headline (and a mapped "City, date" line), reorders the items of the sections named in the CV map
 (cv/layout.yaml, see cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. In the letter
-it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body.
+it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body,
+and a mapped tagline line (letter_headline, else cv.headline).
 It fails before writing anything if a check breaks.
 
 Letters in German and/or English: `languages: [de, en]` in the frontmatter (default: config.yaml
@@ -20,7 +21,7 @@ Every CV keeps all projects; cv.omit_projects only works together with cv.omit_a
 over 2 pages or the letter over 1.
 
 Grounding: every number and every skill or tool term (tools/skills.txt plus config.yaml profile.score_bonus) in a
-letter or the CV headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
+letter, the CV headline or the letter headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
 projects.md, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
 has pass with a warning. `grounding_ok: [term, ...]` in the frontmatter lets reviewed exceptions through. Numbers
 written as words ("three", "zwölf") are checked too: a warning by default, an error with config.yaml
@@ -343,6 +344,13 @@ def fill_recipient(block, value):
         p._p.getparent().remove(p._p)
 
 
+def letter_headline(meta, lang):
+    """The letter's tagline: letter_headline (one text, or {de: ..., en: ...}), else cv.headline, else None."""
+    if meta.get("letter_headline"):
+        return pick_lang(meta["letter_headline"], lang, "letter_headline")
+    return (meta.get("cv") or {}).get("headline")
+
+
 def build_letter(meta, body, lang, langs, layout, out):
     d = docx.Document(MASTER_LETTER)
     if not layout.get("letter"):
@@ -356,6 +364,11 @@ def build_letter(meta, body, lang, langs, layout, out):
                        ("greeting", pick_lang(meta["greeting"], lang, "greeting"))):
         if part in parts:
             set_text(parts[part], text)
+    headline = letter_headline(meta, lang)
+    if "headline" in parts and headline:
+        set_text(parts["headline"], headline)
+    elif meta.get("letter_headline"):
+        raise BuildError("letter_headline is set but cv/layout.yaml maps no letter headline")
     if "recipient" in parts:
         fill_recipient(parts["recipient"], pick_lang(meta["recipient"], lang, "recipient"))
     # The closing line keeps the master text unless application.md sets one or there are several languages.
@@ -620,6 +633,9 @@ def grounding(meta, bodies, variants, folder):
     headline = (meta.get("cv") or {}).get("headline")
     if headline:
         texts["CV headline"] = str(headline)
+    for lg in bodies:
+        if meta.get("letter_headline"):
+            texts[f"letter headline{' ' + lg.upper() if len(bodies) > 1 else ''}"] = str(letter_headline(meta, lg))
     problems, ad_only, word_warnings = [], set(), []
     grounded = lambda n: grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok
     for name, text in texts.items():

@@ -21,6 +21,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   fact your CLAUDE.md forbids); a match fails the build. (#88)
 - The grounding check also reads numbers written as words ("three", "twenty-five", "zwölf"; not "one"/"ein").
   One that isn't in your files or the ad is a warning; `grounding_number_words: fail` makes it an error. (#88)
+- The letter's tagline line can be tailored: map it as `letter: headline:` in cv/layout.yaml; the builder fills it
+  from `letter_headline:` in application.md (one text or `{de: ..., en: ...}`), else from `cv.headline`. A set
+  `letter_headline` is grounded like the CV headline. (#90)
 
 ### Fixed
 - One stale cv/variants.yaml entry (its master text no longer in the master CV) stopped every build. Now only
