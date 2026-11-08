@@ -17,6 +17,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   font to one family, so a two-font design (for example a sans text font and a mono font for headings and dates)
   survives tailoring, and the PDF export and page check can stay on. `fallback_font` may now be a map from font
   to substitute (`{Inter: Arial, JetBrains Mono: Consolas}`); a single name still applies to every font.
+- `never_write:` in config.yaml: phrases or regexes that must never appear in a CV or letter (for example a
+  fact your CLAUDE.md forbids); a match fails the build. (#88)
+- The grounding check also reads numbers written as words ("three", "twenty-five", "zwölf"; not "one"/"ein").
+  One that isn't in your files or the ad is a warning; `grounding_number_words: fail` makes it an error. (#88)
 
 ## [1.0.0] - 2026-11-01: versioned & interactive
 
