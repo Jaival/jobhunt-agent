@@ -237,19 +237,23 @@ def build_cv(meta, variants, layout, out):
         except MapError as e:
             raise BuildError(str(e))
 
-    # Variants and bullet order use ids from cv/variants.yaml, located by their master text.
-    by_id = {}
-    paras = paragraphs(d)
-    for vid, v in variants.items():
-        hits = [p for p in paras if key(p.text) and key(p.text).startswith(key(v["master"])[:60])]
-        if len(hits) != 1:
-            raise BuildError(f"variant '{vid}': master text found {len(hits)} times in the master CV")
-        by_id[vid] = hits[0]
+    # Variants and bullet order use ids from cv/variants.yaml, located by their master text. Only the ids this
+    # application uses must be found; the others only warn, so one stale entry doesn't stop every build.
+    by_id, stale = cv_map.match_variants(paragraphs(d), variants)
     picks = {vid: v["default"] for vid, v in variants.items() if v.get("default")}
     for vid in cvm.get("variants") or {}:
         if vid not in variants:
             raise BuildError(f"unknown variant id '{vid}'")
     picks.update(cvm.get("variants") or {})
+    groups = cvm.get("bullets") or {}
+    used = {vid for vid, pick in picks.items() if pick != "master"}
+    used |= {vid for vid, v in variants.items() if v.get("group") in groups}
+    broken = [vid for vid in stale if vid in used]
+    if broken:
+        raise BuildError(f"variant(s) {broken}: master text not found exactly once in the master CV; update their "
+                         "master text in cv/variants.yaml")
+    if stale:
+        summary.append(f"warning: cv/variants.yaml entries not in the master CV (unused here): {', '.join(stale)}")
     for vid, pick in picks.items():
         if pick == "master":
             continue
@@ -310,11 +314,6 @@ def letter_date(meta):
 
 def norm(s):
     return re.sub(r"\s+", " ", s).strip().lower()
-
-
-def key(s):
-    """Match text without the '- ' bullet prefix."""
-    return norm(s).lstrip("- ")
 
 
 # ---------- letter ----------

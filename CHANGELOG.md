@@ -22,6 +22,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The grounding check also reads numbers written as words ("three", "twenty-five", "zwölf"; not "one"/"ein").
   One that isn't in your files or the ad is a warning; `grounding_number_words: fail` makes it an error. (#88)
 
+### Fixed
+- One stale cv/variants.yaml entry (its master text no longer in the master CV) stopped every build. Now only
+  builds that pick or reorder it stop; the others print a warning, and `cv_map.py check` lists stale entries. (#89)
+
 ## [1.0.0] - 2026-11-01: versioned & interactive
 
 ### Added
