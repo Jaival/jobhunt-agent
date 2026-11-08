@@ -229,8 +229,10 @@ def show_pool(d, name, spec, names, blocks, order):
         raise BuildError(f"section {name}: the further line needs ': ' before its list (in one formatting run)")
     run = line.runs[i]
     head, _, tail = run.text.partition(": ")
-    listed = (tail + "".join(r.text for r in line.runs[i + 1:])).strip()
-    run.text = f"{head}: {', '.join(dropped)}{', ' if listed else ''}{tail}"
+    rest = (tail + "".join(r.text for r in line.runs[i + 1:])).strip()
+    # Names already listed get ", "; text that doesn't start with a word ("· github.com/...") gets a space.
+    sep = ", " if re.match(r"\w", rest) else " " if rest else ""
+    run.text = f"{head}: {', '.join(dropped)}{sep}{tail.lstrip()}"
     for x in dropped:
         for e in blocks.pop(x):
             e.getparent().remove(e)

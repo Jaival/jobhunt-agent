@@ -9,7 +9,8 @@ CV = "Lena_Fischer_CV_Example-Company.docx"
 FURTHER = "Further projects: Blog"
 
 
-def make_pool(sample, max_=2, further=True):
+
+def make_pool(sample, max_=2, further=True, text=FURTHER):
     """Add a 'Further projects' line after the projects and turn the projects section into a pool."""
     path = sample / "cv" / "Lena_Fischer_CV.docx"
     d = docx.Document(str(path))
@@ -17,12 +18,12 @@ def make_pool(sample, max_=2, further=True):
     line = copy.deepcopy(skills._p)
     skills._p.addprevious(line)
     p = docx.text.paragraph.Paragraph(line, skills._parent)
-    p.runs[0].text, p.runs[0].bold = FURTHER, False
+    p.runs[0].text, p.runs[0].bold = text, False
     d.save(str(path))
     layout = sample / "cv" / "layout.yaml"
     pool = f"      max: {max_}\n" + (f'      further: {{starts_with: "Further projects"}}\n' if further else "")
-    text = layout.read_text(encoding="utf-8").replace("      end: [SKILLS]\n", f'      end: ["{FURTHER}"]\n' + pool, 1)
-    layout.write_text(text, encoding="utf-8")
+    yaml_text = layout.read_text(encoding="utf-8").replace("      end: [SKILLS]\n", f'      end: ["{text}"]\n' + pool, 1)
+    layout.write_text(yaml_text, encoding="utf-8")
 
 
 def test_pool_names_the_rest(tool, sample):
@@ -54,3 +55,10 @@ def test_cv_map_check_shows_the_pool(tool, sample):
     r = tool("cv_map.py", "check")
     assert r.returncode == 0, r.stdout
     assert "section projects: shows 2 as blocks, names the rest on: Further projects: Blog" in r.stdout
+
+
+def test_pool_line_without_names(tool, sample):
+    make_pool(sample, max_=2, text="Further projects: · github.com/lena")
+    r = tool("build_application.py", APP, "--no-pdf")
+    assert r.returncode == 0, r.stderr
+    assert "Further projects: Newsletter Relaunch · github.com/lena" in texts(sample / APP / CV)
