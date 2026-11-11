@@ -8,7 +8,8 @@ changes the headline (and a mapped "City, date" line), reorders the items of the
 (cv/layout.yaml, see cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. In the letter
 it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body,
 and a mapped tagline line (letter_headline, else cv.headline).
-It fails before writing anything if a check breaks.
+It fails before writing anything if a check breaks: the page limits are checked on temp files, and the final files
+appear only when everything passed.
 
 Letters in German and/or English: `languages: [de, en]` in the frontmatter (default: config.yaml
 `letter_languages`, else [en]). With two languages the body has a `<!-- de -->` and an `<!-- en -->` part, and
@@ -42,6 +43,7 @@ import argparse
 import copy
 import datetime as dt
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -354,7 +356,12 @@ def build_cv(meta, variants, layout, out):
 
 def letter_date(meta):
     date = meta.get("date") or dt.date.today()
-    return dt.date.fromisoformat(date) if isinstance(date, str) else date
+    if not isinstance(date, str):
+        return date
+    try:
+        return dt.date.fromisoformat(date)
+    except ValueError:
+        raise BuildError(f"date: '{date}' must be YYYY-MM-DD (application.md)") from None
 
 
 def norm(s):
@@ -715,6 +722,7 @@ def main():
     folder = appdirs.find(a.folder) or Path(a.folder)
     if not folder.is_absolute():
         folder = ROOT / folder
+    pdf_note = None
     try:
         meta, bodies = read_application(folder)
         variants = yaml.safe_load(VARIANTS.read_text(encoding="utf-8")) or {}
@@ -742,43 +750,52 @@ def main():
         problems += grounding_problems
         if problems:
             raise BuildError("checks failed:\n  - " + "\n  - ".join(problems))
-        tmp_cv.replace(cv_out)
-        for lg in langs:
-            tmp_letter[lg].replace(letter_out[lg])
+        pairs = [(tmp_cv, cv_out)] + [(tmp_letter[lg], letter_out[lg]) for lg in langs]
+        engine = "skipped"
+        if not a.no_pdf:
+            try:
+                engine = pdf_export.export([tmp for tmp, _ in pairs], CFG.get("pdf_engine"))
+            except (pdf_export.PdfError, subprocess.CalledProcessError) as e:
+                engine = "failed"
+                pdf_note = f"WARNING {folder.name}: no PDFs ({e}); the .docx files are built, page limits unchecked"
+        if engine in ("word", "libreoffice"):
+            problems = check_pages(tmp_cv.with_suffix(".pdf"), [tmp_letter[lg].with_suffix(".pdf") for lg in langs],
+                                   [letter_out[lg].stem for lg in langs])
+            if problems:
+                raise BuildError("page check:\n  - " + "\n  - ".join(problems))
+        for tmp, out in pairs:  # every check passed: the final names appear only now
+            tmp.replace(out)
+            if tmp.with_suffix(".pdf").exists():
+                tmp.with_suffix(".pdf").replace(out.with_suffix(".pdf"))
     except BuildError as e:
-        for f in folder.glob("~build_*.docx"):
-            f.unlink()
         print(f"FAILED {folder.name}: {e}", file=sys.stderr)
         return 1
+    finally:
+        for f in folder.glob("~build_*"):
+            if f.suffix in (".docx", ".pdf"):
+                f.unlink()
     print(f"OK {folder.name}: " + ", ".join(
         f"letter{' ' + lg.upper() if len(langs) > 1 else ''} {n} words" for lg, n in counts.items()))
     for line in summary + warnings:
         print(f"  {line}")
-    if not a.no_pdf:
-        try:
-            engine = pdf_export.export([cv_out, *letter_out.values()], CFG.get("pdf_engine"))
-        except pdf_export.PdfError as e:
-            print(f"WARNING {folder.name}: no PDFs ({e}); the .docx files are built, page limits unchecked",
-                  file=sys.stderr)
-            return 0
-        if engine == "none":
-            print("  no PDFs (pdf_engine: none); page limits unchecked")
-            return 0
-        if engine == "libreoffice":
-            print("  PDFs from LibreOffice: its page count can differ from Word's, open the CV PDF once to check")
-        problems = check_pages(cv_out.with_suffix(".pdf"), [p.with_suffix(".pdf") for p in letter_out.values()])
-        if problems:
-            print(f"FAILED {folder.name}: page check:\n  - " + "\n  - ".join(problems), file=sys.stderr)
-            return 1
+    if pdf_note:
+        print(pdf_note, file=sys.stderr)
+    elif engine == "none":
+        print("  no PDFs (pdf_engine: none); page limits unchecked")
+    elif engine == "libreoffice":
+        print("  PDFs from LibreOffice: its page count can differ from Word's, open the CV PDF once to check")
     return 0
 
 
-def check_pages(cv_pdf, letter_pdfs):
-    """Page limits from the exported PDFs (Word's count is the reliable one; LibreOffice can differ)."""
+def check_pages(cv_pdf, letter_pdfs, names=None):
+    """Page limits from the exported PDFs (Word's count is the reliable one; LibreOffice can differ).
+
+    names: the letters' display names in the messages (default: the PDF stems)."""
     import pypdf
     problems = []
-    for name, path, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {p.stem}", p, LETTER_MAX_PAGES)
-                                                               for p in letter_pdfs]:
+    names = names or [p.stem for p in letter_pdfs]
+    for name, path, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {n}", p, LETTER_MAX_PAGES)
+                                                               for n, p in zip(names, letter_pdfs)]:
         n = len(pypdf.PdfReader(str(path)).pages)
         if n > limit:
             problems.append(f"{name} has {n} pages (max {limit})")

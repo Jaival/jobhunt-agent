@@ -58,6 +58,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - An application confirmed by email now also gets the ledger verdict `applied`.
 - The docs promised a tracker/pending_rows.csv fallback that never existed; when the tracker is open in
   Excel the brief now lists what to run again.
+- A CV over 2 pages or a letter over 1 page stayed in the folder under its final name although the build
+  failed: the page check ran after the files were renamed. The builder now exports and checks the temp files
+  and writes the final .docx and PDF only when every check passed.
+- A date in application.md that isn't YYYY-MM-DD, or a crash of Word / LibreOffice during the PDF export, gave
+  a traceback and left ~build_ files behind. Both are reported as normal build messages now, and temp files
+  are always removed.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
