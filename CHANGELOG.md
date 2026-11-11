@@ -45,6 +45,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   that reach a protected folder through `..`, the Windows `\\?\` path prefix, git commands that change the
   engine's work tree (checkout, reset, stash, ...) from Bash, and `python engine/tools/../...`. Page scripts
   can't call `requestSubmit`. The update steps in UPGRADING.md (fetch, tag, worktree, show) are unaffected.
+- A job you ticked as "tailor" in the brief (or added with `extract.py add`) was dropped from
+  data/candidates.json by the next search, so it was never read or tailored. The search now keeps such jobs
+  until the ledger has them.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a

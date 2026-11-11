@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 
-from conftest import TOOLS
+from conftest import TOOLS, runner
 
 # Runs search_jobs.main() in the workspace with the sources stubbed out. argv: tools dir, JSON {ref: behaviour},
 # where behaviour is "ok", "500" (an HTML error page), "empty" (200 without ad text) or "down" (connection error).
@@ -50,7 +50,7 @@ def run(sample, plan):
                        capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     data = json.loads((sample / "data" / "candidates.json").read_text(encoding="utf-8"))
-    return r.stdout, data["status"]["Arbeitsagentur"], {j["ref"]: j for j in data["jobs"]}
+    return r.stdout, data["status"]["Arbeitsagentur"], {j.get("ref", j["id"]): j for j in data["jobs"]}
 
 
 def test_details_failure_keeps_candidates(sample):
@@ -65,6 +65,28 @@ def test_details_failure_keeps_candidates(sample):
     assert "details 1 ok, 2 failed" in out and out.count("no ad text (detail_error)") == 2
     assert not list((sample / "data").glob("*.tmp"))
 
+
+MANUAL_URL = "https://jobs.example/acme/manual-job"
+
+
+def candidates(sample):
+    return json.loads((sample / "data" / "candidates.json").read_text(encoding="utf-8"))["jobs"]
+
+
+def test_search_keeps_a_job_added_by_link(sample):
+    assert runner(sample)("extract.py", "add", MANUAL_URL).returncode == 0
+    run(sample, {"1": "ok"})
+    jobs = candidates(sample)
+    assert any(j.get("source") == "manual" and j["url"] == MANUAL_URL for j in jobs)
+    assert any(j.get("ref") == "1" for j in jobs)
+
+
+def test_search_drops_a_job_added_by_link_once_the_ledger_has_it(sample):
+    tool = runner(sample)
+    assert tool("extract.py", "add", MANUAL_URL).returncode == 0
+    assert tool("ledger.py", "record", "--model", "m").returncode == 0
+    run(sample, {"1": "ok"})
+    assert not [j for j in candidates(sample) if j["url"] == MANUAL_URL]
 
 def test_names_itself_in_the_user_agent(sample):
     out, _, _ = run(sample, {"1": "ok"})

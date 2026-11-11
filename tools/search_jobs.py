@@ -250,6 +250,14 @@ def main():
                  seen=bool(hit), seen_as=f"{hit['first_seen']} {hit['verdict']} {hit['score']}".strip() if hit else "")
         jobs.append(j)
 
+    # jobs the candidate added by link (extract.py add) stay until the ledger has them
+    have = {j["id"] for j in jobs} | {j["url"] for j in jobs}
+    for j in extract.load_candidates()["jobs"]:
+        if (j.get("source") == "manual" and j["id"] not in have and j["url"] not in have
+                and j["url"] not in idx.by_url and j["id"] not in idx.by_id):
+            j.pop("read_error", None)   # like a searched job, it is tried again each run
+            jobs.append(j)
+
     new = [j for j in jobs if not j["seen"]]
     write(jobs, status, since)  # before the details, so a crash there can't lose the search
     if a.details:
