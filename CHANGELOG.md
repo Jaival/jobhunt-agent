@@ -51,6 +51,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   new `list mail | <since>` task, instead of the daily run opening Gmail itself. The reader returns names and
   dates only; `extract.py save` checks them like leads (no links, addresses or instructions) and prints a `MAIL`
   line each, which step 7 matches to your folders. The main run no longer reads mail text (RULES.md rule 7).
+- The guard hook now also blocks: writes to its own files (data/guard.json, data/guard.log), `git push` and
+  `git remote add / set-url / rename` from Bash or PowerShell, a URL with a backslash before its path, and a
+  WebSearch query that holds your name, email or phone number. `setup_check.py --init` (or "update the engine")
+  updates the hook matcher in .claude/settings.json so WebSearch reaches the guard.
 
 ## [1.1.0] - 2026-11-08: your own design
 

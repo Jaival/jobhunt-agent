@@ -15,7 +15,11 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
   in base64, base32, hex or double URL-encoding in any path segment or query value), a long encoded value, an IP
   address, a port or a scheme other than http(s). Browser navigation may go to any host but gets this check, and on
   a host outside companies.md and sources.md also a shorter value that decodes to text or looks random;
-- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...).
+- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...);
+- writes to its own files (data/guard.json, data/guard.log), so a run can't hide its blocks;
+- `git push` and `git remote add / set-url / rename` from Bash or PowerShell: the workspace history is never pushed;
+- a URL with a backslash before its path (`https://a.example\\@b.example/`: two programs may read two hosts);
+- a WebSearch query that holds the candidate's name, email or phone number.
 
 Every call it sees refreshes data/guard.json (the heartbeat, with the session's transcript path); blocks are
 appended to data/guard.log. `python engine/tools/hooks/guard.py --status` prints whether the guard is active in
@@ -91,6 +95,7 @@ WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|d
                        r"del|erase|copy|move|ren|xcopy|robocopy|sc|ac|ri|mi|cpi|ni|rni)(?![\w-])", re.I)
 GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|restore|clean|apply|am|merge|pull|"
                          r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
+GIT_SENDS = re.compile(r"(?<![\w-])git(?:\.exe)?\b[^|;&\n]*?\s(push|remote\s+(?:add|set-url|rename))(?![\w-])", re.I)
 DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
@@ -126,8 +131,9 @@ def config():
 
 
 def protected(cfg):
-    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the master files."""
-    paths = [ROOT / "engine", ROOT / ".claude"]
+    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the guard's own heartbeat and
+    log, the master files."""
+    paths = [ROOT / "engine", ROOT / ".claude", HEARTBEAT, LOG]
     for key in ("master_cv", "master_letter"):
         if cfg.get(key):
             paths.append(ROOT / str(cfg[key]))
@@ -283,6 +289,8 @@ def check_url(url, pii, hosts=None, known=None):
     that decodes to text or looks random is refused too."""
     if url in ("about:blank",):
         return
+    if re.match(r"(?:[a-z][a-z0-9+.-]*://)?[^/?#]*\\", url, re.I):
+        raise Block("the URL has a backslash before its path; write the address with forward slashes only")
     parts = urlsplit(url if "://" in url else "https://" + url)
     host = (parts.hostname or "").lower()
     if parts.scheme not in ("http", "https"):
@@ -455,10 +463,18 @@ def check(call):
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
     elif tool in SHELL_TOOLS:
         cmd = inp.get("command") or ""
+        if GIT_SENDS.search(cmd):
+            raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
+                        "computer (the candidate can push from a terminal)")
         check_writes(cmd, protected(cfg), cwd)
         check_network(cmd, personal(cfg), allowed_hosts())
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
+    elif tool == "WebSearch":
+        query = unquoted(str(inp.get("query") or "")).lower()
+        if any(p.search(query) for p in personal(cfg)):
+            raise Block("the search query contains the candidate's name, email or phone number; search without "
+                        "personal data")
     elif NAVIGATE.match(tool):
         check_url(inp.get("url") or "", personal(cfg), known=allowed_hosts())
     elif SCRIPT_TOOLS.match(tool):

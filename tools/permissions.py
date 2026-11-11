@@ -10,6 +10,7 @@ The rules only apply to a local Claude Code session whose project folder is the 
 task with "Only on this computer"); cloud and Cowork tasks ignore .claude/.
 
 install() merges, never overwrites: rules and hooks already in .claude/settings.json stay, missing ones are added.
+The matcher of a hook the engine owns is set to the template's.
 The one exception is a deny rule for a tool the engine needs (NEEDED: the ad-reader subagent runs through Agent):
 it is removed, after a copy of the file is saved as .claude/settings.json.bak-<date>.
 The other template files (.claude/hooks/jobhunt_guard.py, which starts engine/tools/hooks/guard.py) belong to the
@@ -80,6 +81,12 @@ def merge(have, want):
         cur = out.setdefault("hooks", {}).setdefault(event, [])
         commands = {h.get("command") for g in cur for h in g.get("hooks", [])}
         for group in groups:
+            for g in cur:
+                same = ({h.get("command") for h in g.get("hooks", [])}
+                        & {h.get("command") for h in group.get("hooks", [])})
+                if same and "matcher" in group and g.get("matcher") != group["matcher"]:
+                    g["matcher"] = group["matcher"]
+                    added.append(f"matcher {event} {group['matcher']}")
             new = [h for h in group.get("hooks", []) if h.get("command") not in commands]
             if new:
                 cur.append({**group, "hooks": new})

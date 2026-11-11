@@ -35,13 +35,15 @@
       "mcp__mcp-registry",
       "mcp__claude-in-chrome",
       "Edit(/engine/**)",
-      "Edit(/.claude/**)"
+      "Edit(/.claude/**)",
+      "Edit(/data/guard.json)",
+      "Edit(/data/guard.log)"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit|WebFetch|mcp__.*",
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit|WebFetch|WebSearch|mcp__.*",
         "hooks": [
           {
             "type": "command",

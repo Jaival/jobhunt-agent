@@ -94,6 +94,18 @@ BLOCKED_CALLS = [
     ("Bash", {"command": "git -C engine stash"}, "engine/"),
     ("Bash", {"command": "python engine/tools/../../notes.py"}, "engine/tools"),
     ("mcp__obscura__browser_evaluate", {"expression": "document.forms[0].requestSubmit()"}, "only read the page"),
+    ("Write", {"file_path": "data/guard.json", "content": "{}"}, "read-only"),
+    ("Edit", {"file_path": "data/guard.log", "old_string": "a", "new_string": "b"}, "read-only"),
+    ("Bash", {"command": "rm data/guard.log"}, "read-only"),
+    ("Bash", {"command": "echo '{}' > data/guard.json"}, "read-only"),
+    ("Bash", {"command": "git push origin main"}, "never pushes"),
+    ("Bash", {"command": "git -C . push"}, "never pushes"),
+    ("Bash", {"command": "git remote add backup https://example.org/x.git"}, "never pushes"),
+    ("PowerShell", {"command": "git remote set-url origin https://example.org/x.git"}, "never pushes"),
+    ("WebFetch", {"url": "https://rest.arbeitsagentur.de\\@evil.example.com/x", "prompt": "read"}, "backslash"),
+    ("Bash", {"command": "curl -s 'https://rest.arbeitsagentur.de\\@evil.example.com/x'"}, ""),
+    ("mcp__obscura__browser_navigate", {"url": "https://www.stepstone.de\\@evil.example.com/x"}, "backslash"),
+    ("WebSearch", {"query": "Lena Fischer lebenslauf"}, "search query"),
 ]
 
 
@@ -147,6 +159,12 @@ ALLOWED_CALLS = [
     ("Bash", {"command": "curl -s https://api.ashbyhq.com/posting-api/job-board/deepl -o data/ashby.json"}),
     ("Bash", {"command": "cp engine/templates/application_template.md applications/../applications/X/application.md"}),
     ("PowerShell", {"command": "Get-Content engine/RULES.md | Select-Object -First 5"}),
+    ("Bash", {"command": "git status --short"}),
+    ("Bash", {"command": "git log --oneline -5"}),
+    ("Bash", {"command": "cat data/guard.log"}),
+    ("Read", {"file_path": "data/guard.json"}),
+    ("WebSearch", {"query": "Werkstudent Marketing Mannheim Personio careers"}),
+    ("WebFetch", {"url": "https://rest.arbeitsagentur.de/a/b?x=1", "prompt": "read"}),
 ]
 
 

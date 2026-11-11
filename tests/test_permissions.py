@@ -104,7 +104,7 @@ def test_install_removes_a_deny_for_agent_with_a_backup(tmp_path):
 def test_hooks_are_merged_by_command():
     want = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
     have = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
-    assert permissions.merge(have, want) == (have, [])
+    assert permissions.merge(have, want) == (want, ["matcher PreToolUse *"])   # the engine's matcher wins
     merged, added = permissions.merge({}, want)
     assert merged["hooks"] == want["hooks"] and added == ["hook PreToolUse python g.py"]
 
@@ -174,3 +174,14 @@ def test_unused_desktop_tools_are_denied():
     assert {"SuggestPluginInstall", "SearchPlugins", "mcp__terminal", "mcp__ccd_session", "mcp__claude-in-chrome"} <= set(DENY)
     assert removes("mcp__ccd_session", "mcp__ccd_session__spawn_task")
     assert not removes("mcp__ccd_session", "mcp__ccd_session_mgmt__get_session")
+
+
+def test_merge_updates_the_matcher_of_an_existing_hook(tmp_path):
+    want = permissions.wanted()
+    old = json.loads(json.dumps(want))
+    old["hooks"]["PreToolUse"][0]["matcher"] = "Bash|Write"
+    merged, added = permissions.merge(old, want)
+    assert merged["hooks"]["PreToolUse"][0]["matcher"] == want["hooks"]["PreToolUse"][0]["matcher"]
+    assert len(merged["hooks"]["PreToolUse"]) == 1
+    assert any(a.startswith("matcher PreToolUse") for a in added)
+    assert permissions.merge(merged, want)[1] == []
