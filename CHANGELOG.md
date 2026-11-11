@@ -37,6 +37,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Rejections and interview invitations are recorded with a tool: `python engine/tools/tracker.py status <folder>
   --status Rejected|Interview|Offer [--response-date ...] [--interview-date ...]`, with the same backup and
   Excel-open check as `add_applied.py`. The daily run no longer edits the Excel file itself.
+- The builder warns when application.md sets a recipient, subject or date that cv/layout.yaml doesn't map
+  (the master letter's own text would stay), and lists numbers that come from the ad only.
 
 ### Fixed
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
@@ -74,6 +76,13 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   `git remote add / set-url / rename` from Bash or PowerShell, a URL with a backslash before its path, and a
   WebSearch query that holds your name, email or phone number. `setup_check.py --init` (or "update the engine")
   updates the hook matcher in .claude/settings.json so WebSearch reaches the guard.
+- The builder's placeholder, banned-phrase and `never_write` checks now read the whole document, including
+  headers, footers, text boxes and tables inside tables. A master CV or letter with `[`, `]` or a banned phrase
+  in such a place now fails the build until it is fixed.
+- Angle-bracket placeholders (`<role at company>`), TBD, TODO, XXX and "lorem ipsum" fail the build like
+  square brackets do.
+- Numbers with a unit ("10k", "2.5M", "3 Mio" written as "3mio") are checked against your files and the ad;
+  before, they were skipped.
 
 ## [1.1.0] - 2026-11-08: your own design
 
