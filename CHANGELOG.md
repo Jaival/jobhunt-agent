@@ -40,6 +40,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   let a blocked call through when data/guard.json wasn't a JSON object. Both now keep blocking.
   `guard.py --status` adds a "guard errors" line when the guard itself failed on a call, and
   `setup_check.py` tests the guard with a network call as well as a send call.
+- The guard hook now also blocks these writes into engine/, .claude/ and the master files: downloads with an
+  output file (`curl -o`, `wget -O`, `-OutFile`), the `>|` redirect, PowerShell aliases (`sc`, `ri`, ...), paths
+  that reach a protected folder through `..`, the Windows `\\?\` path prefix, git commands that change the
+  engine's work tree (checkout, reset, stash, ...) from Bash, and `python engine/tools/../...`. Page scripts
+  can't call `requestSubmit`. The update steps in UPGRADING.md (fetch, tag, worktree, show) are unaffected.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a

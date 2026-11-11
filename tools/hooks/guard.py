@@ -5,7 +5,8 @@ setup_check.py --init, starts it through .claude/hooks/jobhunt_guard.py). It rea
 exits 2 with a one-line reason on stderr to block it; the model sees the reason and lists the block in the brief.
 
 What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
-- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern;
+- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern
+  (also downloads with an output file, git commands that change the work tree, and paths through `..`);
 - the tools that send or type data (Gmail send / reply / drafts, browser typing and form filling), also denied
   by the permission rules;
 - curl, wget, Invoke-WebRequest, WebFetch and inline Python HTTP calls to hosts outside the allowlist (the job
@@ -66,7 +67,8 @@ SHELL_TOOLS = {"Bash", "PowerShell"}
 NAVIGATE = re.compile(r"^mcp__.+__(browser_)?navigate$")
 SCRIPT_TOOLS = re.compile(r"^mcp__.+__(browser_evaluate|javascript_tool)$")
 NETWORK_JS = re.compile(r"\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|\bimport\s*\(|"
-                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|\.submit\s*\(")
+                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|"
+                        r"\.(?:submit|requestSubmit)\s*\(")
 FETCHERS = re.compile(r"(?<![\w-])(curl|wget|Invoke-WebRequest|Invoke-RestMethod|iwr|irm)(?:\.exe)?(?![\w-])", re.I)
 PY_HTTP = re.compile(r"\b(requests|urllib|httpx|http\.client|aiohttp|urlopen)\b")
 INLINE_CODE = re.compile(r"python3?(\.exe)?\s+-c|<<|-Command|\bnode\s+-e")
@@ -81,12 +83,15 @@ LONG_ARGS = {"--output", "--write-out", "--user-agent", "--header", "--data", "-
              "-useragent", "-timeoutsec", "-contenttype"}
 REDIRECT_LOOKUP = re.compile(r"-o\s+(/dev/null|NUL)\b|(?<!\S)(-I|--head|-\w*I)(?!\S)")
 SENDS_DATA = re.compile(r"(?<!\S)(-d|--data\S*|-F|--form\S*|-T|--upload-file|--json|-X\s*(POST|PUT|PATCH))(?!\S)")
-COPY_CMDS = {"cp", "copy", "copy-item", "xcopy", "robocopy", "ln", "unzip", "tar"}
+COPY_CMDS = {"cp", "copy", "copy-item", "cpi", "xcopy", "robocopy", "ln", "unzip", "tar"}
 RUNS_TOOL = re.compile(r"\s*python3?(\.exe)?\s+(\S*[/\\])?engine[/\\]tools[/\\]")
 HOST = re.compile(r"(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
 WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|dd|unzip|tar|sed\s+-i|perl\s+-i|"
                        r"Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item|Rename-Item|"
-                       r"del|erase|copy|move|ren|xcopy|robocopy)(?![\w-])", re.I)
+                       r"del|erase|copy|move|ren|xcopy|robocopy|sc|ac|ri|mi|cpi|ni|rni)(?![\w-])", re.I)
+GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|restore|clean|apply|am|merge|pull|"
+                         r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
+DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
 ENCODED = re.compile(r"^(?:[0-9a-f]{64,}|[A-Za-z0-9+/_=-]{64,})$")
@@ -316,6 +321,7 @@ def check_url(url, pii, hosts=None, known=None):
 
 
 def check_path(path, cwd, protect):
+    path = re.sub(r"^\\\\\?\\(UNC\\)?", lambda m: "\\\\" if m.group(1) else "", str(path))
     p = Path(path)
     p = (p if p.is_absolute() else Path(cwd) / p).resolve()
     for q in protect:
@@ -340,7 +346,7 @@ def path_patterns(protect):
         alt = "|".join(re.escape(f).replace("/", r"[/\\]+") for f in sorted(forms, key=len, reverse=True))
         tail = r"""(?=$|[/\\\s'")])"""
         out.append((rel(q), re.compile(rf"""(?:^|(?<=[\s'"=(,]))(?:\./)?(?:{alt}){tail}""", re.I),
-                    re.compile(rf""">{{1,2}}\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
+                    re.compile(rf""">{{1,2}}\|?\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
     return out
 
 
@@ -348,20 +354,48 @@ def segments(cmd):
     return re.split(r"&&|\|\||;|\|", cmd)
 
 
-def check_writes(cmd, protect):
-    for label, path, redirect in path_patterns(protect):
+def touches(seg, cwd, q):
+    """True when a path-like word of the command segment resolves to q or a path inside it."""
+    try:
+        words = shlex.split(seg, posix=True)
+    except ValueError:
+        words = seg.split()
+    for w in words:
+        for part in re.split(r"[=,]", w):            # --out=engine/x, a,b lists
+            part = part.strip("'\"")
+            if "/" not in part and "\\" not in part or "://" in part:
+                continue
+            part = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", part) if os.name == "nt" else part
+            part = re.sub(r"^\\\\\?\\", "", part)
+            try:
+                p = (Path(cwd) / part).resolve()
+            except (OSError, ValueError):
+                continue
+            if p == q or q in p.parents:
+                return True
+    return False
+
+
+def check_writes(cmd, protect, cwd=None):
+    cwd = cwd or str(ROOT)
+    for seg in segments(cmd):
+        m = RUNS_TOOL.match(seg)
+        if m and ".." in re.split(r"[/\\]", seg[m.end():].split()[0] if seg[m.end():].split() else ""):
+            raise Block("run engine tools by their plain path (python engine/tools/<name>.py): no '..' in it")
+    for (label, path, redirect), q in zip(path_patterns(protect), protect):
         if redirect.search(cmd):
             raise Block(f"the command writes into {label}, which is read-only")
         for seg in segments(cmd):
-            if not path.search(seg) or RUNS_TOOL.match(seg):
+            if RUNS_TOOL.match(seg) or not (path.search(seg) or touches(seg, cwd, q)):
                 continue
             m = WRITE_CMD.search(seg)
             if m and m.group(1).lower() in COPY_CMDS:
                 args = seg[m.end():].split()
-                hit = bool(args) and bool(path.search(args[-1]))   # only the last argument is written
+                # only the last argument is written
+                hit = bool(args) and (bool(path.search(args[-1])) or touches(args[-1], cwd, q))
             else:
                 hit = bool(m) or bool(WRITE_CODE.search(seg))
-            if hit:
+            if hit or FETCHERS.search(seg) or GIT_CHANGES.search(seg):
                 raise Block(f"the command changes {label}, which is read-only: the engine, Claude's settings and "
                             "the master CV and letter are never changed by a run (propose changes in the brief)")
 
@@ -421,7 +455,7 @@ def check(call):
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
     elif tool in SHELL_TOOLS:
         cmd = inp.get("command") or ""
-        check_writes(cmd, protected(cfg))
+        check_writes(cmd, protected(cfg), cwd)
         check_network(cmd, personal(cfg), allowed_hosts())
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
