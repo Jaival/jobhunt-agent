@@ -79,6 +79,12 @@ CLOSING = {"de": "Mit freundlichen Grüßen", "en": "Kind regards"}
 # Phrases the student-letter checks accept per language (RULES.md rule 9).
 START_WORDS = {"en": ["as soon as possible", "immediately"],
                "de": ["ab sofort", "so bald wie möglich", "sobald wie möglich", "schnellstmöglich", "zum nächstmöglichen"]}
+MONTHS = ("january|february|march|april|may|june|july|august|september|october|november|december|"
+          "januar|februar|märz|maerz|mai|juni|juli|oktober|dezember")
+# A concrete start: 01.03.2027, "March 2027", "1 March", "1. März", "15th of April". A month name alone doesn't
+# count ("may" is also a verb).
+START_DATE = re.compile(rf"\b\d{{1,2}}\.\s?\d{{1,2}}\.\s?\d{{4}}\b|\b(?:{MONTHS})\s+\d{{4}}\b|"
+                        rf"\b\d{{1,2}}(?:\.|st|nd|rd|th)?\s+(?:of\s+)?(?:{MONTHS})\b")
 HOURS_WORDS = {"en": ["hours per week", "hours a week"],
                "de": ["stunden pro woche", "wochenstunden", "stunden wöchentlich", "stunden in der woche"]}
 APPLICANT = CFG["applicant"]          # name in metadata; files start with FILE_PREFIX
@@ -601,8 +607,8 @@ def check(meta, bodies, cv_doc, letter_docs):
             letter = " ".join(body).lower()
             if UNIVERSITIES and not any(u.lower() in letter for u in UNIVERSITIES):
                 problems.append(f"{tag(lg)}: student letter must mention {' or '.join(UNIVERSITIES)} enrolment")
-            if not any(w in letter for w in START_WORDS[lg]):
-                problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}')")
+            if not any(w in letter for w in START_WORDS[lg]) and not START_DATE.search(letter):
+                problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}' or a date)")
             if not any(w in letter for w in HOURS_WORDS[lg]):
                 problems.append(f"{tag(lg)}: student letter must state the {HOURS_WORDS[lg][0]}")
             months = internship_duration(lg)

@@ -66,6 +66,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - A date in application.md that isn't YYYY-MM-DD, or a crash of Word / LibreOffice during the PDF export, gave
   a traceback and left ~build_ files behind. Both are reported as normal build messages now, and temp files
   are always removed.
+- Student letters: the builder required a phrase like "as soon as possible" even when your CLAUDE.md gives a
+  start date. A date in the letter ("from 1 March 2027", "ab 01.03.2027") now counts as the start.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
