@@ -2,7 +2,8 @@
 
 A job matches the ledger by URL, by job id, or by normalised company + title (reposts count as seen). Two titles
 at the same company are the same job when they have the same words in any order, after removing gender suffixes
-((m/w/d), Werkstudent:in, Praktikantin, Kauffrau), punctuation and filler words (und, im, for, ...); a word split
+((m/w/d), (m/w/divers), Werkstudent:in, Berater/in, Entwickler*in, Manager:in, Praktikant_in, Praktikantin,
+Kauffrau, Kaufmann/-frau), punctuation and filler words (und, im, for, ...); a word split
 by a hyphen matches the joined word (E-Commerce / eCommerce). Every other word must match exactly, so
 "SAP FI" and "SAP CO", or Projektmanagement and Produktmanagement, stay different jobs.
 
@@ -18,9 +19,11 @@ writes, and model when --model is given; backfill leaves them blank (it can't kn
 Usage (from the JobHunt folder):
     python engine/tools/ledger.py record [--model claude-opus-5-5]
                                                   add every job in data/candidates.json that isn't in the ledger
-                                                  (verdict "screened"; "closed" when its page is gone; jobs the
-                                                  reader couldn't read stay out, so the next run tries again)
-    python engine/tools/ledger.py set <key|url|id> --verdict tailored|skipped|closed|applied|rejected|screened
+                                                  (verdict "screened"; "closed" when its page is gone; jobs without
+                                                  an extract - the reader couldn't read them or never got them -
+                                                  stay out, so the next run tries again)
+    python engine/tools/ledger.py set <key|url|id>
+                               --verdict screened|skipped|closed|tailored|applied|rejected|interview|offer
                                [--score 72] [--subscores skills=4 seniority=5 language=3 location=5 hours=4]
                                [--model claude-opus-5-5] [--note "C1 German"]
     python engine/tools/ledger.py check "<company>" "<title>"   is this job already known?
@@ -50,6 +53,7 @@ CANDIDATES = ROOT / "data" / "candidates.json"
 FIELDS = ["key", "job_id", "source", "company", "title", "url", "first_seen", "verdict", "score", "note",
           "subscores", "engine_version", "model"]
 EXPIRES = {"screened", "skipped", "closed"}  # verdicts whose match expires; every other verdict stays seen
+VERDICTS = ("screened", "skipped", "closed", "tailored", "applied", "rejected", "interview", "offer")
 EXPIRY_DAYS = CFG.get("ledger_expiry_days", 90)
 if not isinstance(EXPIRY_DAYS, int) or isinstance(EXPIRY_DAYS, bool) or EXPIRY_DAYS < 0:
     raise ConfigError(f"config.yaml ledger_expiry_days must be a whole number of days (0 = never), not {EXPIRY_DAYS!r}")
@@ -57,7 +61,7 @@ FILLER = {"und", "and", "für", "fur", "for", "im", "in", "the", "der", "die", "
           "zur", "zum", "am", "bei", "at", "a", "an", "to"}
 
 LEGAL = r"\b(gmbh|mbh|ag|se|kg|kgaa|co|ohg|ug|e\.?\s?v|inc|ltd|llc|bv|b\.v|sa|gruppe|group|holding|deutschland|germany)\b"
-GENDER = r"\((?:[mwfdxnb*/:|,\s.]|all genders?|alle|gn|mensch\*?|div\.?)+\)|\b(?:m/w/d|w/m/d|m/f/d|f/m/d|d/m/w|all genders)\b"
+GENDER = r"\((?:[mwfdxnb*/:|,\s.]|all genders?|alle|gn|mensch\*?|divers[e]?|div\.?)+\)|\b(?:m/w/d|w/m/d|m/f/d|f/m/d|d/m/w|all genders)\b"
 
 
 def norm_company(s):
@@ -71,7 +75,8 @@ def norm_company(s):
 def norm_title(s):
     s = (s or "").lower()
     s = re.sub(GENDER, " ", s, flags=re.I)
-    s = re.sub(r"werkstudent\s?\*?\s?:?in(nen)?\b", "werkstudent", s)
+    s = re.sub(r"kaufmann\s*/\s*-?\s*frau|kauffrau\s*/\s*-?\s*mann", "kaufmann", s)
+    s = re.sub(r"(?<=[a-zäöüß])\s?(?:/-?|[*:_])\s?in(?:nen)?\b", "", s)   # Berater/in, /-in, *in, :in, _in
     s = re.sub(r"[^a-z0-9äöüß+#]+", " ", s)
     return " ".join(s.split())
 
@@ -256,7 +261,7 @@ def main():
     rec.add_argument("--model")
     s = sub.add_parser("set")
     s.add_argument("which")
-    s.add_argument("--verdict", required=True)
+    s.add_argument("--verdict", required=True, choices=VERDICTS)
     s.add_argument("--score")
     s.add_argument("--note")
     s.add_argument("--subscores", nargs=len(score.CRITERIA), metavar="CRITERION=N")
@@ -299,11 +304,13 @@ def main():
         print(f"backfill: {n} rows added, {len(idx.rows)} in ledger")
         return 0
     if a.cmd == "record":
+        import extract
         cands = json.loads(CANDIDATES.read_text(encoding="utf-8"))
         n = unread = 0
         for j in cands["jobs"]:
             error = j.get("read_error")
-            if error and error != "gone":  # the reader couldn't read it: not seen, the next run tries again
+            # not read (the reader failed, was missing or never got to it): not seen, the next run tries again
+            if (error and error != "gone") or (not error and not extract.has_extract(j["id"])):
                 unread += 1
                 continue
             verdict = "closed" if error else "screened"

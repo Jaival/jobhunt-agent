@@ -76,6 +76,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   valid items are saved.
 - Reader output: line breaks and other control characters are removed from every field, and a job link with a
   space, quote, backtick, `$`, backslash, `<`, `>`, `|` or `;` is rejected (also by `extract.py add`).
+- `ledger.py record` recorded jobs that were never read (no extract, no read error) as "screened", so they
+  didn't come back. They now stay out of the ledger until the reader has read them.
+- `ledger.py set --verdict` accepts only screened, skipped, closed, tailored, applied, rejected, interview or
+  offer; a typo stops with an error.
+- The same job with another gender form ("(m/w/divers)", "Kaufmann/-frau", "Berater/in", "Entwickler*in",
+  "Manager:in") counts as seen.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a

@@ -18,6 +18,8 @@ def test_record_stamps_engine_and_model(ledger_mod, monkeypatch, tmp_path):
                      encoding="utf-8")
     monkeypatch.setattr(ledger_mod, "CANDIDATES", cands)
     monkeypatch.setattr(ledger_mod.version, "version", lambda: "1.0.0")
+    import extract
+    monkeypatch.setattr(extract, "has_extract", lambda job_id: True)
     monkeypatch.setattr(sys, "argv", ["ledger.py", "record", "--model", "claude-opus-5-5"])
     assert ledger_mod.main() == 0
     row = ledger_mod.load()[0]
