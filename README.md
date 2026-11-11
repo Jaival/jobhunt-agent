@@ -37,7 +37,7 @@ workspace/                   your private folder (and private git repo)
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions, history
+   │                         upgrade, ledger, add_applied, tracker, archive, tracker_to_md, version, decisions, history
    ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)

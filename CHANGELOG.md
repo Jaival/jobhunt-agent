@@ -34,6 +34,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   G`, Fridays also H and I; the tailor B C D) instead of reading the whole career-ops-playbook.md: about half
   the text in every later call of the run. New tool: `playbook.py`. If your scheduled task's instructions tell it
   to read engine/career-ops-playbook.md, drop that part: ROUTINE.md says which sections to print.
+- Rejections and interview invitations are recorded with a tool: `python engine/tools/tracker.py status <folder>
+  --status Rejected|Interview|Offer [--response-date ...] [--interview-date ...]`, with the same backup and
+  Excel-open check as `add_applied.py`. The daily run no longer edits the Excel file itself.
 
 ### Fixed
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
@@ -48,6 +51,13 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - A job you ticked as "tailor" in the brief (or added with `extract.py add`) was dropped from
   data/candidates.json by the next search, so it was never read or tailored. The search now keeps such jobs
   until the ledger has them.
+- The tracker is saved to a temp file and swapped in, so a run that is cut off can't leave a half-written
+  Excel file.
+- `add_applied.py` treated a folder as "already in the tracker" when its name was the start of another
+  folder's name (`..._Acme_Data` vs `..._Acme_Data-Engineer`) and moved it to _sent/ without a row.
+- An application confirmed by email now also gets the ledger verdict `applied`.
+- The docs promised a tracker/pending_rows.csv fallback that never existed; when the tracker is open in
+  Excel the brief now lists what to run again.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a

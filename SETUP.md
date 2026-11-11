@@ -45,7 +45,7 @@ A visual version of this guide is in [docs/setup-guide.html](docs/setup-guide.ht
    or `setup_check.py` warns under "safety", run `python engine/tools/setup_check.py --init` and check that the
    task is a local Code-tab task on this folder (step 3).
 6. Settings > This computer > System: turn on **Keep computer awake**. Scheduled tasks only run while the app is open and the computer is awake. After sleep, one run catches up for the most recent missed time (within seven days).
-7. Close the tracker in Excel before the routine runs; an open file can't be saved. If it was open, rows go to tracker/pending_rows.csv.
+7. Close the tracker in Excel before the routine runs; an open file can't be saved. If it was open, the brief lists what couldn't be recorded and the command to run again.
 8. Connectors: if you connected Indeed or Gmail in Claude, the routine uses them. Browsing uses the obscura MCP; make sure it is configured in Claude Desktop, and on the first "Run now" choose "always allow" for each obscura tool (typing and form filling stay blocked).
 9. Recommended: set up daily email job alerts on StepStone, XING and LinkedIn. Alert emails are the most reliable way to get jobs from those sites, since they often block automated access.
 

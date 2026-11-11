@@ -223,3 +223,72 @@ def test_tracker_to_md_lists_sent_and_drafts(tool, ws):
     assert md.startswith("# Applications (generated, do not edit)")
     assert "## Sent applications (1: Applied 1)" in md and "Acme GmbH" in md
     assert fresh in (ws / "applications" / "INDEX.md").read_text(encoding="utf-8")
+
+
+# ---------- safe writes and tracker.py status ----------
+
+def test_add_applied_does_not_confuse_a_folder_with_a_longer_name(tool, ws):
+    sent(tool, ws, f"{day(-2)}_Acme_Data-Engineer")
+    name = f"{day(-2)}_Acme_Data"
+    r = sent(tool, ws, name)
+    assert "OK row 3" in r.stdout and "SKIP" not in r.stdout
+    assert [row["Job ID"] for row in rows(ws)][1] == name
+
+
+def test_add_applied_leaves_no_temp_file_and_a_readable_tracker(tool, ws):
+    sent(tool, ws, f"{day(-2)}_Acme_Werkstudent-Marketing")
+    assert list((ws / "tracker").glob("*.tmp")) == []
+    assert len(rows(ws)) == 1
+
+
+def test_status_records_a_rejection(tool, ws):
+    name = f"{day(-2)}_Acme_Werkstudent-Marketing"
+    sent(tool, ws, name)
+    r = tool("tracker.py", "status", name, "--status", "Rejected", "--response-date", day(0), "--note", "mail of today")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.startswith("OK row 2: ")
+    [row] = rows(ws)
+    assert row["Status"] == "Rejected" and row["Response Date"].date() == TODAY
+    assert row["Notes"].endswith("mail of today")
+    assert list((ws / "backups" / day(0)).glob("*status-*.xlsx"))
+    assert "-> _archive/ (rejected" in tool("archive.py", "auto").stdout
+
+
+def test_status_records_an_interview(tool, ws):
+    name = f"{day(-2)}_Acme_Werkstudent-Marketing"
+    sent(tool, ws, name)
+    r = tool("tracker.py", "status", name, "--status", "Interview", "--response-date", day(0),
+             "--interview-date", day(5))
+    assert r.returncode == 0, r.stderr
+    [row] = rows(ws)
+    assert row["Status"] == "Interview"
+    assert row["Response Date"].date() == TODAY
+    assert row["Interview Date"].date() == TODAY + dt.timedelta(days=5)
+
+
+def test_status_refuses_while_excel_has_the_tracker_open(tool, ws):
+    name = f"{day(-2)}_Acme_Werkstudent-Marketing"
+    sent(tool, ws, name)
+    (ws / "tracker" / "~$Job_Application_Tracker.xlsx").write_text("", encoding="utf-8")
+    r = tool("tracker.py", "status", name, "--status", "Rejected")
+    assert r.returncode == 1
+    assert "lock file found" in r.stderr
+    assert rows(ws)[0]["Status"] == "Applied"
+
+
+def test_status_reports_a_folder_without_a_row(tool, ws):
+    name = f"{day(-1)}_Acme_Werkstudent-Marketing"
+    draft(ws, name)
+    r = tool("tracker.py", "status", name, "--status", "Rejected")
+    assert r.returncode == 1
+    assert "isn't in the tracker" in r.stderr
+
+
+def test_status_rejects_an_unknown_status_or_date(tool, ws):
+    name = f"{day(-2)}_Acme_Werkstudent-Marketing"
+    sent(tool, ws, name)
+    assert tool("tracker.py", "status", name, "--status", "Maybe").returncode == 2
+    r = tool("tracker.py", "status", name, "--status", "Rejected", "--response-date", "09.11.2026")
+    assert r.returncode != 0
+    [row] = rows(ws)
+    assert row["Status"] == "Applied" and row["Response Date"] is None
