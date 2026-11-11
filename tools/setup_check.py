@@ -120,7 +120,8 @@ def engine_update(chan):
 
 
 def guard_starts(launcher):
-    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call: it must exit 2.
+    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call and a curl call: both
+    must exit 2.
 
     A hook that can't start doesn't block anything (docs/spike-scheduled-tasks.md), so this is the only proof.
     Returns (ok, fix)."""
@@ -135,11 +136,22 @@ def guard_starts(launcher):
                            env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
     except (OSError, subprocess.TimeoutExpired) as e:
         return False, f"the guard hook didn't run ({e})"
+    if not (r.returncode == 2 and "guard:" in r.stderr):
+        return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
+                       f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
+                       "there? say 'update the engine'")
+    call = json.dumps({"session_id": "setup-check", "cwd": str(ROOT), "tool_name": "Bash",
+                       "tool_input": {"command": "curl -s https://guard-selftest.invalid/"}})
+    try:
+        r = subprocess.run([python, str(launcher)], input=call, capture_output=True, text=True, timeout=30,
+                           env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"the guard hook didn't run ({e})"
     if r.returncode == 2 and "guard:" in r.stderr:
         return True, ""
-    return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
-                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
-                   "there? say 'update the engine'")
+    return False, (f"the guard hook let a network call through (exit {r.returncode}"
+                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): check config.yaml is valid YAML, "
+                   "or say 'update the engine'")
 
 
 def checks():

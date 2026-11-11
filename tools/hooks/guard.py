@@ -28,7 +28,7 @@ parameters). A bare first name or common last name isn't a marker. It reads Bash
 `cd engine && ...`, generated code or an encoded command get past it, and so can a page told something by which URL
 is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
-logged.
+logged. `--status` lists such errors.
 """
 import base64
 import binascii
@@ -114,7 +114,8 @@ class Block(Exception):
 def config():
     try:
         import yaml
-        return yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8")) or {}
+        cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+        return cfg if isinstance(cfg, dict) else {}
     except Exception:
         return {}
 
@@ -140,7 +141,8 @@ def marker(words):
 def personal(cfg):
     """Regexes for the candidate's name, emails, phone numbers, address and birth date (config.yaml, CLAUDE.md)."""
     out, out.weak = Pii(), []
-    titles = set(re.findall(r"[a-zäöüß]{3,}", str((cfg.get("profile") or {}).get("include_titles")).lower()))
+    profile = cfg.get("profile") if isinstance(cfg.get("profile"), dict) else {}
+    titles = set(re.findall(r"[a-zäöüß]{3,}", str(profile.get("include_titles")).lower()))
     for key in ("applicant", "name_in_master"):
         words = re.findall(r"\w+", str(cfg.get(key) or ""))
         if len(words) >= 2 and str(cfg.get(key)) != "Your Name":
@@ -453,6 +455,8 @@ def beat(call, blocked=None):
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8")) if HEARTBEAT.exists() else {}
     except (OSError, ValueError):
         state = {}
+    if not isinstance(state, dict):
+        state = {}
     sid = call.get("session_id") or ""
     if state.get("session_id") != sid:
         state = {"session_id": sid, "calls": 0, "blocked": 0}
@@ -532,24 +536,30 @@ def status():
     try:
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8"))
         age = (now() - dt.datetime.fromisoformat(state["last_seen"])).total_seconds()
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, TypeError):
         state, age = {}, None
     if age is None or age > FRESH:
         print("guard NOT active: no tool call reached engine/tools/hooks/guard.py in this session. The task must be "
               "a local Code-tab task on this folder; run python engine/tools/setup_check.py --init")
         return 1
-    reasons = []
-    if state.get("blocked") and LOG.exists():
+    reasons, errors = [], 0
+    if LOG.exists():
         for line in LOG.read_text(encoding="utf-8").splitlines():
             try:
                 e = json.loads(line)
             except ValueError:
                 continue
             if e.get("session_id") == state.get("session_id"):
-                reasons.append(f"{e.get('tool')}: {e.get('reason')}")
+                if "error" in e:
+                    errors += 1
+                else:
+                    reasons.append(f"{e.get('tool')}: {e.get('reason')}")
     refused = refusals(state)
     print(f"guard active: {state.get('calls', 0)} call(s) checked, {state.get('blocked', 0)} blocked"
           + (f", {len(refused)} refused by the permission rules" if refused else "") + " this session")
+    if errors:
+        print(f"  guard errors: {errors} call(s) passed unchecked because the guard itself failed (data/guard.log); "
+              "say 'update the engine'")
     for r in reasons[-10:]:
         print(f"  blocked {r}")
     for tool, what, why in refused[-10:]:
@@ -567,14 +577,21 @@ def main():
     try:
         check(call)
     except Block as e:
-        beat(call, str(e))
         print(f"guard: {e}", file=sys.stderr)
+        try:
+            beat(call, str(e))
+        except Exception:
+            pass  # the block stands even if the heartbeat can't be written
         return 2
     except Exception as e:  # never block because of the guard's own bug
-        beat(call)
+        try:
+            beat(call)
+        except Exception:
+            pass
         try:
             with LOG.open("a", encoding="utf-8") as f:
-                f.write(json.dumps({"time": now().isoformat(timespec="seconds"), "error": repr(e)}) + "\n")
+                f.write(json.dumps({"time": now().isoformat(timespec="seconds"),
+                                    "session_id": call.get("session_id") or "", "error": repr(e)}) + "\n")
         except OSError:
             pass
         return 0

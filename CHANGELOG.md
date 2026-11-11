@@ -35,6 +35,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   the text in every later call of the run. New tool: `playbook.py`. If your scheduled task's instructions tell it
   to read engine/career-ops-playbook.md, drop that part: ROUTINE.md says which sections to print.
 
+### Fixed
+- The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
+  let a blocked call through when data/guard.json wasn't a JSON object. Both now keep blocking.
+  `guard.py --status` adds a "guard errors" line when the guard itself failed on a call, and
+  `setup_check.py` tests the guard with a network call as well as a send call.
+
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
   new `list mail | <since>` task, instead of the daily run opening Gmail itself. The reader returns names and

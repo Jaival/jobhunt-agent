@@ -136,6 +136,24 @@ def test_allows(guard, tool, tool_input):
     assert guard(tool, **tool_input) == (0, "")
 
 
+BAD_CONFIGS = ["profile: just-a-string\n", "- a\n- list\n", "profile: [x, y]\n", "applicant: [Lena, Fischer]\n"]
+
+
+@pytest.mark.parametrize("text", BAD_CONFIGS)
+def test_a_malformed_config_does_not_switch_the_network_checks_off(guard, text):
+    (guard.root / "config.yaml").write_text(text, encoding="utf-8")
+    assert blocked(guard("Bash", command="curl -s https://evil.example.com/x"), "isn't an allowed API host")
+    assert blocked(guard("WebFetch", url="https://evil.example.com/", prompt="read"), "isn't an allowed API host")
+
+
+@pytest.mark.parametrize("text", ["[]", '"x"', "3", "null", "{broken"])
+def test_a_malformed_heartbeat_does_not_turn_a_block_into_a_pass(guard, text):
+    (guard.root / "data").mkdir(exist_ok=True)
+    (guard.root / "data" / "guard.json").write_text(text, encoding="utf-8")
+    assert blocked(guard("Bash", command="rm -rf engine/tools"), "changes engine/")
+    assert guard("Read", file_path="engine/RULES.md")[0] == 0
+
+
 def test_heartbeat_and_status(guard):
     status = lambda: subprocess.run([sys.executable, str(GUARD), "--status"], capture_output=True, text=True,
                                     encoding="utf-8", env={**os.environ, "JOBHUNT_ROOT": str(guard.root)})
@@ -225,6 +243,15 @@ def test_own_errors_never_block(guard):
                        env={**os.environ, "JOBHUNT_ROOT": str(guard.root)})
     assert r.returncode == 0
     assert "error" in (guard.root / "data" / "guard.log").read_text(encoding="utf-8")
+
+
+def test_status_lists_the_guards_own_errors(guard):
+    call = {"session_id": "s1", "cwd": str(guard.root), "tool_name": "Bash", "tool_input": "x"}
+    r = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(call), capture_output=True, text=True,
+                       env={**os.environ, "JOBHUNT_ROOT": str(guard.root)})
+    assert r.returncode == 0
+    out = run_status(guard.root).stdout
+    assert "guard errors: 1 call(s)" in out, out
 
 
 def test_launcher_runs_the_engine_guard_or_lets_calls_through(tmp_path):
