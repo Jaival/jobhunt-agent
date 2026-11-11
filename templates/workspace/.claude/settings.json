@@ -55,7 +55,7 @@
     ],
     "SubagentStop": [
       {
-        "matcher": "ad-reader",
+        "matcher": "ad-reader|mail-reader",
         "hooks": [
           {
             "type": "command",

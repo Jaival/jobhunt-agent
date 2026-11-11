@@ -93,6 +93,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   already said so). On Mondays, weekend jobs that scored 70 or more are tailored first. RULES.md rule 3 now
   says what the rubric already did: C1/C2 German is a hard mismatch for junior roles; for student roles it
   lowers the language sub-score.
+- Mail is read by a new `mail-reader` subagent (.claude/agents/mail-reader.md) that has Gmail read tools only;
+  the ad reader no longer has mail tasks. An instruction hidden in an ad or an email can no longer combine
+  reading mail with opening web pages. The guard hook enforces the split. Costs one more subagent call per run.
+  `setup_check.py --init` (or "update the engine") installs the new agent file and updates the reply hook.
 
 ## [1.1.0] - 2026-11-08: your own design
 

@@ -222,6 +222,8 @@ def test_reader_reply_hook_saves_only_the_ad_readers_reply(sample, tmp_path):
     r = subprocess.run([sys.executable, str(ws / ".claude" / "hooks" / "reader_reply.py")], input="not json",
                        capture_output=True, text=True, env=env)
     assert r.returncode == 0 and "reader_reply:" in r.stderr   # never exit 2: that would keep the reader running
+    assert run({**reply, "agent_type": "mail-reader", "agent_id": "m1"}).returncode == 0
+    assert (ws / "data" / "ads" / "incoming" / "m1.json").exists()
 
 
 def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
@@ -246,7 +248,7 @@ def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
 
 
 def test_the_agent_returns_mail_items_as_save_checks_them():
-    body = extract.AGENT_FILE.read_text(encoding="utf-8")
+    body = extract.AGENT_FILE.with_name("mail-reader.md").read_text(encoding="utf-8")
     assert "`list mail | <since YYYY-MM-DD>`" in body
     assert set(extract.MAIL["required"]) <= set(re.findall(r'"(\w+)":', body.split('"mail": [', 1)[1].split("]", 1)[0]))
 
@@ -296,6 +298,17 @@ def test_the_agent_has_no_write_bash_or_claude_md():
     denied = {t.strip() for t in front["disallowedTools"].split(",")}
     assert {"Write", "Edit", "Bash", "PowerShell", "Agent", "NotebookEdit"} <= denied
     assert front["name"] == "ad-reader" and front["omitClaudeMd"] is True and "tools" not in front
+
+
+def test_the_mail_reader_has_no_web_tools_and_the_ad_reader_no_mail_tasks():
+    mail_file = extract.AGENT_FILE.with_name("mail-reader.md")
+    front = yaml.safe_load(mail_file.read_text(encoding="utf-8").split("---\n", 2)[1])
+    denied = {t.strip() for t in front["disallowedTools"].split(",")}
+    assert {"Write", "Edit", "Bash", "PowerShell", "Agent", "NotebookEdit", "WebFetch", "WebSearch"} <= denied
+    assert front["name"] == "mail-reader" and front["omitClaudeMd"] is True and "tools" not in front
+    assert "list gmail" in mail_file.read_text(encoding="utf-8") and "list mail" in mail_file.read_text(encoding="utf-8")
+    ad_text = extract.AGENT_FILE.read_text(encoding="utf-8")
+    assert "list gmail" not in ad_text and "list mail" not in ad_text
 
 
 def test_the_agent_drops_tools_it_never_uses():

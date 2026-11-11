@@ -25,7 +25,7 @@ workspace/                   your private folder (and private git repo)
 ├─ projects.md cv/           your project facts, master CV and its map cv/layout.yaml (the builder only reorders
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
-├─ .claude/                  permission rules, guard hook, subagents (ad-reader, tailor) and skills for the
+├─ .claude/                  permission rules, guard hook, subagents (ad-reader, mail-reader, tailor) and skills for the
 │                            requests: ats-review, update-engine, remap-cv, onboarding, and the commands
 │                            tailor, why, sent, job-status
 └─ engine/                   this repo

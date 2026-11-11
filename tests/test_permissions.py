@@ -75,7 +75,7 @@ def test_install_merges_and_is_idempotent(tmp_path):
     assert (tmp_path / ".claude" / "hooks" / "jobhunt_guard.py").is_file()
     assert "file .claude/hooks/jobhunt_guard.py" in added
     reader = data["hooks"]["SubagentStop"][0]
-    assert reader["matcher"] == "ad-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
+    assert reader["matcher"] == "ad-reader|mail-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
     assert (tmp_path / ".claude" / "hooks" / "reader_reply.py").is_file()
     assert data["permissions"]["allow"] == ["Bash(git status)", "Bash(python engine/tools/*)"]
     assert data["permissions"]["deny"].count("mcp__*__reply") == 1

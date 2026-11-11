@@ -18,9 +18,11 @@ def guard(sample):
     """guard(tool, **tool_input) -> (exit code, stderr), run against the sample workspace like Claude Code does."""
     (sample / "companies.md").write_text("| Beispiel | careers.beispiel-werke.de | | | |\n", encoding="utf-8")
 
-    def run(tool, session="s1", transcript=None, **tool_input):
+    def run(tool, session="s1", transcript=None, _agent=None, **tool_input):
         call = {"session_id": session, "cwd": str(sample), "hook_event_name": "PreToolUse", "tool_name": tool,
                 "tool_input": tool_input, "permission_mode": "auto", "transcript_path": str(transcript or "")}
+        if _agent:
+            call["agent_type"] = _agent
         r = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(call), capture_output=True, text=True,
                            encoding="utf-8", env={**os.environ, "JOBHUNT_ROOT": str(sample)})
         return r.returncode, r.stderr
@@ -459,3 +461,25 @@ NAVIGATION_URLS = [
 @pytest.mark.parametrize("url", NAVIGATION_URLS)
 def test_navigation_keeps_real_job_urls_working(nav, url):
     assert nav(url) is None, nav(url)
+
+
+@pytest.mark.parametrize("agent, tool, tool_input", [
+    ("ad-reader", "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung"}),
+    ("ad-reader", "mcp__gmail__get_thread", {"id": "1"}),
+    ("mail-reader", "WebFetch", {"url": "https://rest.arbeitsagentur.de/x", "prompt": "read"}),
+    ("mail-reader", "WebSearch", {"query": "jobs"}),
+    ("mail-reader", "mcp__obscura__browser_navigate", {"url": "https://rest.arbeitsagentur.de/x"}),
+    ("mail-reader", "mcp__claude_ai_Indeed__search_jobs", {"query": "x"}),
+])
+def test_each_reader_keeps_to_its_tools(guard, agent, tool, tool_input):
+    assert blocked(guard(tool, _agent=agent, **tool_input), "reader")
+
+
+@pytest.mark.parametrize("agent, tool, tool_input", [
+    ("mail-reader", "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
+    ("mail-reader", "Read", {"file_path": "sources.md"}),
+    ("ad-reader", "mcp__claude_ai_Indeed__get_job_details", {"job_id": "abc"}),
+    (None, "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
+])
+def test_reader_rules_do_not_block_the_right_tools(guard, agent, tool, tool_input):
+    assert guard(tool, _agent=agent, **tool_input)[0] == 0
