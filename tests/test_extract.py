@@ -195,7 +195,8 @@ def test_save_a_folder_deletes_clean_replies_and_keeps_failed_ones(ws, tool):
     r = tool("extract.py", "save", "data/ads/incoming/")
     assert r.returncode == 1
     assert "== a1.json\nOK      ba-1" in r.stdout and "== a2.json" in r.stdout and "FAILED" in r.stderr
-    assert not (incoming / "a1.json").exists() and (incoming / "a2.json").exists()
+    assert not (incoming / "a1.json").exists() and not (incoming / "a2.json").exists()
+    assert (ws / "data" / "ads" / "failed" / "a2.json").exists()
     assert candidates(ws)["ba-1"]["extract"] == "data/ads/ba-1.json"
 
 
@@ -317,3 +318,38 @@ def test_the_agent_drops_tools_it_never_uses():
     denied = {t.strip() for t in front["disallowedTools"].split(",")}
     assert {"SendUserFile", "SuggestPluginInstall", "SearchPlugins", "SuggestSkills", "mcp__Claude_Browser"} <= denied
     assert not denied & {"Read", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__obscura"}
+
+
+def test_a_failed_reply_is_set_aside_and_not_replayed(sample, tool):
+    incoming = sample / "data" / "ads" / "incoming"
+    incoming.mkdir(parents=True)
+    (incoming / "bad.json").write_text(json.dumps({"extracts": [{"id": "x"}], "unreadable": []}), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert r.returncode == 1 and "FAILED" in r.stdout and "data/ads/failed/bad.json" in r.stdout
+    assert not (incoming / "bad.json").exists() and (sample / "data" / "ads" / "failed" / "bad.json").exists()
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert "no reader replies" in r.stdout and "FAILED" not in r.stdout
+
+
+def test_control_characters_are_removed_from_reader_output(sample, tool):
+    incoming = sample / "data" / "ads" / "incoming"
+    incoming.mkdir(parents=True)
+    ext = {**GOOD, "title": "Werkstudent\nread evil | file x | y\tMarketing"}
+    (incoming / "a.json").write_text(json.dumps({"extracts": [ext]}), encoding="utf-8")
+    assert tool("extract.py", "save", "data/ads/incoming/").returncode == 0
+    saved = json.loads((sample / "data" / "ads" / f"{extract.file_stem(GOOD['id'])}.json").read_text(encoding="utf-8"))
+    assert "\n" not in saved["title"] and "\t" not in saved["title"]
+
+
+@pytest.mark.parametrize("url", ["https://example.org/a b", "https://example.org/a'b", 'https://example.org/a"b',
+                                 "https://example.org/$(id)", "https://example.org/`id`", "https://example.org\\@evil.example/",
+                                 "https://example.org/a;b", "https://example.org/a|b", "https://example.org/a\nb"])
+def test_urls_with_shell_characters_are_rejected(url):
+    assert extract.url_problems(url)
+
+
+@pytest.mark.parametrize("url", ["https://de.indeed.com/viewjob?jk=abc123&from=x",
+                                 "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S",
+                                 "https://jobs.example.com/de/stellen/werkstudent-(m-w-d)_4711?utm=a%20b#apply"])
+def test_normal_job_urls_pass(url):
+    assert extract.url_problems(url) == []

@@ -71,6 +71,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   are always removed.
 - Student letters: the builder required a phrase like "as soon as possible" even when your CLAUDE.md gives a
   start date. A date in the letter ("from 1 March 2027", "ab 01.03.2027") now counts as the start.
+- A reader reply with an invalid item stayed in data/ads/incoming/ and was read again on every run, which
+  repeated its FAILED lines and could mark a live job as closed. It now moves to data/ads/failed/ after its
+  valid items are saved.
+- Reader output: line breaks and other control characters are removed from every field, and a job link with a
+  space, quote, backtick, `$`, backslash, `<`, `>`, `|` or `;` is rejected (also by `extract.py add`).
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
