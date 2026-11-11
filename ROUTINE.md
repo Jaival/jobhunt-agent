@@ -3,15 +3,15 @@ This file is the only copy of the routine; the scheduled task just points here. 
 
 This file is only the daily run. The on-request workflows (ATS review, updating the engine, remapping the CV, the setup interview) are skills in .claude/skills/ (RULES.md "On request").
 
-Today = the current local date. Work in this order. All tools run from the workspace folder: `python engine/tools/<name>.py --help` shows usage.
+Today = the current local date. Work in this order. All tools run from the workspace folder: `python engine/tools/<name>.py --help` shows usage (tracker_to_md.py and playbook.py take no options; don't call them with --help).
 
 0. Guard and mode
-- **Setup first:** run `python engine/tools/setup_check.py`. If its "config version" check is TODO, config.yaml is from an older engine: don't start the interview. Write daily/<today>.md with only "Setup needed: config.yaml is from an older engine version. Open this folder in Claude Code and say 'update the engine'." and stop. Otherwise, if it prints NOT READY (exit code 1), or there is no config.yaml or CLAUDE.md yet, stop here and run the setup interview instead (the `onboarding` skill, engine/ONBOARDING.md). Warnings alone don't stop the routine; list them under "Your actions" in the brief.
+- **Setup first:** run `python engine/tools/setup_check.py`. If its "config version" check is TODO, config.yaml is from an older engine: don't start the interview. Write daily/<today>.md with only "Setup needed: config.yaml is from an older engine version. Open this folder in Claude Code and say 'update the engine'." and stop. Otherwise, if it prints NOT READY (exit code 1), or there is no config.yaml or CLAUDE.md yet, stop here and run the setup interview instead (the `onboarding` skill, engine/ONBOARDING.md); in a scheduled run with nobody to answer, write the "Setup needed" brief as its "Nobody there to answer?" rule says and stop. Warnings alone don't stop the routine; list them under "Your actions" in the brief.
 - If daily/<today>.md already exists (and isn't a "Setup needed" brief), this is a repeat or catch-up run: only add jobs that aren't in the ledger yet, append them to that brief, and skip step 6 and the decisions in step 1 (the first run today acted on them).
 - **Weekend mode (Saturday and Sunday):** run steps 1, 2, 3, 4, 7 and a short brief (step 8: summary, scored jobs, actions for the candidate, sources). No tailoring, no outreach, no follow-ups; run decisions.py with `--no-tailor`. Monday tailors from the weekend's scored list first.
 
 1. Load context
-- Read CLAUDE.md, projects.md and the master CV text (path in config.yaml; python-docx). The tracker view tracker/applications.md lists sent applications, drafts not sent yet and follow-up dates; read it instead of the Excel file.
+- Read CLAUDE.md, projects.md and the master CV text (`python engine/tools/cv_map.py outline <master_cv from config.yaml>`). The tracker view tracker/applications.md lists sent applications, drafts not sent yet and follow-up dates; read it instead of the Excel file.
 - Already-seen jobs live in the ledger data/seen_jobs.csv (`python engine/tools/ledger.py check "<company>" "<title>"`). Don't grep old briefs for this.
 - **Decisions:** `python engine/tools/decisions.py` reads the Decisions checklist of the newest earlier brief (step 8) and prints one line per item. Act on every `DO` line through the same tools as the rest of the run, without asking: the ticked box is the candidate's yes.
   - `DO tailor <url>`: tailor this job in step 5 first, whatever its score; it doesn't count toward the limit of 6. If it isn't in candidates.json, `python engine/tools/extract.py add <url>` puts it there (and on the ad reader's list in step 2 when it has no extract yet); score it in step 4 if the ledger has no score for it (`python engine/tools/ledger.py show <url>`).
@@ -29,13 +29,14 @@ Today = the current local date. Work in this order. All tools run from the works
 - If the ad-reader subagent isn't available: `python engine/tools/extract.py read` extracts the API ad files without any tools; skip the `list` sources and the ads without a file, and say so under "Your actions" ("ad reader missing: run setup_check.py").
 - Browsing for yourself (career pages to find an ATS endpoint, not ads): use the obscura MCP for web pages (browser_navigate with waitUntil "domcontentloaded" -> browser_links -> browser_markdown, max_chars 12000). If browser_navigate times out, still call browser_markdown once. Use curl/WebFetch only for JSON APIs. If obscura is missing, fall back to WebFetch and say so in the brief. Call browser_close when done.
 - Bot checks ("Just a moment...", CAPTCHA) or empty pages: don't retry or work around them. Mark the platform "blocked <date>" in sources.md and move on. Respect the etiquette rules in sources.md.
+- When something fails: a source with `error` in the search_jobs.py output, or a `list` source the reader reports as unreadable, is named on the brief's Sources line and under "Your actions"; go on with the other sources. If search_jobs.py itself fails (non-zero exit), run only the `list` sources and say so. No new jobs at all: skip steps 3 to 5 and still do steps 6 to 9.
 - Company watchlist: for companies with an empty Endpoint, find the careers page, detect the ATS and write the endpoint into companies.md, so search_jobs.py picks it up next time.
 - Update the Status column in sources.md (ok / blocked / error + date, with counts from the script output).
 
 3. Filter
 - search_jobs.py and extract.py save already filter titles by the `profile:` block in config.yaml (role types, include and exclude words, a narrower list for junior roles if set). Then judge each job from its extract (data/ads/<id>.json: requirements, tasks, years of experience): drop senior-in-disguise roles and jobs outside the candidate's field as described in CLAUDE.md "Routine settings".
 - Scope: the target roles in CLAUDE.md "Routine settings".
-- Role Type: Werkstudent / Internship / HiWi / Thesis / Junior (the script guesses from the title; the extract's role_type is read from the ad).
+- Role Type: Werkstudent / Internship / HiWi / Thesis / Junior (the script guesses from the title; the extract's role_type is read from the ad). An extract with role_type Other (experienced, freelance, apprenticeship) is skipped with the reason "role type".
 - Liveness gate (playbook A): drop ads whose extract says `closed` and list them under "Skipped: closed" with the closed_evidence.
 - Same role on several platforms: keep one entry, prefer the company's own page, list the others in Match Reasons ("also on: StepStone, XING"). Reposts per playbook B.
 
@@ -50,7 +51,7 @@ Today = the current local date. Work in this order. All tools run from the works
 - **Record the outcome in the ledger:** `python engine/tools/ledger.py record --model <your model id>` (adds every job in candidates.json), then `python engine/tools/ledger.py set <url or key> --verdict screened|skipped|closed|tailored --score N --subscores skills=N seniority=N language=N location=N hours=N --model <your model id> --note "<reason>"` for each job you scored or skipped (`--subscores` only for jobs you scored; not for UNREAD jobs: `record` leaves them out so they come back), including jobs from Indeed, Gmail and the browser (add them to candidates.json first or `set` by URL after `record`).
 
 5. Tailor (weekdays only)
-- Tailor the top 3 (score >= 70, no hard mismatch) plus every other student role scoring >= 70, up to 6 per run; list further ones in the brief.
+- Tailor the top 3 (score >= 70, no hard mismatch) plus every other student role scoring >= 70, up to 6 per run; list further ones in the brief. On Monday, jobs the weekend briefs list with a score >= 70 and no hard mismatch come first and count toward the 6.
 - Backlog limit: if more than 10 drafts from the last 14 days are unsent (tracker/applications.md, "Drafts not sent yet"), tailor only the top 3 and say so.
 - **One `tailor` subagent per job** (.claude/agents/tailor.md: a fresh context with the candidate's files, no web, mail or browser tools). For each selected job, create the empty folder applications/<today>_<Company>_<Role>/ and call the Agent tool (subagent_type `tailor`, `run_in_background: false`) with one task line:
   `tailor <id> | applications/<folder> | score <N> (skills=N seniority=N language=N location=N hours=N) | <role type> | <reasons and gaps from step 4> | <notes>`
@@ -63,7 +64,7 @@ Today = the current local date. Work in this order. All tools run from the works
   - `grounding` terms and every `actions` line -> "Your actions" (variants waiting for approval, facts to check).
   - A reply without the block, or a tailor that stopped on a guard block: list the job as not tailored with the reason; don't tailor it yourself.
 - If the tailor subagent isn't available, tailor each job yourself following .claude/agents/tailor.md steps 1-6, and say so under "Your actions" ("tailor subagent missing: run setup_check.py").
-- outreach.md (you, after the tailor's reply): one confirmed contact and a LinkedIn note of max 200 characters (playbook E). Drafts only.
+- outreach.md (you, after the tailor's reply, for jobs with score >= 70): one confirmed contact and a LinkedIn note of max 200 characters (playbook E). Drafts only.
 - `python engine/tools/ledger.py set <url> --verdict tailored --score N --model <your model id>` for each job the tailor built or wrote.
 - A job from a `DO tailor` decision (step 1) goes first, with the note "you ticked it in the <date> brief".
 
@@ -110,7 +111,7 @@ Weekend briefs: decisions, summary, scored jobs (top half), your actions, and so
 - Platforms with the most matches >= 70, and ones that produced nothing (candidates to switch off in sources.md).
 - One concrete suggestion to improve targeting or the CV.
 - The pattern review from playbook H (funnel, send rate, score vs outcome, top blockers).
-- Every second Friday (or after 5+ rejections in a week): the master CV review from playbook I, saved in reviews/; link it in the brief and list its open questions under "Your actions".
+- Every second Friday, that is when reviews/ has no file from the last 13 days (or after 5+ rejections in a week): the master CV review from playbook I, saved in reviews/; link it in the brief and list its open questions under "Your actions".
 
 Then run `python engine/tools/history.py commit`: it commits the run's changes to the workspace history ("daily run <today>, engine v<version>"; never pushed), so it runs after the brief is written. Do not edit the brief after it.
 
