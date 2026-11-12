@@ -42,6 +42,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - ROUTINE.md: the daily run reads the master CV with `cv_map.py outline` (it had no allowed way to read a
   .docx), names failed sources and goes on, skips steps 3 to 5 when nothing is new, and writes the "Setup
   needed" brief when a scheduled run finds the setup unfinished.
+- For contributors: CI runs `ruff check` (syntax errors and pyflakes only), and CLAUDE.md in the repo root
+  lists the checks and the branch and changelog rules.
 
 ### Fixed
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
