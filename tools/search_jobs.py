@@ -22,7 +22,6 @@ import base64
 import datetime as dt
 import html
 import json
-import os
 import re
 import sys
 import time

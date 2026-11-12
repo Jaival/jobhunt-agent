@@ -830,9 +830,9 @@ def check_pages(cv_pdf, letter_pdfs, names=None):
     import pypdf
     problems = []
     names = names or [p.stem for p in letter_pdfs]
-    for name, path, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {n}", p, LETTER_MAX_PAGES)
+    for name, pdf, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {n}", p, LETTER_MAX_PAGES)
                                                                for n, p in zip(names, letter_pdfs)]:
-        n = len(pypdf.PdfReader(str(path)).pages)
+        n = len(pypdf.PdfReader(str(pdf)).pages)
         if n > limit:
             problems.append(f"{name} has {n} pages (max {limit})")
     if any(p.startswith("CV") for p in problems):

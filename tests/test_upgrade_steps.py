@@ -5,7 +5,10 @@ import json
 import pytest
 
 import upgrade
-from test_channels import head, remote, run  # noqa: F401  (remote is a fixture)
+import test_channels
+from test_channels import head
+
+remote = test_channels.remote  # the fixture; an import here would be "redefined" by every test's parameter
 
 
 def state_of(ws):
