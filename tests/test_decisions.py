@@ -2,6 +2,8 @@
 next run and carries unticked ones over for 7 days."""
 import re
 
+import pytest
+
 from test_stamping import ENGINE
 
 URL = "https://jobs.example/acme/1"
@@ -76,3 +78,13 @@ def test_routine_line_forms_parse(tool, sample):
     out = tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
     assert out[1:] == ["DO       tailor <url>", "DO       sent <folder>", "DO       skip <folder>"]
     assert "python engine/tools/decisions.py" in routine and "--no-tailor" in routine
+
+
+@pytest.mark.parametrize("box, kind", [
+    ("- [x ]", "DO"), ("- [ x]", "DO"), ("-[x]", "DO"), ("- [X]", "DO"), ("*  [x]", "DO"),
+    ("- []", "KEEP"), ("- [  ]", "KEEP"),
+])
+def test_odd_checkbox_spacing(tool, sample, box, kind):
+    brief(sample, "2026-10-31", f"## Decisions\n{box} Mark as sent: f `sent 2026-10-30_Acme_Marketing`\n")
+    out = tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
+    assert out[1].startswith(kind) and (kind == "KEEP" or out[1] == "DO       sent 2026-10-30_Acme_Marketing")

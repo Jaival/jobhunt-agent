@@ -41,7 +41,7 @@ LOG = ROOT / "data" / "decisions_done.txt"
 CARRY_DAYS = 7
 ACTIONS = ("tailor", "sent", "skip")
 HEAD = re.compile(r"^#+\s+Decisions\s*$", re.M)
-ITEM = re.compile(r"^\s*[-*] \[([ xX])\] .*`(\w+) ([^`\s]+)`.*$")
+ITEM = re.compile(r"^\s*[-*]\s*\[\s*([xX]?)\s*\]\s*.*`(\w+) ([^`\s]+)`.*$")
 SINCE = re.compile(r"since (\d{4}-\d{2}-\d{2})")
 
 
@@ -77,7 +77,7 @@ def items(day, lines):
         if m[2] not in ACTIONS:
             raise DecisionError(f"unknown action '{m[2]}' in: {line.strip()} (use {', '.join(ACTIONS)})")
         since = SINCE.search(line)
-        out.append((m[1] != " ", m[2], m[3], dt.date.fromisoformat(since[1]) if since else day, line.strip()))
+        out.append((bool(m[1]), m[2], m[3], dt.date.fromisoformat(since[1]) if since else day, line.strip()))
     return out
 
 
