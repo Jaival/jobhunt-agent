@@ -132,3 +132,60 @@ def test_compare_files(tmp_path):
     assert any(ln.startswith("-") for ln in diff) and any(ln.startswith("+") for ln in diff)
     verdict, _ = upgrade.compare_files(a, b)  # two saves can differ in zip metadata
     assert verdict == "identical" or verdict.startswith("same text")
+
+
+def test_apply_without_an_update_leaves_local_edits_in_place(remote):
+    _, ws, sha = remote
+    upgrade.cmd_prepare(None)
+    upgrade.cmd_apply(None)                                   # now at v0.6.0, the newest release
+    upgrade.cmd_prepare(None)                                 # a second run: nothing newer
+    (ws / "engine" / "local.txt").write_text("mine", encoding="utf-8")
+    with pytest.raises(upgrade.UpgradeError, match="no update"):
+        upgrade.cmd_apply(None)
+    assert (ws / "engine" / "local.txt").read_text(encoding="utf-8") == "mine"
+    assert state_of(ws)["stash"] is None
+
+
+def test_apply_saves_the_stash_before_it_moves_the_engine(remote, monkeypatch):
+    _, ws, sha = remote
+    (ws / "engine" / "local.txt").write_text("mine", encoding="utf-8")
+    upgrade.cmd_prepare(None)
+    real = upgrade.git
+
+    def failing(*args, **kw):
+        if args[:1] == ("checkout",):
+            raise upgrade.UpgradeError("checkout failed")
+        return real(*args, **kw)
+    monkeypatch.setattr(upgrade, "git", failing)
+    with pytest.raises(upgrade.UpgradeError, match="checkout failed"):
+        upgrade.cmd_apply(None)
+    assert state_of(ws)["stash"]                               # rollback can bring the edits back
+
+
+def test_rollback_restores_the_config_when_the_stash_does_not_apply(remote, monkeypatch, capsys):
+    _, ws, sha = remote
+    (ws / "engine" / "local.txt").write_text("mine", encoding="utf-8")
+    upgrade.cmd_prepare(None)
+    upgrade.cmd_apply(None)
+    (ws / "config.yaml").write_text("applicant: Changed\n", encoding="utf-8")
+    real = upgrade.git
+
+    def failing(*args, **kw):
+        if args[:2] == ("stash", "apply"):
+            raise upgrade.UpgradeError("git stash apply failed: conflict")
+        return real(*args, **kw)
+    monkeypatch.setattr(upgrade, "git", failing)
+    assert upgrade.cmd_rollback(None) == 0
+    assert (ws / "config.yaml").read_text(encoding="utf-8") == "applicant: Test\n"
+    assert head(ws) == sha["v0.5.0"]
+    out = capsys.readouterr().out
+    assert "NOT restored" in out and "engine-local-changes.patch" in out
+
+
+@pytest.mark.parametrize("text", ["{broken", "[]", '{"backup": "x"}'])
+def test_a_damaged_state_file_stops_with_a_message(remote, text):
+    _, ws, sha = remote
+    upgrade.cmd_prepare(None)
+    upgrade.state_path().write_text(text, encoding="utf-8")
+    with pytest.raises(upgrade.UpgradeError, match="upgrade.json"):
+        upgrade.cmd_apply(None)

@@ -82,6 +82,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   offer; a typo stops with an error.
 - The same job with another gender form ("(m/w/divers)", "Kaufmann/-frau", "Berater/in", "Entwickler*in",
   "Manager:in") counts as seen.
+- "update the engine": `upgrade.py apply` put local engine edits aside before it knew there was an update, and
+  lost track of them when there was none. `upgrade.py rollback` stopped before it restored config.yaml when the
+  local edits didn't apply cleanly. `migrate` deleted the comment lines after a config key it removed. A damaged
+  upgrade.json now gives a message instead of a traceback.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
