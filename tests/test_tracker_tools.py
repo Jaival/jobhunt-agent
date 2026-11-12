@@ -174,7 +174,7 @@ def test_auto_archives_a_cold_application(tool, ws):
         (ws / "follow-ups" / f"{day(offset)}_Acme.md").write_text("Follow-up\n", encoding="utf-8")
     r = tool("archive.py", "auto")
     assert r.returncode == 0, r.stderr
-    assert "cold: 2 follow-ups" in r.stdout
+    assert "cold: 2 follow-ups drafted" in r.stdout
     assert (ws / "applications" / "_archive" / name).is_dir()
 
 
