@@ -2,7 +2,8 @@
 
 `setup_check.py --init` calls init(): when the workspace isn't in a git repo yet it runs `git init` and makes sure
 .gitignore keeps out engine/ (the public engine clone), backups/ and Office temp files. A workspace that already
-is a repo (or sits inside one) is left as it is. The routine runs `commit` at the end of each run (ROUTINE.md
+is a repo keeps its .gitignore; `commit` adds the missing ignore lines to .git/info/exclude. A workspace inside
+another repo is not committed. The routine runs `commit` at the end of each run (ROUTINE.md
 step 8): it commits every change as "daily run 2026-12-14, engine v1.0.0". It never adds a remote or pushes:
 the history stays on this computer. Like setup_check.py, this doesn't import config.py.
 
@@ -57,6 +58,21 @@ def init(root=ROOT):
     return ["started the workspace history (git init; engine/ and backups/ stay out of it, nothing is pushed)"]
 
 
+def exclude(root):
+    """Make sure the IGNORE lines apply: add the ones .gitignore lacks to .git/info/exclude (the repo's own
+    ignore file), so a repo the user already had keeps its .gitignore as it is."""
+    path = root / ".gitignore"
+    have = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    info = Path(git(root, "rev-parse", "--git-path", "info/exclude").stdout.strip())
+    info = info if info.is_absolute() else root / info
+    have += info.read_text(encoding="utf-8").splitlines() if info.exists() else []
+    missing = [line for line in IGNORE if line not in have]
+    if missing:
+        info.parent.mkdir(parents=True, exist_ok=True)
+        with info.open("a", encoding="utf-8") as f:
+            f.write("\n".join(["# Kept out of the workspace history (engine/tools/history.py)", *missing]) + "\n")
+
+
 def commit(root=ROOT, today=None):
     """Commit every change in the workspace. Returns the line to print."""
     top = toplevel(root)
@@ -64,6 +80,7 @@ def commit(root=ROOT, today=None):
         return "no history: the workspace isn't a git repo (python engine/tools/setup_check.py --init starts one)"
     if top != root.resolve():
         return f"no history: the workspace is inside another repo ({top}); not committed"
+    exclude(root)
     git(root, "add", "-A", check=True)
     if git(root, "diff", "--cached", "--quiet").returncode == 0:
         return "nothing to commit"

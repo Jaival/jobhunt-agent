@@ -91,6 +91,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - One failed Arbeitnow page (an error page, a changed field) dropped every Arbeitnow job of the run. The pages
   already read are now kept and the error is counted in the source line. The search also says when its 7-page
   limit left out older jobs.
+- In a workspace that already was a git repo before setup, the daily commit added engine/, backups/ and Office
+  lock files. The ignore lines now go to .git/info/exclude; your .gitignore is not changed. Files such a repo
+  already tracks stay tracked: `git rm -r --cached engine backups` removes them from the history going forward.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
