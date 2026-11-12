@@ -8,7 +8,8 @@ changes the headline (and a mapped "City, date" line), reorders the items of the
 (cv/layout.yaml, see cv_map.py), and swaps bullet text for approved variants from cv/variants.yaml. In the letter
 it fills the date, the address block (recipient: one line, or a list / several lines), subject, greeting and body,
 and a mapped tagline line (letter_headline, else cv.headline).
-It fails before writing anything if a check breaks.
+It fails before writing anything if a check breaks: the page limits are checked on temp files, and the final files
+appear only when everything passed.
 
 Letters in German and/or English: `languages: [de, en]` in the frontmatter (default: config.yaml
 `letter_languages`, else [en]). With two languages the body has a `<!-- de -->` and an `<!-- en -->` part, and
@@ -42,6 +43,7 @@ import argparse
 import copy
 import datetime as dt
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -77,6 +79,12 @@ CLOSING = {"de": "Mit freundlichen Grüßen", "en": "Kind regards"}
 # Phrases the student-letter checks accept per language (RULES.md rule 9).
 START_WORDS = {"en": ["as soon as possible", "immediately"],
                "de": ["ab sofort", "so bald wie möglich", "sobald wie möglich", "schnellstmöglich", "zum nächstmöglichen"]}
+MONTHS = ("january|february|march|april|may|june|july|august|september|october|november|december|"
+          "januar|februar|märz|maerz|mai|juni|juli|oktober|dezember")
+# A concrete start: 01.03.2027, "March 2027", "1 March", "1. März", "15th of April". A month name alone doesn't
+# count ("may" is also a verb).
+START_DATE = re.compile(rf"\b\d{{1,2}}\.\s?\d{{1,2}}\.\s?\d{{4}}\b|\b(?:{MONTHS})\s+\d{{4}}\b|"
+                        rf"\b\d{{1,2}}(?:\.|st|nd|rd|th)?\s+(?:of\s+)?(?:{MONTHS})\b")
 HOURS_WORDS = {"en": ["hours per week", "hours a week"],
                "de": ["stunden pro woche", "wochenstunden", "stunden wöchentlich", "stunden in der woche"]}
 APPLICANT = CFG["applicant"]          # name in metadata; files start with FILE_PREFIX
@@ -106,6 +114,8 @@ NUMBER_WORDS_MODE = str(CFG.get("grounding_number_words") or "warn")   # number 
 if NUMBER_WORDS_MODE not in ("warn", "fail"):
     raise ConfigError("config.yaml: grounding_number_words must be warn or fail")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+# Template-style placeholders: <role at company>, <...>; and the usual "fill me in" marks.
+PLACEHOLDER = re.compile(r"<[^<>\n]{1,60}>|\b(?:TBD|TODO|XXX)\b|\blorem ipsum\b")
 
 
 class BuildError(Exception):
@@ -354,7 +364,12 @@ def build_cv(meta, variants, layout, out):
 
 def letter_date(meta):
     date = meta.get("date") or dt.date.today()
-    return dt.date.fromisoformat(date) if isinstance(date, str) else date
+    if not isinstance(date, str):
+        return date
+    try:
+        return dt.date.fromisoformat(date)
+    except ValueError:
+        raise BuildError(f"date: '{date}' must be YYYY-MM-DD (application.md)") from None
 
 
 def norm(s):
@@ -442,6 +457,14 @@ def build_letter(meta, body, lang, langs, layout, out):
 
 
 # ---------- fonts and metadata ----------
+
+def unmapped_letter_parts(meta, layout):
+    """Warnings for letter parts application.md sets but cv/layout.yaml doesn't map: the master's text stays."""
+    mapped = layout.get("letter") or {}
+    return [f"{part} is set in application.md but cv/layout.yaml maps no letter {part}: the master letter's "
+            f"own text stays there (say 'remap my CV' to map it)"
+            for part in ("recipient", "subject", "date") if meta.get(part) and not mapped.get(part)]
+
 
 def fallback_for(font):
     """The substitute config.yaml names for this font, or None."""
@@ -541,6 +564,15 @@ def doc_text(d):
     return "\n".join(parts)
 
 
+def all_text(d):
+    """The text of every paragraph wherever it sits: body, tables in tables, text boxes, headers and footers."""
+    parts = []
+    for part in documents(d):
+        root = part.element if part is d else part._element
+        parts += ["".join(t.text or "" for t in p.iter(f"{W}t")) for p in root.iter(f"{W}p")]
+    return "\n".join(parts)
+
+
 def internship_duration(lang):
     """The duration an internship letter in this language must state ("" = no check)."""
     if isinstance(INTERNSHIP_DURATION, dict):
@@ -554,9 +586,12 @@ def check(meta, bodies, cv_doc, letter_docs):
     problems = []
     tag = lambda lg: "letter" if len(bodies) == 1 else f"letter {lg.upper()}"
     for name, d in [("CV", cv_doc)] + [(tag(lg), d) for lg, d in letter_docs.items()]:
-        txt = doc_text(d)
+        txt = all_text(d)
         if "[" in txt or "]" in txt:
             problems.append(f"{name}: contains '[' or ']' (placeholder?)")
+        m = PLACEHOLDER.search(txt)
+        if m:
+            problems.append(f"{name}: contains '{m.group(0)}' (placeholder?)")
         low = txt.lower()
         problems += [f"{name}: banned phrase '{b}'" for b in BANNED if b in low]
         for phrase, pattern in NEVER_WRITE:
@@ -572,8 +607,8 @@ def check(meta, bodies, cv_doc, letter_docs):
             letter = " ".join(body).lower()
             if UNIVERSITIES and not any(u.lower() in letter for u in UNIVERSITIES):
                 problems.append(f"{tag(lg)}: student letter must mention {' or '.join(UNIVERSITIES)} enrolment")
-            if not any(w in letter for w in START_WORDS[lg]):
-                problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}')")
+            if not any(w in letter for w in START_WORDS[lg]) and not START_DATE.search(letter):
+                problems.append(f"{tag(lg)}: student letter must state the start ('{START_WORDS[lg][0]}' or a date)")
             if not any(w in letter for w in HOURS_WORDS[lg]):
                 problems.append(f"{tag(lg)}: student letter must state the {HOURS_WORDS[lg][0]}")
             months = internship_duration(lg)
@@ -584,19 +619,20 @@ def check(meta, bodies, cv_doc, letter_docs):
 
 # ---------- grounding ----------
 
-NUMBER = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)*)(?!\w)(\s*(?:%|prozent\b|percent\b|per cent\b))?", re.I)
+NUMBER = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)*)(k|m|mio|mrd|bn)?(?!\w)(\s*(?:%|prozent\b|percent\b|per cent\b))?",
+                    re.I)
 
 
 def numbers(text):
     """The numbers in a text, normalised: "1,200" / "1.200" -> 1200, "2,5" -> 2.5, "18 Prozent" -> 18%; other
     forms (dates) as written."""
     found = set()
-    for n, percent in NUMBER.findall(text):
+    for n, unit, percent in NUMBER.findall(text):
         if re.fullmatch(r"\d{1,3}(?:[.,]\d{3})+", n):
             n = re.sub(r"[.,]", "", n)
         elif re.fullmatch(r"\d+[.,]\d+", n):
             n = n.replace(",", ".")
-        found.add((str(int(n)) if n.isdigit() else n) + ("%" if percent else ""))
+        found.add((str(int(n)) if n.isdigit() else n) + unit.lower() + ("%" if percent else ""))
     return found
 
 
@@ -681,9 +717,13 @@ def grounding(meta, bodies, variants, folder):
         if meta.get("letter_headline"):
             texts[f"letter headline{' ' + lg.upper() if len(bodies) > 1 else ''}"] = str(letter_headline(meta, lg))
     problems, ad_only, word_warnings = [], set(), []
+    ad_numbers_used = set()
     grounded = lambda n: grounded_number(n, own_numbers | ad_numbers) or n in ok or n.rstrip("%") in ok
     for name, text in texts.items():
         missing = [n for n in sorted(numbers(text)) if not grounded(n)]
+        ad_numbers_used |= {n for n in numbers(text)
+                            if grounded_number(n, ad_numbers) and not grounded_number(n, own_numbers)
+                            and n not in ok and n.rstrip("%") not in ok}
         words = sorted(n for n in word_numbers(text) - numbers(text) if not grounded(n))
         if words and NUMBER_WORDS_MODE == "fail":
             missing += [f"{n} (as a word)" for n in words]
@@ -704,6 +744,9 @@ def grounding(meta, bodies, variants, folder):
                         "application.md, and job.md must say why.")
     warnings = [f"from the ad only, not in your files: {', '.join(sorted(ad_only))} "
                 "(the letter may name them, never claim them)"] if ad_only else []
+    if ad_numbers_used:
+        warnings.append(f"numbers from the ad only, not in your files: {', '.join(sorted(ad_numbers_used))} "
+                        "(fine for facts about the job, never for the candidate's own results)")
     return problems, warnings + word_warnings
 
 
@@ -715,6 +758,7 @@ def main():
     folder = appdirs.find(a.folder) or Path(a.folder)
     if not folder.is_absolute():
         folder = ROOT / folder
+    pdf_note = None
     try:
         meta, bodies = read_application(folder)
         variants = yaml.safe_load(VARIANTS.read_text(encoding="utf-8")) or {}
@@ -742,44 +786,53 @@ def main():
         problems += grounding_problems
         if problems:
             raise BuildError("checks failed:\n  - " + "\n  - ".join(problems))
-        tmp_cv.replace(cv_out)
-        for lg in langs:
-            tmp_letter[lg].replace(letter_out[lg])
+        pairs = [(tmp_cv, cv_out)] + [(tmp_letter[lg], letter_out[lg]) for lg in langs]
+        engine = "skipped"
+        if not a.no_pdf:
+            try:
+                engine = pdf_export.export([tmp for tmp, _ in pairs], CFG.get("pdf_engine"))
+            except (pdf_export.PdfError, subprocess.CalledProcessError) as e:
+                engine = "failed"
+                pdf_note = f"WARNING {folder.name}: no PDFs ({e}); the .docx files are built, page limits unchecked"
+        if engine in ("word", "libreoffice"):
+            problems = check_pages(tmp_cv.with_suffix(".pdf"), [tmp_letter[lg].with_suffix(".pdf") for lg in langs],
+                                   [letter_out[lg].stem for lg in langs])
+            if problems:
+                raise BuildError("page check:\n  - " + "\n  - ".join(problems))
+        for tmp, out in pairs:  # every check passed: the final names appear only now
+            tmp.replace(out)
+            if tmp.with_suffix(".pdf").exists():
+                tmp.with_suffix(".pdf").replace(out.with_suffix(".pdf"))
     except BuildError as e:
-        for f in folder.glob("~build_*.docx"):
-            f.unlink()
         print(f"FAILED {folder.name}: {e}", file=sys.stderr)
         return 1
+    finally:
+        for f in folder.glob("~build_*"):
+            if f.suffix in (".docx", ".pdf"):
+                f.unlink()
     print(f"OK {folder.name}: " + ", ".join(
         f"letter{' ' + lg.upper() if len(langs) > 1 else ''} {n} words" for lg, n in counts.items()))
-    for line in summary + warnings:
+    for line in summary + warnings + unmapped_letter_parts(meta, layout):
         print(f"  {line}")
-    if not a.no_pdf:
-        try:
-            engine = pdf_export.export([cv_out, *letter_out.values()], CFG.get("pdf_engine"))
-        except pdf_export.PdfError as e:
-            print(f"WARNING {folder.name}: no PDFs ({e}); the .docx files are built, page limits unchecked",
-                  file=sys.stderr)
-            return 0
-        if engine == "none":
-            print("  no PDFs (pdf_engine: none); page limits unchecked")
-            return 0
-        if engine == "libreoffice":
-            print("  PDFs from LibreOffice: its page count can differ from Word's, open the CV PDF once to check")
-        problems = check_pages(cv_out.with_suffix(".pdf"), [p.with_suffix(".pdf") for p in letter_out.values()])
-        if problems:
-            print(f"FAILED {folder.name}: page check:\n  - " + "\n  - ".join(problems), file=sys.stderr)
-            return 1
+    if pdf_note:
+        print(pdf_note, file=sys.stderr)
+    elif engine == "none":
+        print("  no PDFs (pdf_engine: none); page limits unchecked")
+    elif engine == "libreoffice":
+        print("  PDFs from LibreOffice: its page count can differ from Word's, open the CV PDF once to check")
     return 0
 
 
-def check_pages(cv_pdf, letter_pdfs):
-    """Page limits from the exported PDFs (Word's count is the reliable one; LibreOffice can differ)."""
+def check_pages(cv_pdf, letter_pdfs, names=None):
+    """Page limits from the exported PDFs (Word's count is the reliable one; LibreOffice can differ).
+
+    names: the letters' display names in the messages (default: the PDF stems)."""
     import pypdf
     problems = []
-    for name, path, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {p.stem}", p, LETTER_MAX_PAGES)
-                                                               for p in letter_pdfs]:
-        n = len(pypdf.PdfReader(str(path)).pages)
+    names = names or [p.stem for p in letter_pdfs]
+    for name, pdf, limit in [("CV", cv_pdf, CV_MAX_PAGES)] + [(f"letter {n}", p, LETTER_MAX_PAGES)
+                                                               for n, p in zip(names, letter_pdfs)]:
+        n = len(pypdf.PdfReader(str(pdf)).pages)
         if n > limit:
             problems.append(f"{name} has {n} pages (max {limit})")
     if any(p.startswith("CV") for p in problems):

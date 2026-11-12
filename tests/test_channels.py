@@ -117,8 +117,17 @@ def test_setup_check_reports_the_release(remote, monkeypatch):
     monkeypatch.delenv("JOBHUNT_OFFLINE", raising=False)
     monkeypatch.setattr(version, "ENGINE", ws / "engine")
     import setup_check
-    assert setup_check.engine_update("stable") == ("v0.6.0", "release v0.6.0")
-    assert setup_check.engine_update("next")[1] == "2 new change(s) on next"
+    assert setup_check.engine_update("stable") == (("v0.6.0", "release v0.6.0"), True)
+    assert setup_check.engine_update("next")[0][1] == "2 new change(s) on next"
+
+
+def test_setup_check_says_when_the_update_check_did_not_run(monkeypatch):
+    import setup_check
+    monkeypatch.delenv("JOBHUNT_OFFLINE", raising=False)
+    monkeypatch.setattr(setup_check, "git", lambda *a, **k: None)
+    assert setup_check.engine_update("stable") == (None, False)
+    monkeypatch.setenv("JOBHUNT_OFFLINE", "1")
+    assert setup_check.engine_update("stable") == (None, None)
 
 
 def test_migrate_adds_the_channel(tool):

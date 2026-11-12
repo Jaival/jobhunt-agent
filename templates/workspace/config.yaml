@@ -14,8 +14,9 @@ university: TU Berlin                           # student letters must mention i
 font: Open Sans                                 # font for CV and letter; `keep` keeps the master's fonts (two-font designs)
 fallback_font: Open Sans                        # substitute named in the font table; per font with keep:
                                                 # {Inter: Arial, JetBrains Mono: Consolas}
-never_write: []                                 # phrases or regexes a CV or letter must never contain; a match fails
-                                                # the build, e.g. ["3 products", 'stopped deploying\s+by hand']
+never_write: []                                 # regexes a CV or letter must never contain; a match fails the build,
+                                                # e.g. ["3 products", 'stopped deploying\s+by hand']. Escape special
+                                                # characters in a plain phrase: 'C\+\+', 'Node\.js'
 grounding_number_words: warn                    # numbers written as words ("three") not in your files: warn | fail
 search:
   home: {wo: Berlin, umkreis: 50}               # Arbeitsagentur home-area pass (plus a nationwide pass)

@@ -10,10 +10,12 @@ The rules only apply to a local Claude Code session whose project folder is the 
 task with "Only on this computer"); cloud and Cowork tasks ignore .claude/.
 
 install() merges, never overwrites: rules and hooks already in .claude/settings.json stay, missing ones are added.
+The matcher of a hook the engine owns is set to the template's.
 The one exception is a deny rule for a tool the engine needs (NEEDED: the ad-reader subagent runs through Agent):
 it is removed, after a copy of the file is saved as .claude/settings.json.bak-<date>.
 The other template files (.claude/hooks/jobhunt_guard.py, which starts engine/tools/hooks/guard.py) belong to the
-engine and are copied when missing or changed. setup_check.py --init and upgrade.py migrate call it;
+engine and are copied when missing or changed; a changed file is first saved under backups/claude-files-<date>/.
+setup_check.py --init and upgrade.py migrate call it;
 setup_check.py warns while something is missing.
 """
 import copy
@@ -80,6 +82,12 @@ def merge(have, want):
         cur = out.setdefault("hooks", {}).setdefault(event, [])
         commands = {h.get("command") for g in cur for h in g.get("hooks", [])}
         for group in groups:
+            for g in cur:
+                same = ({h.get("command") for h in g.get("hooks", [])}
+                        & {h.get("command") for h in group.get("hooks", [])})
+                if same and "matcher" in group and g.get("matcher") != group["matcher"]:
+                    g["matcher"] = group["matcher"]
+                    added.append(f"matcher {event} {group['matcher']}")
             new = [h for h in group.get("hooks", []) if h.get("command") not in commands]
             if new:
                 cur.append({**group, "hooks": new})
@@ -112,13 +120,22 @@ def install(root, cfg=None, dry_run=False):
     Raises SettingsError."""
     merged, added = merge(load(root), wanted(cfg))
     files = stale_files(root)
+    saved = []
     if not dry_run:
         backup = settings_path(root).with_name(f"settings.json.bak-{dt.date.today().isoformat()}")
         if any(a.startswith("removed ") for a in added) and not backup.exists():
             shutil.copy2(settings_path(root), backup)
         for src in files:  # the launcher first, so the hook entry never points at a missing file
-            atomic.write_text(Path(root) / ".claude" / src.relative_to(TEMPLATE.parent),
-                              src.read_text(encoding="utf-8"))
+            dst = Path(root) / ".claude" / src.relative_to(TEMPLATE.parent)
+            if dst.is_file():   # other content: an older engine's file, or the user's edit; keep a copy
+                folder = f"claude-files-{dt.date.today().isoformat()}"
+                keep = Path(root) / "backups" / folder / src.relative_to(TEMPLATE.parent)
+                if not keep.exists():
+                    keep.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(dst, keep)
+                    saved.append(f"saved the old .claude/{src.relative_to(TEMPLATE.parent).as_posix()} to "
+                                 f"backups/{folder}/")
+            atomic.write_text(dst, src.read_text(encoding="utf-8"))
         if added:
             atomic.write_text(settings_path(root), json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
-    return added + [file_label(src) for src in files]
+    return added + [file_label(src) for src in files] + saved

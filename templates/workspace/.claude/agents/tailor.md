@@ -41,7 +41,7 @@ they differ from config.yaml.
      `approved: false` (the only edit you make outside the job folder) and report it; don't use it.
    - Letter: RULES.md rules 1, 2, 4, 6, 9 and 10, in each language of config.yaml `letter_languages` (or the
      languages from the notes), each body after its `<!-- de -->` / `<!-- en -->` line. Student roles state the
-     enrolment (degree and university from CLAUDE.md), hours per week, "as soon as possible", and for internships
+     enrolment (degree and university from CLAUDE.md), hours per week, the start ("as soon as possible", or the date CLAUDE.md gives under "Rule 9 values"), and for internships
      the duration; they lead with the candidate's most relevant real work (CLAUDE.md "Student letters") and name
      missing tools as things the candidate is eager to learn. Thesis roles: a short motivation email (email.md)
      instead of a letter, and no build.

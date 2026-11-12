@@ -75,7 +75,7 @@ def test_install_merges_and_is_idempotent(tmp_path):
     assert (tmp_path / ".claude" / "hooks" / "jobhunt_guard.py").is_file()
     assert "file .claude/hooks/jobhunt_guard.py" in added
     reader = data["hooks"]["SubagentStop"][0]
-    assert reader["matcher"] == "ad-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
+    assert reader["matcher"] == "ad-reader|mail-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
     assert (tmp_path / ".claude" / "hooks" / "reader_reply.py").is_file()
     assert data["permissions"]["allow"] == ["Bash(git status)", "Bash(python engine/tools/*)"]
     assert data["permissions"]["deny"].count("mcp__*__reply") == 1
@@ -104,7 +104,7 @@ def test_install_removes_a_deny_for_agent_with_a_backup(tmp_path):
 def test_hooks_are_merged_by_command():
     want = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
     have = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
-    assert permissions.merge(have, want) == (have, [])
+    assert permissions.merge(have, want) == (want, ["matcher PreToolUse *"])   # the engine's matcher wins
     merged, added = permissions.merge({}, want)
     assert merged["hooks"] == want["hooks"] and added == ["hook PreToolUse python g.py"]
 
@@ -174,3 +174,30 @@ def test_unused_desktop_tools_are_denied():
     assert {"SuggestPluginInstall", "SearchPlugins", "mcp__terminal", "mcp__ccd_session", "mcp__claude-in-chrome"} <= set(DENY)
     assert removes("mcp__ccd_session", "mcp__ccd_session__spawn_task")
     assert not removes("mcp__ccd_session", "mcp__ccd_session_mgmt__get_session")
+
+
+def test_merge_updates_the_matcher_of_an_existing_hook(tmp_path):
+    want = permissions.wanted()
+    old = json.loads(json.dumps(want))
+    old["hooks"]["PreToolUse"][0]["matcher"] = "Bash|Write"
+    merged, added = permissions.merge(old, want)
+    assert merged["hooks"]["PreToolUse"][0]["matcher"] == want["hooks"]["PreToolUse"][0]["matcher"]
+    assert len(merged["hooks"]["PreToolUse"]) == 1
+    assert any(a.startswith("matcher PreToolUse") for a in added)
+    assert permissions.merge(merged, want)[1] == []
+
+
+def test_install_saves_an_edited_claude_file_before_replacing_it(tmp_path):
+    import datetime as dt
+    permissions.install(tmp_path)
+    agent = tmp_path / ".claude" / "agents" / "tailor.md"
+    template = (permissions.TEMPLATE.parent / "agents" / "tailor.md").read_text(encoding="utf-8")
+    agent.write_text(template + "my own line\n", encoding="utf-8")
+    added = permissions.install(tmp_path)
+    folder = f"claude-files-{dt.date.today().isoformat()}"
+    assert agent.read_text(encoding="utf-8") == template
+    keep = tmp_path / "backups" / folder / "agents" / "tailor.md"
+    assert keep.read_text(encoding="utf-8").endswith("my own line\n")
+    assert f"saved the old .claude/agents/tailor.md to backups/{folder}/" in added
+    assert not [a for a in permissions.install(tmp_path) if a.startswith("saved ")]
+    assert [p.name for p in keep.parent.iterdir()] == ["tailor.md"]

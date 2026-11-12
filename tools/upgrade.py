@@ -167,7 +167,15 @@ def state_path():
 
 def load_state():
     p = state_path()
-    return p, json.loads(p.read_text(encoding="utf-8"))
+    try:
+        state = json.loads(p.read_text(encoding="utf-8"))
+    except ValueError:
+        state = None
+    need = {"date", "backup", "old_commit", "old_branch", "steps"}
+    if not isinstance(state, dict) or not need <= set(state):
+        raise UpgradeError(f"{p.relative_to(ROOT).as_posix()} is damaged (not the upgrade.json that 'prepare' "
+                           "wrote); run 'upgrade.py prepare' again")
+    return p, state
 
 
 def save_state(p, state):
@@ -226,7 +234,20 @@ def set_key(text, key, value, comment="", after=None):
 
 
 def drop_key(text, key):
-    return "".join("".join(lines) for k, lines in blocks(text) if k != key)
+    """text without the top-level block `key`. Comment and blank lines at the end of the block start at column 0
+    and describe the next key, so they stay."""
+    out = []
+    for k, lines in blocks(text):
+        if k != key:
+            out += lines
+            continue
+        keep = []
+        for ln in reversed(lines[1:]):
+            if ln.strip() and not ln.startswith("#"):
+                break
+            keep.insert(0, ln)
+        out += keep
+    return "".join(out)
 
 
 # ---------- status / prepare / apply ----------
@@ -311,10 +332,6 @@ def cmd_apply(a):
     p, state = load_state()
     if "apply" in state["steps"]:
         raise UpgradeError("already applied; use 'migrate' next, or 'rollback'")
-    if edits():
-        git("stash", "push", "--include-untracked", "-m", f"jobhunt upgrade {state['date']}")
-        state["stash"] = git("rev-parse", "stash@{0}")
-        print("local edits put aside (git stash; 'rollback' brings them back)")
     chan = channel()
     if not fetch():
         raise UpgradeError("git fetch failed: check the internet connection and try again")
@@ -322,6 +339,11 @@ def cmd_apply(a):
     if not found:
         raise UpgradeError(f"no update on the {chan} channel (newest release {version.newest_tag(ENGINE)}); "
                            "nothing changed, run 'upgrade.py finish'")
+    if edits():
+        git("stash", "push", "--include-untracked", "-m", f"jobhunt upgrade {state['date']}")
+        state["stash"] = git("rev-parse", "stash@{0}")
+        save_state(p, state)                              # before the engine moves: rollback must know the stash
+        print("local edits put aside (git stash; 'rollback' brings them back)")
     if chan == "stable":
         git("checkout", "--detach", found[0])             # main only moves at releases; the tag is the release
     else:
@@ -700,8 +722,12 @@ def cmd_rollback(a):
         git("checkout", branch)
         git("reset", "--hard", state["old_commit"])
     if state.get("stash"):
-        git("stash", "apply", state["stash"])
-        print("local edits back in engine/")
+        try:
+            git("stash", "apply", state["stash"])
+            print("local edits back in engine/")
+        except UpgradeError as e:
+            print(f"local edits NOT restored ({e}). They are in git stash {state['stash'][:7]} and in "
+                  f"backups/{state['backup']}/engine-local-changes.patch; apply them by hand")
     for name in ("config.yaml", "custom.md"):
         if (backup / name).exists():
             shutil.copy2(backup / name, ROOT / name)

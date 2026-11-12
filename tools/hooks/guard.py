@@ -5,7 +5,8 @@ setup_check.py --init, starts it through .claude/hooks/jobhunt_guard.py). It rea
 exits 2 with a one-line reason on stderr to block it; the model sees the reason and lists the block in the brief.
 
 What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
-- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern;
+- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern
+  (also downloads with an output file, git commands that change the work tree, and paths through `..`);
 - the tools that send or type data (Gmail send / reply / drafts, browser typing and form filling), also denied
   by the permission rules;
 - curl, wget, Invoke-WebRequest, WebFetch and inline Python HTTP calls to hosts outside the allowlist (the job
@@ -14,7 +15,13 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
   in base64, base32, hex or double URL-encoding in any path segment or query value), a long encoded value, an IP
   address, a port or a scheme other than http(s). Browser navigation may go to any host but gets this check, and on
   a host outside companies.md and sources.md also a shorter value that decodes to text or looks random;
-- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...).
+- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...);
+- writes to its own files (data/guard.json, data/guard.log), so a run can't hide its blocks;
+- `git push` and `git remote add / set-url / rename` from Bash or PowerShell: the workspace history is never pushed;
+- a URL with a backslash before its path (`https://a.example\\@b.example/`: two programs may read two hosts);
+- a WebSearch query that holds the candidate's name, email or phone number;
+- a reader using the other reader's tools: the ad reader any Gmail tool; the mail reader WebFetch, WebSearch or
+  any MCP tool other than Gmail.
 
 Every call it sees refreshes data/guard.json (the heartbeat, with the session's transcript path); blocks are
 appended to data/guard.log. `python engine/tools/hooks/guard.py --status` prints whether the guard is active in
@@ -28,7 +35,7 @@ parameters). A bare first name or common last name isn't a marker. It reads Bash
 `cd engine && ...`, generated code or an encoded command get past it, and so can a page told something by which URL
 is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
-logged.
+logged. `--status` lists such errors.
 """
 import base64
 import binascii
@@ -66,7 +73,8 @@ SHELL_TOOLS = {"Bash", "PowerShell"}
 NAVIGATE = re.compile(r"^mcp__.+__(browser_)?navigate$")
 SCRIPT_TOOLS = re.compile(r"^mcp__.+__(browser_evaluate|javascript_tool)$")
 NETWORK_JS = re.compile(r"\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|\bimport\s*\(|"
-                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|\.submit\s*\(")
+                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|"
+                        r"\.(?:submit|requestSubmit)\s*\(")
 FETCHERS = re.compile(r"(?<![\w-])(curl|wget|Invoke-WebRequest|Invoke-RestMethod|iwr|irm)(?:\.exe)?(?![\w-])", re.I)
 PY_HTTP = re.compile(r"\b(requests|urllib|httpx|http\.client|aiohttp|urlopen)\b")
 INLINE_CODE = re.compile(r"python3?(\.exe)?\s+-c|<<|-Command|\bnode\s+-e")
@@ -81,12 +89,16 @@ LONG_ARGS = {"--output", "--write-out", "--user-agent", "--header", "--data", "-
              "-useragent", "-timeoutsec", "-contenttype"}
 REDIRECT_LOOKUP = re.compile(r"-o\s+(/dev/null|NUL)\b|(?<!\S)(-I|--head|-\w*I)(?!\S)")
 SENDS_DATA = re.compile(r"(?<!\S)(-d|--data\S*|-F|--form\S*|-T|--upload-file|--json|-X\s*(POST|PUT|PATCH))(?!\S)")
-COPY_CMDS = {"cp", "copy", "copy-item", "xcopy", "robocopy", "ln", "unzip", "tar"}
+COPY_CMDS = {"cp", "copy", "copy-item", "cpi", "xcopy", "robocopy", "ln", "unzip", "tar"}
 RUNS_TOOL = re.compile(r"\s*python3?(\.exe)?\s+(\S*[/\\])?engine[/\\]tools[/\\]")
 HOST = re.compile(r"(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
 WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|dd|unzip|tar|sed\s+-i|perl\s+-i|"
                        r"Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item|Rename-Item|"
-                       r"del|erase|copy|move|ren|xcopy|robocopy)(?![\w-])", re.I)
+                       r"del|erase|copy|move|ren|xcopy|robocopy|sc|ac|ri|mi|cpi|ni|rni)(?![\w-])", re.I)
+GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|restore|clean|apply|am|merge|pull|"
+                         r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
+GIT_SENDS = re.compile(r"(?<![\w-])git(?:\.exe)?\b[^|;&\n]*?\s(push|remote\s+(?:add|set-url|rename))(?![\w-])", re.I)
+DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
 ENCODED = re.compile(r"^(?:[0-9a-f]{64,}|[A-Za-z0-9+/_=-]{64,})$")
@@ -114,14 +126,16 @@ class Block(Exception):
 def config():
     try:
         import yaml
-        return yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8")) or {}
+        cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+        return cfg if isinstance(cfg, dict) else {}
     except Exception:
         return {}
 
 
 def protected(cfg):
-    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the master files."""
-    paths = [ROOT / "engine", ROOT / ".claude"]
+    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the guard's own heartbeat and
+    log, the master files."""
+    paths = [ROOT / "engine", ROOT / ".claude", HEARTBEAT, LOG]
     for key in ("master_cv", "master_letter"):
         if cfg.get(key):
             paths.append(ROOT / str(cfg[key]))
@@ -140,7 +154,8 @@ def marker(words):
 def personal(cfg):
     """Regexes for the candidate's name, emails, phone numbers, address and birth date (config.yaml, CLAUDE.md)."""
     out, out.weak = Pii(), []
-    titles = set(re.findall(r"[a-zäöüß]{3,}", str((cfg.get("profile") or {}).get("include_titles")).lower()))
+    profile = cfg.get("profile") if isinstance(cfg.get("profile"), dict) else {}
+    titles = set(re.findall(r"[a-zäöüß]{3,}", str(profile.get("include_titles")).lower()))
     for key in ("applicant", "name_in_master"):
         words = re.findall(r"\w+", str(cfg.get(key) or ""))
         if len(words) >= 2 and str(cfg.get(key)) != "Your Name":
@@ -276,6 +291,8 @@ def check_url(url, pii, hosts=None, known=None):
     that decodes to text or looks random is refused too."""
     if url in ("about:blank",):
         return
+    if re.match(r"(?:[a-z][a-z0-9+.-]*://)?[^/?#]*\\", url, re.I):
+        raise Block("the URL has a backslash before its path; write the address with forward slashes only")
     parts = urlsplit(url if "://" in url else "https://" + url)
     host = (parts.hostname or "").lower()
     if parts.scheme not in ("http", "https"):
@@ -314,6 +331,7 @@ def check_url(url, pii, hosts=None, known=None):
 
 
 def check_path(path, cwd, protect):
+    path = re.sub(r"^\\\\\?\\(UNC\\)?", lambda m: "\\\\" if m.group(1) else "", str(path))
     p = Path(path)
     p = (p if p.is_absolute() else Path(cwd) / p).resolve()
     for q in protect:
@@ -338,7 +356,7 @@ def path_patterns(protect):
         alt = "|".join(re.escape(f).replace("/", r"[/\\]+") for f in sorted(forms, key=len, reverse=True))
         tail = r"""(?=$|[/\\\s'")])"""
         out.append((rel(q), re.compile(rf"""(?:^|(?<=[\s'"=(,]))(?:\./)?(?:{alt}){tail}""", re.I),
-                    re.compile(rf""">{{1,2}}\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
+                    re.compile(rf""">{{1,2}}\|?\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
     return out
 
 
@@ -346,20 +364,48 @@ def segments(cmd):
     return re.split(r"&&|\|\||;|\|", cmd)
 
 
-def check_writes(cmd, protect):
-    for label, path, redirect in path_patterns(protect):
+def touches(seg, cwd, q):
+    """True when a path-like word of the command segment resolves to q or a path inside it."""
+    try:
+        words = shlex.split(seg, posix=True)
+    except ValueError:
+        words = seg.split()
+    for w in words:
+        for part in re.split(r"[=,]", w):            # --out=engine/x, a,b lists
+            part = part.strip("'\"")
+            if "/" not in part and "\\" not in part or "://" in part:
+                continue
+            part = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", part) if os.name == "nt" else part
+            part = re.sub(r"^\\\\\?\\", "", part)
+            try:
+                p = (Path(cwd) / part).resolve()
+            except (OSError, ValueError):
+                continue
+            if p == q or q in p.parents:
+                return True
+    return False
+
+
+def check_writes(cmd, protect, cwd=None):
+    cwd = cwd or str(ROOT)
+    for seg in segments(cmd):
+        m = RUNS_TOOL.match(seg)
+        if m and ".." in re.split(r"[/\\]", seg[m.end():].split()[0] if seg[m.end():].split() else ""):
+            raise Block("run engine tools by their plain path (python engine/tools/<name>.py): no '..' in it")
+    for (label, path, redirect), q in zip(path_patterns(protect), protect):
         if redirect.search(cmd):
             raise Block(f"the command writes into {label}, which is read-only")
         for seg in segments(cmd):
-            if not path.search(seg) or RUNS_TOOL.match(seg):
+            if RUNS_TOOL.match(seg) or not (path.search(seg) or touches(seg, cwd, q)):
                 continue
             m = WRITE_CMD.search(seg)
             if m and m.group(1).lower() in COPY_CMDS:
                 args = seg[m.end():].split()
-                hit = bool(args) and bool(path.search(args[-1]))   # only the last argument is written
+                # only the last argument is written
+                hit = bool(args) and (bool(path.search(args[-1])) or touches(args[-1], cwd, q))
             else:
                 hit = bool(m) or bool(WRITE_CODE.search(seg))
-            if hit:
+            if hit or FETCHERS.search(seg) or GIT_CHANGES.search(seg):
                 raise Block(f"the command changes {label}, which is read-only: the engine, Claude's settings and "
                             "the master CV and letter are never changed by a run (propose changes in the brief)")
 
@@ -414,15 +460,29 @@ def check(call):
     cwd = call.get("cwd") or str(ROOT)
     if SEND_TOOLS.match(tool):
         raise Block(f"{tool} sends or types data; the routine never sends anything (drafts go in applications/)")
+    agent = call.get("agent_type") or ""
+    if agent == "ad-reader" and "gmail" in tool.lower():
+        raise Block("the ad reader has no mail tools; mail goes through the mail reader")
+    if agent == "mail-reader" and (tool in ("WebFetch", "WebSearch")
+                                   or (tool.startswith("mcp__") and "gmail" not in tool.lower())):
+        raise Block("the mail reader only reads Gmail: no web, browser or Indeed tools")
     cfg = config()
     if tool in FILE_TOOLS:
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
     elif tool in SHELL_TOOLS:
         cmd = inp.get("command") or ""
-        check_writes(cmd, protected(cfg))
+        if GIT_SENDS.search(cmd):
+            raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
+                        "computer (the candidate can push from a terminal)")
+        check_writes(cmd, protected(cfg), cwd)
         check_network(cmd, personal(cfg), allowed_hosts())
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
+    elif tool == "WebSearch":
+        query = unquoted(str(inp.get("query") or "")).lower()
+        if any(p.search(query) for p in personal(cfg)):
+            raise Block("the search query contains the candidate's name, email or phone number; search without "
+                        "personal data")
     elif NAVIGATE.match(tool):
         check_url(inp.get("url") or "", personal(cfg), known=allowed_hosts())
     elif SCRIPT_TOOLS.match(tool):
@@ -452,6 +512,8 @@ def beat(call, blocked=None):
     try:
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8")) if HEARTBEAT.exists() else {}
     except (OSError, ValueError):
+        state = {}
+    if not isinstance(state, dict):
         state = {}
     sid = call.get("session_id") or ""
     if state.get("session_id") != sid:
@@ -532,24 +594,30 @@ def status():
     try:
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8"))
         age = (now() - dt.datetime.fromisoformat(state["last_seen"])).total_seconds()
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, TypeError):
         state, age = {}, None
     if age is None or age > FRESH:
         print("guard NOT active: no tool call reached engine/tools/hooks/guard.py in this session. The task must be "
               "a local Code-tab task on this folder; run python engine/tools/setup_check.py --init")
         return 1
-    reasons = []
-    if state.get("blocked") and LOG.exists():
+    reasons, errors = [], 0
+    if LOG.exists():
         for line in LOG.read_text(encoding="utf-8").splitlines():
             try:
                 e = json.loads(line)
             except ValueError:
                 continue
             if e.get("session_id") == state.get("session_id"):
-                reasons.append(f"{e.get('tool')}: {e.get('reason')}")
+                if "error" in e:
+                    errors += 1
+                else:
+                    reasons.append(f"{e.get('tool')}: {e.get('reason')}")
     refused = refusals(state)
     print(f"guard active: {state.get('calls', 0)} call(s) checked, {state.get('blocked', 0)} blocked"
           + (f", {len(refused)} refused by the permission rules" if refused else "") + " this session")
+    if errors:
+        print(f"  guard errors: {errors} call(s) passed unchecked because the guard itself failed (data/guard.log); "
+              "say 'update the engine'")
     for r in reasons[-10:]:
         print(f"  blocked {r}")
     for tool, what, why in refused[-10:]:
@@ -567,14 +635,21 @@ def main():
     try:
         check(call)
     except Block as e:
-        beat(call, str(e))
         print(f"guard: {e}", file=sys.stderr)
+        try:
+            beat(call, str(e))
+        except Exception:
+            pass  # the block stands even if the heartbeat can't be written
         return 2
     except Exception as e:  # never block because of the guard's own bug
-        beat(call)
+        try:
+            beat(call)
+        except Exception:
+            pass
         try:
             with LOG.open("a", encoding="utf-8") as f:
-                f.write(json.dumps({"time": now().isoformat(timespec="seconds"), "error": repr(e)}) + "\n")
+                f.write(json.dumps({"time": now().isoformat(timespec="seconds"),
+                                    "session_id": call.get("session_id") or "", "error": repr(e)}) + "\n")
         except OSError:
             pass
         return 0

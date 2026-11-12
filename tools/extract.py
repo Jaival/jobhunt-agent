@@ -18,10 +18,11 @@ Usage (from the workspace folder):
         knows it, and prints its read task line, or where its extract is
     python engine/tools/extract.py save data/ads/incoming/ | data/ads/incoming.json
         the reader's replies (the folder: one file per reader call, saved by the SubagentStop hook; each file is
-        deleted once it saved cleanly) or one reply: saves valid extracts, adds its leads (Indeed, Gmail, web) to
-        candidates.json with the title filter and ledger check, records unreadable ads, prints a `MAIL` line per
-        reply to an application (from a `list mail` task; nothing is stored); one line per item, exit 1 when one is
-        invalid or the folder is empty
+        deleted once it saved cleanly; a reply with an invalid item is moved to data/ads/failed/ after its valid
+        items were saved, so it is not read again) or one reply: saves valid extracts, adds its leads (Indeed,
+        Gmail, web) to candidates.json with the title filter and ledger check, records unreadable ads, prints a
+        `MAIL` line per reply to an application (from a `list mail` task; nothing is stored); one line per item,
+        exit 1 when one is invalid or the folder is empty
     python engine/tools/extract.py read [<id> ...] [--model M]
         fallback without the subagent: reads the pending ad files with a headless `claude -p` call (no tools)
     python engine/tools/extract.py attach <id> applications/<folder>   copy the extract and ad text (ad.json, ad.txt)
@@ -107,6 +108,20 @@ def validate(value, schema, where="extract"):
     return out
 
 
+CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def clean(value):
+    """value with every run of control characters (line breaks, tabs, escape codes) in its strings made a space."""
+    if isinstance(value, str):
+        return CONTROL.sub(" ", value).strip()
+    if isinstance(value, list):
+        return [clean(v) for v in value]
+    if isinstance(value, dict):
+        return {k: clean(v) for k, v in value.items()}
+    return value
+
+
 def strings(value, where):
     """(field, text) for every string in value, at any depth."""
     if isinstance(value, str):
@@ -136,6 +151,9 @@ def text_problems(data, where=""):
 def url_problems(url, where="url"):
     if not isinstance(url, str) or not url.startswith("https://"):
         return [f"{where}: must start with https://"]
+    if re.search(r"""[\s"'`$\\<>|;\x00-\x1f\x7f]""", url):
+        return [f"{where}: holds a character a job link doesn't need (space, quote, backtick, $, backslash, "
+                "<, >, | or ;)"]
     if urlparse(url).hostname == "to.indeed.com":
         return [f"{where}: an Indeed short link; use https://de.indeed.com/viewjob?jk=<jk>"]
     return []
@@ -353,7 +371,12 @@ def cmd_save(a):
         failed = save_reply(f)
         bad += failed
         if not failed:
-            f.unlink()  # a failed reply stays, so the task can be sent again and the file checked
+            f.unlink()
+        else:  # set aside: a replay would report the same failure, and re-apply its "gone" marks, on every run
+            aside = path.with_name("failed") / f.name
+            aside.parent.mkdir(parents=True, exist_ok=True)
+            f.replace(aside)
+            print(f"        kept as {aside.as_posix()} (not read again)")
     return 1 if bad else 0
 
 
@@ -365,6 +388,7 @@ def save_reply(path):
     if not isinstance(data, dict) or set(data) - {"extracts", "leads", "unreadable", "mail"}:
         print("FAILED  the reply must be one JSON object with extracts, leads, unreadable and mail", file=sys.stderr)
         return 1
+    data = clean(data)
     cands, bad = load_candidates(), 0
     for mail in data.get("mail") or []:
         found = mail_problems(mail)
@@ -409,6 +433,7 @@ def cmd_read(a):
         text = (ads_dir() / f"{file_stem(j['id'])}.txt").read_text(encoding="utf-8")
         try:
             ext, _, _ = read_text(j, text, a.model)
+            ext = clean(ext)
         except (RuntimeError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as e:
             bad += 1
             print(f"FAILED  {j['id']}: {e}")

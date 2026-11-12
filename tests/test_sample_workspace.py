@@ -102,3 +102,21 @@ def test_old_config_asks_for_engine_update(tool, sample):
     result = json.loads(tool("setup_check.py", "--init", "--json").stdout)
     version = [c for c in result["checks"] if c["item"] == "config version"][0]
     assert not result["ready"] and version["status"] == "todo" and "update the engine" in version["fix"]
+
+
+def test_university_check(tool, sample):
+    def check():
+        result = json.loads(tool("setup_check.py", "--json").stdout)
+        return result["ready"], [c for c in result["checks"] if c["item"] == "university (student letters name it)"][0]
+    ready, uni = check()
+    assert uni["status"] == "ok"
+    cfg = sample / "config.yaml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("university: Universität Mannheim", "university:"),
+                   encoding="utf-8")
+    ready_after, uni = check()
+    assert uni["status"] == "warn" and "university is empty" in uni["fix"]
+    assert ready_after == ready
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("university:", "university: 42"), encoding="utf-8")
+    ready_after, uni = check()
+    assert uni["status"] == "warn" and "must be a name or a list of names" in uni["fix"]
+    assert ready_after == ready

@@ -112,15 +112,19 @@ def engine_edits():
 
 
 def engine_update(chan):
-    """The update on this channel that GitHub has and engine/ doesn't (version.update), or None when up to date
-    or unknown (offline). Only fetches; never changes engine/."""
-    if os.environ.get("JOBHUNT_OFFLINE") or git("fetch", "--quiet", "--tags", timeout=60) is None:
-        return None
-    return version.update(chan)
+    """(update, checked): the update on this channel that GitHub has and engine/ doesn't (version.update) or
+    None, and whether the check ran. JOBHUNT_OFFLINE=1 skips it; a failed fetch means not checked.
+    Only fetches; never changes engine/."""
+    if os.environ.get("JOBHUNT_OFFLINE"):
+        return None, None          # skipped on purpose
+    if git("fetch", "--quiet", "--tags", timeout=60) is None:
+        return None, False
+    return version.update(chan), True
 
 
 def guard_starts(launcher):
-    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call: it must exit 2.
+    """Start the hook the way Claude Code does (`python` from PATH) with a Gmail send call and a curl call: both
+    must exit 2.
 
     A hook that can't start doesn't block anything (docs/spike-scheduled-tasks.md), so this is the only proof.
     Returns (ok, fix)."""
@@ -135,11 +139,22 @@ def guard_starts(launcher):
                            env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
     except (OSError, subprocess.TimeoutExpired) as e:
         return False, f"the guard hook didn't run ({e})"
+    if not (r.returncode == 2 and "guard:" in r.stderr):
+        return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
+                       f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
+                       "there? say 'update the engine'")
+    call = json.dumps({"session_id": "setup-check", "cwd": str(ROOT), "tool_name": "Bash",
+                       "tool_input": {"command": "curl -s https://guard-selftest.invalid/"}})
+    try:
+        r = subprocess.run([python, str(launcher)], input=call, capture_output=True, text=True, timeout=30,
+                           env={**os.environ, "JOBHUNT_GUARD_SELFTEST": "1", "CLAUDE_PROJECT_DIR": str(ROOT)})
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"the guard hook didn't run ({e})"
     if r.returncode == 2 and "guard:" in r.stderr:
         return True, ""
-    return False, (f"the guard hook let a Gmail send through (exit {r.returncode}"
-                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): is engine/tools/hooks/guard.py "
-                   "there? say 'update the engine'")
+    return False, (f"the guard hook let a network call through (exit {r.returncode}"
+                   f"{': ' + r.stderr.strip()[:200] if r.stderr.strip() else ''}): check config.yaml is valid YAML, "
+                   "or say 'update the engine'")
 
 
 def checks():
@@ -182,6 +197,20 @@ def checks():
                 add("config.yaml", "profile is valid", True)
             except Exception as e:  # bad role type or a broken regex fragment
                 add("config.yaml", "profile is valid", False, str(e))
+        student = isinstance(prof, dict) and {"Werkstudent", "HiWi", "Internship"} & set(prof.get("role_types") or [])
+        uni = cfg.get("university")
+        listed = [uni] if isinstance(uni, str) else uni or []
+        names = [u for u in listed if isinstance(u, str) and u.strip()] if isinstance(listed, list) else []
+        if student and not isinstance(listed, list):
+            add("config.yaml", "university (student letters name it)", False,
+                "university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]: "
+                "the builder stops until it is", warn=True)
+        elif student:
+            claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8") if (ROOT / "CLAUDE.md").exists() else ""
+            add("config.yaml", "university (student letters name it)",
+                bool(names) and any(n.lower() in claude_text.lower() for n in names),
+                "university is empty, so student letters aren't checked for your enrolment: set it" if not names else
+                f"university '{names[0]}' isn't named in CLAUDE.md: is it still the template value?", warn=True)
 
     for key, label in (("master_cv", "master CV"), ("master_letter", "master cover letter")):
         p = ROOT / str(cfg.get(key) or "")
@@ -263,9 +292,13 @@ def checks():
     except ValueError as e:
         add("engine", "engine_channel", False, f"{e}: set it to stable (releases only) or next", warn=True)
         chan = "stable"
-    found = engine_update(chan)
-    add("engine", f"engine is up to date ({chan} channel)", not found,
-        f"engine update available ({found and found[1]}): say 'update the engine'", warn=True)
+    found, checked = engine_update(chan)
+    if checked is False:
+        add("engine", f"engine update check ({chan} channel)", False,
+            "couldn't reach GitHub (offline, or engine/ isn't a git clone): engine updates unknown", warn=True)
+    else:
+        add("engine", f"engine is up to date ({chan} channel)", not found,
+            f"engine update available ({found and found[1]}): say 'update the engine'", warn=True)
 
     import pdf_export
     try:

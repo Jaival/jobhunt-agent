@@ -6,11 +6,17 @@ for the best ones. Python tools keep a ledger of every screened job, refuse unfi
 Excel tracker of what you sent. **Nothing is ever sent or submitted automatically**: you review the drafts
 and apply yourself.
 
-Built for working-student, internship and junior roles in Germany (Arbeitsagentur, Arbeitnow, StepStone,
-XING, Indeed), in **any field**: marketing, nursing, engineering or software. The first run asks what you are
-looking for and turns it into your own title filter, search terms and rules, all plain text you can change.
-Before tailoring anything it checks your CV and cover letter for ATS problems and suggests fixes, then maps
-your own CV design so the builder can tailor it without you switching to a template.
+**Who it is for:** students and people looking for a first job in Germany: working-student (Werkstudent),
+student-assistant (HiWi), internship, thesis and junior roles, in **any field** (marketing, nursing,
+engineering, software). It searches Arbeitsagentur, Arbeitnow, StepStone, XING and Indeed.
+
+**Not for (yet):** experienced professionals (titles with senior, lead or manager and ads that ask for
+several years of experience are dropped), apprenticeships (Ausbildung), freelance work and mini-jobs. Setup,
+the daily brief and the commands are in English; cover letters can be English, German or both.
+
+The first run asks what you are looking for and turns it into your own title filter, search terms and rules, all
+plain text you can change. Before tailoring anything it checks your CV and cover letter for ATS problems and
+suggests fixes, then maps your own CV design so the builder can tailor it without you switching to a template.
 
 Built by [Jaival Saija](https://github.com/Jaival) with Claude Code ([portfolio](https://jaivalsaija.vercel.app)).
 
@@ -25,7 +31,7 @@ workspace/                   your private folder (and private git repo)
 ├─ projects.md cv/           your project facts, master CV and its map cv/layout.yaml (the builder only reorders
 │                            and swaps approved wordings)
 ├─ applications/ tracker/ daily/ data/ follow-ups/ interview-prep/ reviews/
-├─ .claude/                  permission rules, guard hook, subagents (ad-reader, tailor) and skills for the
+├─ .claude/                  permission rules, guard hook, subagents (ad-reader, mail-reader, tailor) and skills for the
 │                            requests: ats-review, update-engine, remap-cv, onboarding, and the commands
 │                            tailor, why, sent, job-status
 └─ engine/                   this repo
@@ -37,7 +43,9 @@ workspace/                   your private folder (and private git repo)
    ├─ RULES.md               honesty, no-placeholder and drafts-only rules
    ├─ career-ops-playbook.md liveness, posting check, requirements table, outreach, follow-ups, reviews
    ├─ tools/                 setup_check, search_jobs, scope, ats_scan, cv_map, build_application, pdf_export,
-   │                         upgrade, ledger, add_applied, archive, tracker_to_md, version, decisions, history
+   │                         upgrade, ledger, add_applied, tracker, archive, tracker_to_md, version, decisions, history,
+   │                         score, extract, playbook, permissions, appdirs, atomic, config, eval_run, release_notes,
+   │                         hooks/guard, hooks/reader_reply
    ├─ docs/                  visual setup guide, roadmap to v1.0 (ROADMAP.md), how releases work (RELEASING.md)
    ├─ examples/              filled-in sample workspaces (a fictional marketing student; a German mechanical
    │                         engineer with a plain-paragraph CV and German + English letters)
@@ -83,10 +91,11 @@ does it with the same tools, and lists what it did under "Done from your decisio
 on the list for 7 days.
 
 ## Requirements
-- Claude Desktop (Code tab) with a local scheduled task (Scheduled > New task > Only on this computer)
+- Claude Desktop (Code tab) on a Claude plan that includes Claude Code, with a local scheduled task (Scheduled > New task > Only on this computer)
 - Your CV and a cover letter as Word .docx files (Word, Google Docs and LibreOffice can all export one)
 - For PDFs: Microsoft Word (Windows or macOS) or the free LibreOffice; without either you still get .docx files
 - Python 3.11 or newer with `python-docx`, `openpyxl`, `pypdf`, `pyyaml`, `requests`
+- git (to get the engine and its updates)
 - Optional MCP connectors: Gmail, Indeed, a headless browser (obscura)
 
 See [SETUP.md](SETUP.md), or the visual guide in [docs/setup-guide.html](docs/setup-guide.html). Setup is mostly

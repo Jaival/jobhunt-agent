@@ -5,7 +5,7 @@ CLAUDE.md. **Decisions recorded in CLAUDE.md override these defaults.**
 
 1. Honest framing: map real strengths to the job's requirements; name relevant gaps openly and say the candidate is actively working on them. Describe adjacent experience as transferable, never as direct.
 2. Disclose the candidate's German level in the letter when the ad mentions German; frame it as actively improving.
-3. Flag hard mismatches before drafting: required C1/C2 German (when the candidate's level is lower), required university enrolment (for Werkstudent roles, check the enrolment conditions), senior-only roles. CLAUDE.md may record exceptions (for example, drafting student roles despite a German requirement).
+3. Flag hard mismatches before drafting: required C1/C2 German for junior roles (when the candidate's level is lower; for student roles it lowers the language sub-score instead, engine/rubric.md), required university enrolment (for Werkstudent roles, check the enrolment conditions), senior-only roles. CLAUDE.md may record exceptions (for example, drafting student roles despite a German requirement).
 4. If the role is far away and CLAUDE.md says the candidate is willing to relocate, say so; never imply the candidate already lives there.
 5. CV edits are surgical: preserve the design; only change the profile summary (headline), skill ordering/wording and bullet emphasis.
    - Projects: every CV keeps all projects; per job only the order changes. With a project pool (cv/layout.yaml `max: N`
