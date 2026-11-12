@@ -44,6 +44,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   needed" brief when a scheduled run finds the setup unfinished.
 - For contributors: CI runs `ruff check` (syntax errors and pyflakes only), and CLAUDE.md in the repo root
   lists the checks and the branch and changelog rules.
+- The README now says who the engine is for (student and first-job roles in Germany, any field), who it is not
+  for yet (experienced professionals, apprenticeships, freelance) and what it needs.
 
 ### Fixed
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
