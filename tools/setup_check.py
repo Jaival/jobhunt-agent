@@ -199,8 +199,13 @@ def checks():
                 add("config.yaml", "profile is valid", False, str(e))
         student = isinstance(prof, dict) and {"Werkstudent", "HiWi", "Internship"} & set(prof.get("role_types") or [])
         uni = cfg.get("university")
-        names = [u for u in ([uni] if isinstance(uni, str) else uni or []) if isinstance(u, str) and u.strip()]
-        if student:
+        listed = [uni] if isinstance(uni, str) else uni or []
+        names = [u for u in listed if isinstance(u, str) and u.strip()] if isinstance(listed, list) else []
+        if student and not isinstance(listed, list):
+            add("config.yaml", "university (student letters name it)", False,
+                "university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]: "
+                "the builder stops until it is", warn=True)
+        elif student:
             claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8") if (ROOT / "CLAUDE.md").exists() else ""
             add("config.yaml", "university (student letters name it)",
                 bool(names) and any(n.lower() in claude_text.lower() for n in names),

@@ -116,3 +116,7 @@ def test_university_check(tool, sample):
     ready_after, uni = check()
     assert uni["status"] == "warn" and "university is empty" in uni["fix"]
     assert ready_after == ready
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("university:", "university: 42"), encoding="utf-8")
+    ready_after, uni = check()
+    assert uni["status"] == "warn" and "must be a name or a list of names" in uni["fix"]
+    assert ready_after == ready
