@@ -86,6 +86,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   lost track of them when there was none. `upgrade.py rollback` stopped before it restored config.yaml when the
   local edits didn't apply cleanly. `migrate` deleted the comment lines after a config key it removed. A damaged
   upgrade.json now gives a message instead of a traceback.
+- `eval_run.py compare` (the release gate) passed when the new run had lost or errored ads. It now fails for
+  any ad of the old run that the new run didn't judge, and lists the ads each metric lost and gained.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a

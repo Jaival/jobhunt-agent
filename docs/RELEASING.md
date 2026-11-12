@@ -63,7 +63,8 @@ effect, not the function.
 4. The judgment eval ([tests/evals/README.md](../tests/evals/README.md#running-an-eval)): on `next`,
    `python tools/eval_run.py run --label X.Y.Z` (writes `tests/evals/baselines/vX.Y.Z.json` and `.md`), then
    `python tools/eval_run.py compare tests/evals/baselines/v<previous>.json tests/evals/baselines/vX.Y.Z.json`.
-   No metric may lose more than 2 ads; explain smaller drops and intended changes in the CHANGELOG. Commit both
+   No metric may lose more than 2 ads. It also fails when an ad of the old baseline was not judged in the new
+   run. Explain smaller drops and intended changes in the CHANGELOG. Commit both
    baseline files on the release branch (step 5).
 5. Branch `release-X.Y.Z` from `next`: set `VERSION` to `X.Y.Z`; rename `## [Unreleased]` to
    `## [X.Y.Z] - YYYY-MM-DD: <short title>`, add a new empty `## [Unreleased]` above it, and update the
