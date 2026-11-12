@@ -185,3 +185,19 @@ def test_merge_updates_the_matcher_of_an_existing_hook(tmp_path):
     assert len(merged["hooks"]["PreToolUse"]) == 1
     assert any(a.startswith("matcher PreToolUse") for a in added)
     assert permissions.merge(merged, want)[1] == []
+
+
+def test_install_saves_an_edited_claude_file_before_replacing_it(tmp_path):
+    import datetime as dt
+    permissions.install(tmp_path)
+    agent = tmp_path / ".claude" / "agents" / "tailor.md"
+    template = (permissions.TEMPLATE.parent / "agents" / "tailor.md").read_text(encoding="utf-8")
+    agent.write_text(template + "my own line\n", encoding="utf-8")
+    added = permissions.install(tmp_path)
+    folder = f"claude-files-{dt.date.today().isoformat()}"
+    assert agent.read_text(encoding="utf-8") == template
+    keep = tmp_path / "backups" / folder / "agents" / "tailor.md"
+    assert keep.read_text(encoding="utf-8").endswith("my own line\n")
+    assert f"saved the old .claude/agents/tailor.md to backups/{folder}/" in added
+    assert not [a for a in permissions.install(tmp_path) if a.startswith("saved ")]
+    assert [p.name for p in keep.parent.iterdir()] == ["tailor.md"]
