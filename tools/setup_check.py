@@ -197,6 +197,15 @@ def checks():
                 add("config.yaml", "profile is valid", True)
             except Exception as e:  # bad role type or a broken regex fragment
                 add("config.yaml", "profile is valid", False, str(e))
+        student = isinstance(prof, dict) and {"Werkstudent", "HiWi", "Internship"} & set(prof.get("role_types") or [])
+        uni = cfg.get("university")
+        names = [u for u in ([uni] if isinstance(uni, str) else uni or []) if isinstance(u, str) and u.strip()]
+        if student:
+            claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8") if (ROOT / "CLAUDE.md").exists() else ""
+            add("config.yaml", "university (student letters name it)",
+                bool(names) and any(n.lower() in claude_text.lower() for n in names),
+                "university is empty, so student letters aren't checked for your enrolment: set it" if not names else
+                f"university '{names[0]}' isn't named in CLAUDE.md: is it still the template value?", warn=True)
 
     for key, label in (("master_cv", "master CV"), ("master_letter", "master cover letter")):
         p = ROOT / str(cfg.get(key) or "")
