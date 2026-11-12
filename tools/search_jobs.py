@@ -22,7 +22,6 @@ import base64
 import datetime as dt
 import html
 import json
-import os
 import re
 import sys
 import time
@@ -157,21 +156,37 @@ def write(jobs, status, since):
                                        "status": status, "jobs": jobs}, ensure_ascii=False, indent=1))
 
 
+ARBEITNOW_PAGES = 7
+
+
 def arbeitnow(since, status):
+    """Arbeitnow's job board, newest first, up to ARBEITNOW_PAGES pages. A page that fails (HTTP error, not
+    JSON, an item without its fields) ends the search and keeps the pages already read; the error goes to
+    status["errors"]. A full last page inside the window is reported as status["warning"]."""
     out, cutoff = [], dt.datetime.fromisoformat(since).timestamp()
-    for page in range(1, 8):
-        data = requests.get(ARBEITNOW, params={"page": page}, headers=UA, timeout=30).json().get("data", [])
+    for page in range(1, ARBEITNOW_PAGES + 1):
+        try:
+            r = requests.get(ARBEITNOW, params={"page": page}, headers=UA, timeout=30)
+            r.raise_for_status()
+            data = r.json().get("data", [])
+            found = []
+            for x in data:
+                if x["created_at"] < cutoff or not x["url"].startswith("https://www.arbeitnow.com/"):
+                    continue
+                text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", x.get("description", ""))))
+                found.append(dict(id=f"an-{x['slug']}", source="Arbeitnow", title=x["title"], company=x["company_name"],
+                                  location=x.get("location", ""), remote=x.get("remote"),
+                                  posted=f"{dt.date.fromtimestamp(x['created_at']):%Y-%m-%d}", url=x["url"], text=text))
+            done = not data or min(x["created_at"] for x in data) < cutoff
+        except Exception as e:  # keep the pages already read; report in the status line
+            status.setdefault("errors", []).append(f"page {page}: {type(e).__name__}: {e}")
+            return out
         status["fetched"] = status.get("fetched", 0) + len(data)
-        for x in data:
-            if x["created_at"] < cutoff or not x["url"].startswith("https://www.arbeitnow.com/"):
-                continue
-            text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", x.get("description", ""))))
-            out.append(dict(id=f"an-{x['slug']}", source="Arbeitnow", title=x["title"], company=x["company_name"],
-                            location=x.get("location", ""), remote=x.get("remote"),
-                            posted=f"{dt.date.fromtimestamp(x['created_at']):%Y-%m-%d}", url=x["url"], text=text))
-        if not data or min(x["created_at"] for x in data) < cutoff:
-            break
+        out += found
+        if done:
+            return out
         time.sleep(1)
+    status["warning"] = f"stopped after {ARBEITNOW_PAGES} pages, older jobs in the window were left out: run more often"
     return out
 
 

@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import subprocess
 
+import history
 from test_stamping import ENGINE
 
 
@@ -43,6 +44,29 @@ def test_an_existing_repo_is_left_as_it_is(tool, sample):
     init = json.loads(tool("setup_check.py", "--init", "--json").stdout)["init"]
     assert not any("history" in line for line in init)
     assert (sample / ".gitignore").read_text(encoding="utf-8") == "mine/\n"
+
+
+def test_a_repo_the_user_already_had_gets_the_ignore_lines_in_info_exclude(tmp_path, monkeypatch):
+    ws = tmp_path / "ws"
+    (ws / "engine").mkdir(parents=True)
+    (ws / "backups" / "2026-01-01").mkdir(parents=True)
+    (ws / "data").mkdir()
+    history.git(ws, "init", "-q")                      # the user's own repo, with their own .gitignore
+    (ws / ".gitignore").write_text("*.tmp\n", encoding="utf-8")
+    (ws / "engine" / "x.py").write_text("x", encoding="utf-8")
+    (ws / "backups" / "2026-01-01" / "cv.docx").write_text("x", encoding="utf-8")
+    (ws / "data" / "candidates.json").write_text("{}", encoding="utf-8")
+    (ws / "~$letter.docx").write_text("x", encoding="utf-8")
+    (ws / "daily.md").write_text("brief", encoding="utf-8")
+    assert history.commit(ws).startswith("committed")
+    tracked = history.git(ws, "ls-files").stdout.split()
+    assert sorted(tracked) == [".gitignore", "daily.md"]
+    assert (ws / ".gitignore").read_text(encoding="utf-8") == "*.tmp\n"          # untouched
+    exclude = (ws / ".git" / "info" / "exclude").read_text(encoding="utf-8")
+    assert all(line in exclude.splitlines() for line in history.IGNORE)
+    (ws / "daily.md").write_text("brief 2", encoding="utf-8")
+    history.commit(ws)
+    assert (ws / ".git" / "info" / "exclude").read_text(encoding="utf-8") == exclude   # written once
 
 
 def test_a_workspace_inside_another_repo_isnt_committed(tool, sample):

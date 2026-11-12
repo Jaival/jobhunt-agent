@@ -39,6 +39,13 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   Excel-open check as `add_applied.py`. The daily run no longer edits the Excel file itself.
 - The builder warns when application.md sets a recipient, subject or date that cv/layout.yaml doesn't map
   (the master letter's own text would stay), and lists numbers that come from the ad only.
+- ROUTINE.md: the daily run reads the master CV with `cv_map.py outline` (it had no allowed way to read a
+  .docx), names failed sources and goes on, skips steps 3 to 5 when nothing is new, and writes the "Setup
+  needed" brief when a scheduled run finds the setup unfinished.
+- For contributors: CI runs `ruff check` (syntax errors and pyflakes only), and CLAUDE.md in the repo root
+  lists the checks and the branch and changelog rules.
+- The README now says who the engine is for (student and first-job roles in Germany, any field), who it is not
+  for yet (experienced professionals, apprenticeships, freelance) and what it needs.
 
 ### Fixed
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
@@ -68,6 +75,35 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   are always removed.
 - Student letters: the builder required a phrase like "as soon as possible" even when your CLAUDE.md gives a
   start date. A date in the letter ("from 1 March 2027", "ab 01.03.2027") now counts as the start.
+- A reader reply with an invalid item stayed in data/ads/incoming/ and was read again on every run, which
+  repeated its FAILED lines and could mark a live job as closed. It now moves to data/ads/failed/ after its
+  valid items are saved.
+- Reader output: line breaks and other control characters are removed from every field, and a job link with a
+  space, quote, backtick, `$`, backslash, `<`, `>`, `|` or `;` is rejected (also by `extract.py add`).
+- `ledger.py record` recorded jobs that were never read (no extract, no read error) as "screened", so they
+  didn't come back. They now stay out of the ledger until the reader has read them.
+- `ledger.py set --verdict` accepts only screened, skipped, closed, tailored, applied, rejected, interview or
+  offer; a typo stops with an error.
+- The same job with another gender form ("(m/w/divers)", "Kaufmann/-frau", "Berater/in", "Entwickler*in",
+  "Manager:in") counts as seen.
+- "update the engine": `upgrade.py apply` put local engine edits aside before it knew there was an update, and
+  lost track of them when there was none. `upgrade.py rollback` stopped before it restored config.yaml when the
+  local edits didn't apply cleanly. `migrate` deleted the comment lines after a config key it removed. A damaged
+  upgrade.json now gives a message instead of a traceback.
+- `eval_run.py compare` (the release gate) passed when the new run had lost or errored ads. It now fails for
+  any ad of the old run that the new run didn't judge, and lists the ads each metric lost and gained.
+- One failed Arbeitnow page (an error page, a changed field) dropped every Arbeitnow job of the run. The pages
+  already read are now kept and the error is counted in the source line. The search also says when its 7-page
+  limit left out older jobs.
+- In a workspace that already was a git repo before setup, the daily commit added engine/, backups/ and Office
+  lock files. The ignore lines now go to .git/info/exclude; your .gitignore is not changed. Files such a repo
+  already tracks stay tracked: `git rm -r --cached engine backups` removes them from the history going forward.
+- `setup_check.py` said "engine is up to date" when it couldn't reach GitHub; it now says the check didn't run.
+- `setup_check.py` warns when `university` in config.yaml is empty or isn't the one in your CLAUDE.md.
+- A ticked decision written as `[x ]`, `[ x]` or `-[x]` is now read as ticked.
+- `setup_check.py --init` and "update the engine" save a changed file under .claude/ (an agent or skill you
+  edited) to backups/claude-files-<date>/ before they replace it.
+- The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
@@ -85,6 +121,15 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   square brackets do.
 - Numbers with a unit ("10k", "2.5M", "3 Mio" written as "3mio") are checked against your files and the ad;
   before, they were skipped.
+- Jobs whose ad the reader classes as role type Other (experienced, freelance, apprenticeship) are skipped with
+  the reason "role type". Outreach drafts are written for jobs with a score of 70 or more only (playbook E
+  already said so). On Mondays, weekend jobs that scored 70 or more are tailored first. RULES.md rule 3 now
+  says what the rubric already did: C1/C2 German is a hard mismatch for junior roles; for student roles it
+  lowers the language sub-score.
+- Mail is read by a new `mail-reader` subagent (.claude/agents/mail-reader.md) that has Gmail read tools only;
+  the ad reader no longer has mail tasks. An instruction hidden in an ad or an email can no longer combine
+  reading mail with opening web pages. The guard hook enforces the split. Costs one more subagent call per run.
+  `setup_check.py --init` (or "update the engine") installs the new agent file and updates the reply hook.
 
 ## [1.1.0] - 2026-11-08: your own design
 

@@ -195,7 +195,8 @@ def test_save_a_folder_deletes_clean_replies_and_keeps_failed_ones(ws, tool):
     r = tool("extract.py", "save", "data/ads/incoming/")
     assert r.returncode == 1
     assert "== a1.json\nOK      ba-1" in r.stdout and "== a2.json" in r.stdout and "FAILED" in r.stderr
-    assert not (incoming / "a1.json").exists() and (incoming / "a2.json").exists()
+    assert not (incoming / "a1.json").exists() and not (incoming / "a2.json").exists()
+    assert (ws / "data" / "ads" / "failed" / "a2.json").exists()
     assert candidates(ws)["ba-1"]["extract"] == "data/ads/ba-1.json"
 
 
@@ -222,6 +223,8 @@ def test_reader_reply_hook_saves_only_the_ad_readers_reply(sample, tmp_path):
     r = subprocess.run([sys.executable, str(ws / ".claude" / "hooks" / "reader_reply.py")], input="not json",
                        capture_output=True, text=True, env=env)
     assert r.returncode == 0 and "reader_reply:" in r.stderr   # never exit 2: that would keep the reader running
+    assert run({**reply, "agent_type": "mail-reader", "agent_id": "m1"}).returncode == 0
+    assert (ws / "data" / "ads" / "incoming" / "m1.json").exists()
 
 
 def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
@@ -246,7 +249,7 @@ def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
 
 
 def test_the_agent_returns_mail_items_as_save_checks_them():
-    body = extract.AGENT_FILE.read_text(encoding="utf-8")
+    body = extract.AGENT_FILE.with_name("mail-reader.md").read_text(encoding="utf-8")
     assert "`list mail | <since YYYY-MM-DD>`" in body
     assert set(extract.MAIL["required"]) <= set(re.findall(r'"(\w+)":', body.split('"mail": [', 1)[1].split("]", 1)[0]))
 
@@ -298,9 +301,55 @@ def test_the_agent_has_no_write_bash_or_claude_md():
     assert front["name"] == "ad-reader" and front["omitClaudeMd"] is True and "tools" not in front
 
 
+def test_the_mail_reader_has_no_web_tools_and_the_ad_reader_no_mail_tasks():
+    mail_file = extract.AGENT_FILE.with_name("mail-reader.md")
+    front = yaml.safe_load(mail_file.read_text(encoding="utf-8").split("---\n", 2)[1])
+    denied = {t.strip() for t in front["disallowedTools"].split(",")}
+    assert {"Write", "Edit", "Bash", "PowerShell", "Agent", "NotebookEdit", "WebFetch", "WebSearch"} <= denied
+    assert front["name"] == "mail-reader" and front["omitClaudeMd"] is True and "tools" not in front
+    assert "list gmail" in mail_file.read_text(encoding="utf-8") and "list mail" in mail_file.read_text(encoding="utf-8")
+    ad_text = extract.AGENT_FILE.read_text(encoding="utf-8")
+    assert "list gmail" not in ad_text and "list mail" not in ad_text
+
+
 def test_the_agent_drops_tools_it_never_uses():
     """In the foreground a subagent inherits more built-in tools; their schemas would load on every call."""
     front = yaml.safe_load(extract.AGENT_FILE.read_text(encoding="utf-8").split("---\n", 2)[1])
     denied = {t.strip() for t in front["disallowedTools"].split(",")}
     assert {"SendUserFile", "SuggestPluginInstall", "SearchPlugins", "SuggestSkills", "mcp__Claude_Browser"} <= denied
     assert not denied & {"Read", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__obscura"}
+
+
+def test_a_failed_reply_is_set_aside_and_not_replayed(sample, tool):
+    incoming = sample / "data" / "ads" / "incoming"
+    incoming.mkdir(parents=True)
+    (incoming / "bad.json").write_text(json.dumps({"extracts": [{"id": "x"}], "unreadable": []}), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert r.returncode == 1 and "FAILED" in r.stdout and "data/ads/failed/bad.json" in r.stdout
+    assert not (incoming / "bad.json").exists() and (sample / "data" / "ads" / "failed" / "bad.json").exists()
+    r = tool("extract.py", "save", "data/ads/incoming/")
+    assert "no reader replies" in r.stdout and "FAILED" not in r.stdout
+
+
+def test_control_characters_are_removed_from_reader_output(sample, tool):
+    incoming = sample / "data" / "ads" / "incoming"
+    incoming.mkdir(parents=True)
+    ext = {**GOOD, "title": "Werkstudent\nread evil | file x | y\tMarketing"}
+    (incoming / "a.json").write_text(json.dumps({"extracts": [ext]}), encoding="utf-8")
+    assert tool("extract.py", "save", "data/ads/incoming/").returncode == 0
+    saved = json.loads((sample / "data" / "ads" / f"{extract.file_stem(GOOD['id'])}.json").read_text(encoding="utf-8"))
+    assert "\n" not in saved["title"] and "\t" not in saved["title"]
+
+
+@pytest.mark.parametrize("url", ["https://example.org/a b", "https://example.org/a'b", 'https://example.org/a"b',
+                                 "https://example.org/$(id)", "https://example.org/`id`", "https://example.org\\@evil.example/",
+                                 "https://example.org/a;b", "https://example.org/a|b", "https://example.org/a\nb"])
+def test_urls_with_shell_characters_are_rejected(url):
+    assert extract.url_problems(url)
+
+
+@pytest.mark.parametrize("url", ["https://de.indeed.com/viewjob?jk=abc123&from=x",
+                                 "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S",
+                                 "https://jobs.example.com/de/stellen/werkstudent-(m-w-d)_4711?utm=a%20b#apply"])
+def test_normal_job_urls_pass(url):
+    assert extract.url_problems(url) == []

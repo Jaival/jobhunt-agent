@@ -1,0 +1,6 @@
+# Lint: syntax errors and pyflakes only (unused imports, undefined names). No style rules, no formatter.
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["E9", "F"]

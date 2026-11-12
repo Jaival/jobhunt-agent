@@ -21,7 +21,7 @@ def make_pool(sample, max_=2, further=True, text=FURTHER):
     p.runs[0].text, p.runs[0].bold = text, False
     d.save(str(path))
     layout = sample / "cv" / "layout.yaml"
-    pool = f"      max: {max_}\n" + (f'      further: {{starts_with: "Further projects"}}\n' if further else "")
+    pool = f"      max: {max_}\n" + ('      further: {starts_with: "Further projects"}\n' if further else "")
     yaml_text = layout.read_text(encoding="utf-8").replace("      end: [SKILLS]\n", f'      end: ["{text}"]\n' + pool, 1)
     layout.write_text(yaml_text, encoding="utf-8")
 

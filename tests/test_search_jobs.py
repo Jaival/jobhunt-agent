@@ -4,7 +4,9 @@ import os
 import subprocess
 import sys
 
+import extract
 from conftest import TOOLS, runner
+from test_extract import GOOD
 
 # Runs search_jobs.main() in the workspace with the sources stubbed out. argv: tools dir, JSON {ref: behaviour},
 # where behaviour is "ok", "500" (an HTML error page), "empty" (200 without ad text) or "down" (connection error).
@@ -84,6 +86,11 @@ def test_search_keeps_a_job_added_by_link(sample):
 def test_search_drops_a_job_added_by_link_once_the_ledger_has_it(sample):
     tool = runner(sample)
     assert tool("extract.py", "add", MANUAL_URL).returncode == 0
+    [job] = [j for j in candidates(sample) if j["url"] == MANUAL_URL]
+    ads = sample / "data" / "ads"
+    ads.mkdir(parents=True, exist_ok=True)
+    (ads / f"{extract.file_stem(job['id'])}.json").write_text(
+        json.dumps(dict(GOOD, id=job["id"], url=MANUAL_URL)), encoding="utf-8")  # read, so record keeps it
     assert tool("ledger.py", "record", "--model", "m").returncode == 0
     run(sample, {"1": "ok"})
     assert not [j for j in candidates(sample) if j["url"] == MANUAL_URL]

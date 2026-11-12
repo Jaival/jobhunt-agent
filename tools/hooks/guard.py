@@ -19,7 +19,9 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
 - writes to its own files (data/guard.json, data/guard.log), so a run can't hide its blocks;
 - `git push` and `git remote add / set-url / rename` from Bash or PowerShell: the workspace history is never pushed;
 - a URL with a backslash before its path (`https://a.example\\@b.example/`: two programs may read two hosts);
-- a WebSearch query that holds the candidate's name, email or phone number.
+- a WebSearch query that holds the candidate's name, email or phone number;
+- a reader using the other reader's tools: the ad reader any Gmail tool; the mail reader WebFetch, WebSearch or
+  any MCP tool other than Gmail.
 
 Every call it sees refreshes data/guard.json (the heartbeat, with the session's transcript path); blocks are
 appended to data/guard.log. `python engine/tools/hooks/guard.py --status` prints whether the guard is active in
@@ -458,6 +460,12 @@ def check(call):
     cwd = call.get("cwd") or str(ROOT)
     if SEND_TOOLS.match(tool):
         raise Block(f"{tool} sends or types data; the routine never sends anything (drafts go in applications/)")
+    agent = call.get("agent_type") or ""
+    if agent == "ad-reader" and "gmail" in tool.lower():
+        raise Block("the ad reader has no mail tools; mail goes through the mail reader")
+    if agent == "mail-reader" and (tool in ("WebFetch", "WebSearch")
+                                   or (tool.startswith("mcp__") and "gmail" not in tool.lower())):
+        raise Block("the mail reader only reads Gmail: no web, browser or Indeed tools")
     cfg = config()
     if tool in FILE_TOOLS:
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))

@@ -112,11 +112,14 @@ def engine_edits():
 
 
 def engine_update(chan):
-    """The update on this channel that GitHub has and engine/ doesn't (version.update), or None when up to date
-    or unknown (offline). Only fetches; never changes engine/."""
-    if os.environ.get("JOBHUNT_OFFLINE") or git("fetch", "--quiet", "--tags", timeout=60) is None:
-        return None
-    return version.update(chan)
+    """(update, checked): the update on this channel that GitHub has and engine/ doesn't (version.update) or
+    None, and whether the check ran. JOBHUNT_OFFLINE=1 skips it; a failed fetch means not checked.
+    Only fetches; never changes engine/."""
+    if os.environ.get("JOBHUNT_OFFLINE"):
+        return None, None          # skipped on purpose
+    if git("fetch", "--quiet", "--tags", timeout=60) is None:
+        return None, False
+    return version.update(chan), True
 
 
 def guard_starts(launcher):
@@ -194,6 +197,20 @@ def checks():
                 add("config.yaml", "profile is valid", True)
             except Exception as e:  # bad role type or a broken regex fragment
                 add("config.yaml", "profile is valid", False, str(e))
+        student = isinstance(prof, dict) and {"Werkstudent", "HiWi", "Internship"} & set(prof.get("role_types") or [])
+        uni = cfg.get("university")
+        listed = [uni] if isinstance(uni, str) else uni or []
+        names = [u for u in listed if isinstance(u, str) and u.strip()] if isinstance(listed, list) else []
+        if student and not isinstance(listed, list):
+            add("config.yaml", "university (student letters name it)", False,
+                "university must be a name or a list of names, e.g. [Universität Mannheim, University of Mannheim]: "
+                "the builder stops until it is", warn=True)
+        elif student:
+            claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8") if (ROOT / "CLAUDE.md").exists() else ""
+            add("config.yaml", "university (student letters name it)",
+                bool(names) and any(n.lower() in claude_text.lower() for n in names),
+                "university is empty, so student letters aren't checked for your enrolment: set it" if not names else
+                f"university '{names[0]}' isn't named in CLAUDE.md: is it still the template value?", warn=True)
 
     for key, label in (("master_cv", "master CV"), ("master_letter", "master cover letter")):
         p = ROOT / str(cfg.get(key) or "")
@@ -275,9 +292,13 @@ def checks():
     except ValueError as e:
         add("engine", "engine_channel", False, f"{e}: set it to stable (releases only) or next", warn=True)
         chan = "stable"
-    found = engine_update(chan)
-    add("engine", f"engine is up to date ({chan} channel)", not found,
-        f"engine update available ({found and found[1]}): say 'update the engine'", warn=True)
+    found, checked = engine_update(chan)
+    if checked is False:
+        add("engine", f"engine update check ({chan} channel)", False,
+            "couldn't reach GitHub (offline, or engine/ isn't a git clone): engine updates unknown", warn=True)
+    else:
+        add("engine", f"engine is up to date ({chan} channel)", not found,
+            f"engine update available ({found and found[1]}): say 'update the engine'", warn=True)
 
     import pdf_export
     try:

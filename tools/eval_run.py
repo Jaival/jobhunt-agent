@@ -15,7 +15,8 @@ Usage (from the engine folder):
     python tools/eval_run.py run [--model opus] [--label 0.3.0] [--only 01,07] [--jobs 4]
         --label  the version in the baseline's name (default: VERSION)
     python tools/eval_run.py compare tests/evals/baselines/v0.3.0.json tests/evals/baselines/v0.4.0.json [--tolerance 2]
-        exits 1 when a metric agrees on more than --tolerance fewer ads than in the older baseline
+        exits 1 when a metric agrees on more than --tolerance fewer ads than in the older baseline; also fails
+        when an ad of the old run is missing or errored in the new run; lists the ads each metric lost and gained
 """
 import argparse
 import concurrent.futures
@@ -222,14 +223,25 @@ def cmd_run(a):
 
 
 def compare(old, new, tolerance):
-    """Lines describing each metric's change, and whether any metric fell by more than tolerance ads."""
+    """Lines describing each metric's change, and whether the gate fails: a metric fell by more than tolerance
+    ads, or an ad the old run judged is missing or errored in the new run."""
     lines, worse = [], False
+    grades = lambda run: {r["ad"]: r["grades"] for r in run["results"] if "error" not in r}
+    was, now = grades(old), grades(new)
+    missing = sorted(set(was) - set(now))
+    if missing:
+        worse = True
+        lines.append(f"NOT JUDGED in the new run: {', '.join(missing)} REGRESSION")
     for key, label in METRICS:
         (o, on), (n, nn) = old["summary"][key], new["summary"][key]
-        drop = o - n
-        flag = " REGRESSION" if drop > tolerance else ""
+        flag = " REGRESSION" if o - n > tolerance else ""
         worse |= bool(flag)
-        lines.append(f"{label}: {o}/{on} -> {n}/{nn}{flag}")
+        both = [ad for ad in sorted(set(was) & set(now)) if key in was[ad] and key in now[ad]]
+        lost = [ad for ad in both if was[ad][key] and not now[ad][key]]
+        gained = [ad for ad in both if not was[ad][key] and now[ad][key]]
+        detail = "; ".join(x for x in (f"lost: {', '.join(lost)}" if lost else "",
+                                       f"gained: {', '.join(gained)}" if gained else "") if x)
+        lines.append(f"{label}: {o}/{on} -> {n}/{nn}{flag}" + (f" ({detail})" if detail else ""))
     return lines, worse
 
 
