@@ -57,6 +57,11 @@ Consequences:
 - `Edit(/engine/**)` and `Edit` on the master CV and letter (paths from config.yaml), `Bash(curl *)` and
   `Bash(wget *)`. curl is then allowed only through the hook's Indeed redirect exception (see below), because an allow
   rule can't make an exception to a deny rule.
+
+> **Not shipped (2026-11):** the template has no `Bash(curl *)` / `Bash(wget *)` deny rule. The routine uses
+> curl for JSON APIs, so curl stays allowed and the guard hook checks every curl, wget and WebFetch target
+> against the host allowlist (`tools/hooks/guard.py`).
+
 - Allow `Bash(python engine/tools/*)`. The daily runs are in auto mode, so allow rules mainly save classifier calls.
   They are not the safety control.
 - Don't use bare `mcp__claude_ai_Gmail__…` names: they don't match in Desktop scheduled runs.
