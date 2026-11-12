@@ -94,6 +94,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - In a workspace that already was a git repo before setup, the daily commit added engine/, backups/ and Office
   lock files. The ignore lines now go to .git/info/exclude; your .gitignore is not changed. Files such a repo
   already tracks stay tracked: `git rm -r --cached engine backups` removes them from the history going forward.
+- `setup_check.py` said "engine is up to date" when it couldn't reach GitHub; it now says the check didn't run.
+- `setup_check.py` warns when `university` in config.yaml is empty or isn't the one in your CLAUDE.md.
+- A ticked decision written as `[x ]`, `[ x]` or `-[x]` is now read as ticked.
+- `setup_check.py --init` and "update the engine" save a changed file under .claude/ (an agent or skill you
+  edited) to backups/claude-files-<date>/ before they replace it.
+- The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
 
 ### Behaviour changes
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
