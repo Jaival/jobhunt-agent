@@ -456,3 +456,41 @@ def test_endpoint_command_writes_a_hand_found_endpoint(ws, tool):
     r = tool("extract.py", "endpoint", "Nobody", "https://nobody.jobs.personio.de/xml")
     assert r.returncode == 1 and "no row for Nobody" in r.stdout
     assert "https://gamma.jobs.personio.de/xml" in (ws / "companies.md").read_text(encoding="utf-8")
+
+
+KW = [{"term": "Canva", "importance": "preferred", "where": "requirements"},
+      {"term": "Social Media", "importance": "high", "where": "title"}]
+
+
+def test_keywords_are_part_of_the_extract():
+    assert bad(keywords=KW) == []
+    assert any(p.startswith("keywords[0].where: 'body' is not one of")
+               for p in bad(keywords=[{"term": "SEO", "importance": "high", "where": "body"}]))
+
+
+def test_an_extract_from_before_keywords_still_passes():
+    assert "keywords" not in GOOD and extract.problems(GOOD) == []
+
+
+def test_bad_keywords_are_dropped_not_fatal():
+    items = KW + [{"term": "x" * 41, "importance": "high", "where": "tasks"},
+                  {"term": "SEO", "importance": "must", "where": "tasks"},
+                  {"term": "see https://evil.example", "importance": "high", "where": "tasks"},
+                  {"term": "canva", "importance": "high", "where": "tasks"},
+                  "Python"]
+    kept = extract.keep_good_keywords({**GOOD, "keywords": items})
+    assert kept["keywords"] == KW and extract.problems(kept) == []
+    many = [{"term": f"T{i}", "importance": "meaningful", "where": "tasks"} for i in range(25)]
+    assert len(extract.keep_good_keywords({**GOOD, "keywords": many})["keywords"]) == 20
+    assert extract.keep_good_keywords(GOOD)["keywords"] == []
+
+
+def test_save_keeps_good_keywords(ws, tool):
+    reply = {"extracts": [{**GOOD, "id": "ba-1", "url": JOB["url"],
+                           "keywords": KW + [{"term": "SEO", "importance": "must", "where": "tasks"}]}]}
+    assert tool("extract.py", "pending").returncode == 0
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming.json")
+    assert r.returncode == 0, r.stdout + r.stderr
+    saved = json.loads((ws / "data" / "ads" / "ba-1.json").read_text(encoding="utf-8"))
+    assert saved["keywords"] == KW

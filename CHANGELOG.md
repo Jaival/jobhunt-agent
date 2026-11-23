@@ -12,6 +12,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+### Added
+- Ad extracts hold the ad's key terms (`keywords`: up to 20, each with its importance and where the ad names
+  it), the words an applicant tracking system searches a CV for. The ad reader fills them in; `extract.py save`
+  drops a bad term instead of the whole extract. Extracts saved before this have none and stay valid.
+
 ### Changed
 - The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
   comes back as the call's result, so the run no longer spends turns waiting with `sleep` or empty turns
@@ -112,6 +117,7 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
 
 ### Behaviour changes
+- The ad reader also returns the ad's key terms (`keywords` in data/ads/<id>.json).
 - Untrusted pages, ads and mail have less say over what the daily run does:
   - Watchlist endpoints are found by the ad reader, not the run itself: `extract.py pending` hands out an
     `endpoint | <company> | <careers page>` task for each companies.md row without an Endpoint (again after 30

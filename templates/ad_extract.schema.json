@@ -51,6 +51,21 @@
       "items": {"type": "string", "maxLength": 150},
       "description": "The main tasks of the role, one short phrase each."
     },
+    "keywords": {
+      "type": "array",
+      "maxItems": 20,
+      "description": "The ad's key terms an applicant tracking system would search the CV for: tools, languages, methods, domains and role words (\"Python\", \"CI/CD\", \"Agile\", \"SAP\", \"Werkstudent\"), in the ad's own wording, most important first. One term each, no sentences, no soft-skill filler (\"team player\", \"motivated\") unless the ad lists it as a requirement. Empty when the ad names none.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "term": {"type": "string", "maxLength": 40, "description": "One term as the ad writes it."},
+          "importance": {"enum": ["critical", "high", "meaningful", "preferred"], "description": "As for requirements: critical = must-have or in the title; preferred = nice-to-have."},
+          "where": {"enum": ["title", "tasks", "requirements"], "description": "The part of the ad it is in (the first one, if several)."}
+        },
+        "required": ["term", "importance", "where"],
+        "additionalProperties": false
+      }
+    },
     "injection_text": {
       "type": "array",
       "maxItems": 5,
@@ -61,6 +76,6 @@
   "required": ["ad_extract_version", "id", "url", "title", "company", "location", "remote", "language", "role_type",
                "closed", "closed_evidence", "german_required", "hours_per_week", "start", "duration_months",
                "years_experience", "enrolment_required", "mandatory_internship_only", "requirements", "tasks",
-               "injection_text"],
+               "keywords", "injection_text"],
   "additionalProperties": false
 }
