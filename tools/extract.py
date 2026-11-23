@@ -547,8 +547,9 @@ def cmd_save(a):
 def save_reply(path):
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        data = None
+    except (OSError, ValueError) as e:  # ValueError: bad JSON or bytes that aren't UTF-8
+        print(f"FAILED  {path.name} can't be read as UTF-8 JSON: {type(e).__name__}", file=sys.stderr)
+        return 1
     if not isinstance(data, dict) or set(data) - {"extracts", "leads", "unreadable", "mail", "endpoints"}:
         print("FAILED  the reply must be one JSON object with extracts, leads, unreadable, mail and endpoints",
               file=sys.stderr)

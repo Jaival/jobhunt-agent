@@ -48,6 +48,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   for yet (experienced professionals, apprenticeships, freelance) and what it needs.
 
 ### Fixed
+- `extract.py save` no longer stops with a traceback on a reader reply that isn't UTF-8 or can't be read. It
+  prints FAILED for that file, sets it aside in `data/ads/failed/` and saves the other replies.
 - `search_jobs.py` prints API titles, companies and locations without control characters and cut to 200
   characters. A new job whose title, company or location holds a link or an instruction, or whose link has
   shell characters, prints as `NEW ... SUSPICIOUS (reader will check)` without that text; the ad reader still
