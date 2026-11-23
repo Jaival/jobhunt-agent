@@ -194,11 +194,13 @@ def test_save_a_folder_deletes_clean_replies_and_keeps_failed_ones(ws, tool):
     (incoming / "a1.json").write_text(json.dumps({"extracts": [{**GOOD, "id": "ba-1", "url": JOB["url"]}]}),
                                       encoding="utf-8")
     (incoming / "a2.json").write_text("Here is the JSON: {", encoding="utf-8")   # prose instead of the object
+    (incoming / "a3.json").write_bytes(b'{"extracts": [], "x": "\xff\xfe"}')   # not UTF-8: no crash, set aside
     r = tool("extract.py", "save", "data/ads/incoming/")
-    assert r.returncode == 1
+    assert r.returncode == 1 and "Traceback" not in r.stderr
     assert "== a1.json\nOK      ba-1" in r.stdout and "== a2.json" in r.stdout and "FAILED" in r.stderr
-    assert not (incoming / "a1.json").exists() and not (incoming / "a2.json").exists()
-    assert (ws / "data" / "ads" / "failed" / "a2.json").exists()
+    assert "== a3.json" in r.stdout and "a3.json can't be read as UTF-8 JSON: UnicodeDecodeError" in r.stderr
+    assert not any(incoming.glob("*.json"))
+    assert {f.name for f in (ws / "data" / "ads" / "failed").iterdir()} == {"a2.json", "a3.json"}
     assert candidates(ws)["ba-1"]["extract"] == "data/ads/ba-1.json"
 
 
