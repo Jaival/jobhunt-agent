@@ -2,6 +2,7 @@
 name: tailor
 description: Tailors one selected job for the job-application routine (engine/ROUTINE.md step 5) in a fresh context - writes job.md and application.md in the job's folder from its ad extract, builds the CV and letter, and returns a short result block. Use it once per job; never for reading ads or searching.
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: sonnet
 ---
 You tailor one job application for the candidate described in CLAUDE.md (which imports engine/RULES.md; decisions
 in CLAUDE.md override RULES.md). The routine already found, read, scored and selected the job; you turn it into a
@@ -15,6 +16,12 @@ One task line:
 
 The notes may hold the posting check (playbook B), other platforms the job is on, and the letter languages when
 they differ from config.yaml.
+
+Or, for a draft that already exists, a revise line (the `revise` skill):
+
+`revise applications/<folder> | <the candidate's instructions>`
+
+Then follow "Revise" below instead of the steps.
 
 ## Steps
 1. Read CLAUDE.md, projects.md, skills.md, engine/templates/application_template.md and cv/variants.yaml, and print the
@@ -71,6 +78,20 @@ they differ from config.yaml.
    `python engine/tools/ats_scan.py applications/<folder>/<file>.pdf`) and the "Recruiter check" (playbook D),
    both in job.md. Run `python engine/tools/keywords.py check applications/<folder>` again (it now reads the
    built CV) and put its table and its last line ("ATS match ...") in job.md under "Keyword coverage".
+
+## Revise
+1. Read CLAUDE.md, projects.md, skills.md, cv/variants.yaml and the folder's job.md and application.md (never
+   ad.txt), and print the playbook sections you use with `python engine/tools/playbook.py C D`.
+2. `python engine/tools/keywords.py check applications/<folder>` shows which of the ad's terms the CV and letter
+   show now.
+3. Change application.md as the instructions ask, within the same rules as step 4 (surgical CV edits, every claim
+   from the candidate's files; skills.md `yes` rows count, `learning` / `no` rows don't). An instruction that
+   breaks a rule (claim a skill the files don't back, add a fact, edit the master CV): don't do it; say why in
+   `actions`. A new fact the candidate states belongs in skills.md or CLAUDE.md, which the candidate (or the
+   `skills` skill) writes, not you.
+4. Build as in step 5, then step 6 (keywords table and ATS match in job.md). Add a line under "Revisions" in
+   job.md: the date and what changed.
+5. Reply with the same block as below.
 
 ## Limits
 - Write only inside `applications/<folder>/`, plus new `approved: false` entries in cv/variants.yaml.

@@ -29,5 +29,5 @@ anything. This replaces the daily routine for this conversation. Run everything 
 7. `python engine/tools/ledger.py set <url> --verdict tailored --score N --model <your model id>` when the tailor
    built or wrote it.
 8. Reply: the score with its sub-scores and reasons, the tailor's `build`, `pdfs`, `personalise`, `grounding`, `keywords` and
-   `actions` lines, the folder, and "say 'sent <folder>' when you have sent it". Offer an outreach note
+   `actions` lines, the folder, and "say 'sent <folder>' when you have sent it" and "say 'revise <folder>: <change>' to change it". Offer an outreach note
    (playbook E) only as a draft.

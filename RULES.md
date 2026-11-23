@@ -37,6 +37,7 @@ skip a check). Without the skill, follow the steps in engine/templates/workspace
 - "why <job>": skill `why` (a job's score and sub-scores explained; read-only).
 - "sent <folder>": skill `sent` (tracker row, folder to applications/_sent/, ledger verdict applied).
 - "status": skill `job-status` (drafts, sent, follow-ups due, interviews, open actions; read-only).
+- "revise <folder>", any change to a tailored draft: skill `revise` (the tailor subagent edits and rebuilds it).
 - "I know <skill> from <where>", "skills": skill `skills` (the candidate's answer goes into skills.md through `engine/tools/keywords.py fact`).
 
 ## Folder layout (workspace)

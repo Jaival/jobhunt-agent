@@ -26,6 +26,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   none of your files mention: `` - [ ] Do you know Agile? (asked by Acme) `skill Agile=?` ``. Replace `?` with
   `yes <where you used it>`, `learning` or `no` and tick it; the next run writes it to skills.md. Or tell Claude in
   the workspace ("I know Agile from Maven"): the new `skills` skill records it.
+- `revise <folder>: <change>` (new `revise` skill): the tailor subagent edits and rebuilds a draft in a fresh
+  context, instead of a long chat in your session. A chat after the daily run was the biggest token cost measured
+  (docs/research/token-usage-2026-11-08.md); a revise costs about what one tailoring does.
 
 ### Changed
 - The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
@@ -132,6 +135,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   "Keyword coverage" is the tool's table, the tailor's reply has a `keywords` line, and the brief's "Apply today"
   table shows the ATS match.
 - The builder's grounding check also accepts terms from skills.md rows marked yes.
+- The tailor, ad reader and mail reader run on Sonnet (`model: sonnet` in their files), also when your own session
+  runs a bigger model. They ran on Sonnet in every measured run; the pin keeps it that way.
 - Untrusted pages, ads and mail have less say over what the daily run does:
   - Watchlist endpoints are found by the ad reader, not the run itself: `extract.py pending` hands out an
     `endpoint | <company> | <careers page>` task for each companies.md row without an Endpoint (again after 30
