@@ -48,6 +48,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   for yet (experienced professionals, apprenticeships, freelance) and what it needs.
 
 ### Fixed
+- The guard hook splits a multi-line Bash command into its lines. Before, a file write on one line and
+  `python engine/tools/...` on the next counted as one part, and the guard blocked it as a write into engine/.
+  It no longer splits inside quotes or a heredoc body, so code in `python -c "..."` or a heredoc is checked as
+  one part: a script that names an engine/ path in one statement and writes to it in another is now blocked.
+  Shell variables set in the same command (`p=engine/x; rm $p`, PowerShell `$p = '...'`) are replaced by their
+  value before the checks, for the read-only paths and for the allowed hosts.
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
   let a blocked call through when data/guard.json wasn't a JSON object. Both now keep blocking.
   `guard.py --status` adds a "guard errors" line when the guard itself failed on a call, and

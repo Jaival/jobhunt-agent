@@ -99,6 +99,12 @@ GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|
                          r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
 GIT_SENDS = re.compile(r"(?<![\w-])git(?:\.exe)?\b[^|;&\n]*?\s(push|remote\s+(?:add|set-url|rename))(?![\w-])", re.I)
 DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
+HEREDOC = re.compile(r"<<(-?)\s*(['\"]?)([\w.-]+)\2")
+SEPARATORS = re.compile(r"&&|\|\||;|\||\r?\n")
+SH_VAR = re.compile(r"""(?:^|(?<=[\s;&|(]))(?:(?:export|local|readonly|declare(?:\s+-\w+)?)\s+)?"""
+                    r"""([A-Za-z_]\w*)=('[^']*'|"[^"]*"|[^\s;&|)]*)""")
+PS_VAR = re.compile(r"""\$(?:env:)?([A-Za-z_]\w*)\s*=\s*(@'.*?'@|@".*?"@|'[^']*'|"[^"]*"|[^\s;|]+)""", re.S)
+VAR_USE = re.compile(r"\$\{([A-Za-z_]\w*)\}|\$(?:env:)?([A-Za-z_]\w*)")
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
 ENCODED = re.compile(r"^(?:[0-9a-f]{64,}|[A-Za-z0-9+/_=-]{64,})$")
@@ -361,7 +367,73 @@ def path_patterns(protect):
 
 
 def segments(cmd):
-    return re.split(r"&&|\|\||;|\|", cmd)
+    """The command's parts: split on &&, ||, ;, | and line breaks outside quotes. A heredoc body stays with the part
+    that opens it, so the code in `python -c "..."`, a heredoc or a here-string is one part. With unbalanced quotes
+    it splits on every separator."""
+    parts, quote, pending, i, n = [[]], None, [], 0, len(cmd)
+    while i < n:
+        c, cur = cmd[i], parts[-1]
+        if quote:
+            if c == "\\" and quote == '"' and i + 1 < n:
+                cur.append(cmd[i:i + 2])
+                i += 2
+                continue
+            quote = None if c == quote else quote
+        elif c in "'\"":
+            quote = c
+        elif c == "\\" and i + 1 < n:
+            cur.append(cmd[i:i + 2])
+            i += 2
+            continue
+        elif cmd.startswith("<<", i) and not cmd.startswith("<<<", i) and (m := HEREDOC.match(cmd, i)):
+            pending.append((m.group(3), bool(m.group(1)), cur))
+            cur.append(m.group())
+            i = m.end()
+            continue
+        elif c == "\n" and pending:
+            end = i                                    # body: up to the line holding each terminator word
+            for word, tabs, part in pending:
+                start = end
+                while end < n:
+                    end = cmd.find("\n", end + 1)
+                    end = n if end < 0 else end
+                    line = cmd[cmd.rfind("\n", 0, end) + 1:end].rstrip("\r")
+                    if (line.lstrip("\t") if tabs else line) == word:
+                        break
+                part.append(cmd[start:end])
+            pending, i = [], end
+            continue
+        elif cmd.startswith(("&&", "||"), i) or c in ";|\n":
+            parts.append([])
+            i += 2 if cmd.startswith(("&&", "||"), i) else 1
+            continue
+        cur.append(c)
+        i += 1
+    if quote:
+        return SEPARATORS.split(cmd)
+    return ["".join(p) for p in parts]
+
+
+def expand_vars(cmd):
+    """The command with $name, ${name} and $env:name replaced by the value of the last plain assignment before them
+    (Bash name=value, PowerShell $name = value), so a path kept in a variable is checked like one written out.
+    Values computed when the command runs ($(...), read, Join-Path) aren't known and stay as they are."""
+    found = sorted((m.start(), m.end(), m.group(1).lower(), m.group(2))
+                   for r in (SH_VAR, PS_VAR) for m in r.finditer(cmd))
+    values = []                                        # (end of assignment, name, value)
+
+    def value(m, pos):
+        name = (m.group(1) or m.group(2)).lower()
+        hits = [v for end, n, v in values if n == name and end <= pos]
+        return hits[-1] if hits else m.group()
+
+    for start, end, name, raw in found:
+        if raw[:2] in ("@'", '@"'):
+            raw = raw[2:-2].strip("\r\n")
+        elif raw[:1] in "'\"" and len(raw) > 1:
+            raw = raw[1:-1]
+        values.append((end, name, VAR_USE.sub(lambda m, pos=start: value(m, pos), raw)))   # a=x; b=$a/y
+    return VAR_USE.sub(lambda m: value(m, m.start()), cmd) if values else cmd
 
 
 def touches(seg, cwd, q):
@@ -470,7 +542,7 @@ def check(call):
     if tool in FILE_TOOLS:
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
     elif tool in SHELL_TOOLS:
-        cmd = inp.get("command") or ""
+        cmd = expand_vars(inp.get("command") or "")
         if GIT_SENDS.search(cmd):
             raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
                         "computer (the candidate can push from a terminal)")

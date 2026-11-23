@@ -95,6 +95,16 @@ BLOCKED_CALLS = [
     ("Bash", {"command": "git -C engine reset --hard HEAD~1"}, "engine/"),
     ("Bash", {"command": "git -C engine stash"}, "engine/"),
     ("Bash", {"command": "python engine/tools/../../notes.py"}, "engine/tools"),
+    ("Bash", {"command": "echo ok\nrm -rf engine/tools"}, "changes engine/"),
+    ("Bash", {"command": "python - <<'EOF'\np = 'engine/RULES.md'\nopen(p, 'w').write('x')\nEOF"}, "changes engine/"),
+    ("Bash", {"command": "python - <<EOF | python engine/tools/history.py commit\np = 'engine/RULES.md'\n"
+                         "open(p, 'w')\nEOF"}, "changes engine/"),
+    ("Bash", {"command": "python -c \"p = 'engine/RULES.md'; open(p, 'w')\""}, "changes engine/"),
+    ("Bash", {"command": "p=engine/RULES.md; rm $p"}, "changes engine/"),
+    ("Bash", {"command": "export a=\"engine\"\nb=${a}/tools\nrm -rf \"$b\""}, "changes engine/"),
+    ("PowerShell", {"command": "$p = 'engine/RULES.md'; Remove-Item $p"}, "changes engine/"),
+    ("PowerShell", {"command": "$env:P = @'\nengine/RULES.md\n'@\nSet-Content $env:P x"}, "changes engine/"),
+    ("Bash", {"command": "u=evil.example.com; curl -s $u"}, ""),
     ("mcp__obscura__browser_evaluate", {"expression": "document.forms[0].requestSubmit()"}, "only read the page"),
     ("Write", {"file_path": "data/guard.json", "content": "{}"}, "read-only"),
     ("Edit", {"file_path": "data/guard.log", "old_string": "a", "new_string": "b"}, "read-only"),
@@ -134,6 +144,12 @@ ALLOWED_CALLS = [
     ("Bash", {"command": "python engine/tools/decisions.py --no-tailor"}),
     ("Bash", {"command": "python engine/tools/decisions.py done 2026-10-30 sent 2026-10-30_Acme_Marketing"}),
     ("Bash", {"command": "python engine/tools/history.py commit"}),
+    ("Bash", {"command": "touch data/x.txt\npython engine/tools/history.py commit"}),
+    ("Bash", {"command": "cat > data/note.md <<'EOF'\nx\nEOF\npython engine/tools/ledger.py show Acme"}),
+    ("Bash", {"command": "python engine/tools/ledger.py set https://x.example.com --note \"a; rm engine/x\""}),
+    ("Bash", {"command": "touch data/x.txt # don't\npython engine/tools/history.py commit"}),   # unbalanced quote
+    ("Bash", {"command": "f=engine/templates/application_template.md; cp $f applications/X/application.md"}),
+    ("Bash", {"command": "p=engine/RULES.md; p=data/x.txt; rm $p"}),   # the last assignment counts
     ("Bash", {"command": "curl -s -o /dev/null -w \"%{redirect_url}\" \"https://to.indeed.com/aabbcc\""}),
     ("Bash", {"command": "curl -s -D - -o /dev/null to.indeed.com/aabbcc"}),
     ("Bash", {"command": "curl -s -m 40 -H 'X-API-Key: jobboerse-jobsuche' "
