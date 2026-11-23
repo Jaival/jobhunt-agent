@@ -31,9 +31,10 @@ reads this session's transcript for tool results saying so and lists them as "re
 
 Limits: plain words in a URL (`?cv=SAP+FI+5+years`) can't be told from a search query, so CV facts that aren't
 personal markers pass, as does text encoded in a way it doesn't try (reversed, ciphered, split over several
-parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would.
-`cd engine && ...`, generated code or an encoded command get past it, and so can a page told something by which URL
-is opened. The permission rules are the main
+parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would:
+it follows cd / pushd / Set-Location and plain variable assignments, and blocks a write after a cd it can't follow
+and a curl / wget whose URL it can't read. Generated code or an encoded command get past it, and so can a page told
+something by which URL is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
 logged. `--status` lists such errors.
 """
@@ -91,6 +92,16 @@ REDIRECT_LOOKUP = re.compile(r"-o\s+(/dev/null|NUL)\b|(?<!\S)(-I|--head|-\w*I)(?
 SENDS_DATA = re.compile(r"(?<!\S)(-d|--data\S*|-F|--form\S*|-T|--upload-file|--json|-X\s*(POST|PUT|PATCH))(?!\S)")
 COPY_CMDS = {"cp", "copy", "copy-item", "cpi", "xcopy", "robocopy", "ln", "unzip", "tar"}
 RUNS_TOOL = re.compile(r"\s*python3?(\.exe)?\s+(\S*[/\\])?engine[/\\]tools[/\\]")
+# A tool call holding one of these runs more than the tool (a substitution, a second line), so it gets the checks.
+RUNS_MORE = re.compile(r"\n|\$\(|`|[<>]\(")
+CD = re.compile(r"^\s*\(?\s*(cd|chdir|pushd|popd|Set-Location|sl|Push-Location|Pop-Location)(?![\w-])(.*)$",
+                re.I | re.S)
+REDIRECT_TO = re.compile(r"(?<![<>])\d?>{1,2}\|?\s*(?!&)([^\s;&|<>()]+)")
+NO_WRITE = {"/dev/null", "nul", "$null"}
+UNRESOLVED = re.compile(r"\$\(|`|<\(")
+# what may stand before a fetcher that runs (rather than a word like `grep curl x`): wrappers, xargs, a substitution
+FETCH_PREFIX = re.compile(r"(?:^\s*(?:\w+=\S*\s+)*(?:(?:sudo|env|command|exec|nohup|time|timeout(?:\s+\S+)?|"
+                          r"xargs(?:\s+-\S+)*|&)\s+)*|(?:\$\(|`|\()\s*)$", re.I)
 HOST = re.compile(r"(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
 WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|dd|unzip|tar|sed\s+-i|perl\s+-i|"
                        r"Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item|Rename-Item|"
@@ -99,7 +110,7 @@ GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|
                          r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
 GIT_SENDS = re.compile(r"(?<![\w-])git(?:\.exe)?\b[^|;&\n]*?\s(push|remote\s+(?:add|set-url|rename))(?![\w-])", re.I)
 DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
-HEREDOC = re.compile(r"<<(-?)\s*(['\"]?)([\w.-]+)\2")
+HEREDOC = re.compile(r"<<(-?)[ \t]*")
 SEPARATORS = re.compile(r"&&|\|\||;|\||\r?\n")
 SH_VAR = re.compile(r"""(?:^|(?<=[\s;&|(]))(?:(?:export|local|readonly|declare(?:\s+-\w+)?)\s+)?"""
                     r"""([A-Za-z_]\w*)=('[^']*'|"[^"]*"|[^\s;&|)]*)""")
@@ -366,13 +377,45 @@ def path_patterns(protect):
     return out
 
 
+def heredoc_word(cmd, i):
+    """(terminator, strip tabs, end) of the heredoc operator `<<` at i, or None. The word may be quoted in parts
+    (`<<E"O"F` ends at a line `EOF`), as Bash reads it."""
+    m = HEREDOC.match(cmd, i)
+    word, j, n = [], m.end(), len(cmd)
+    while j < n and cmd[j] not in " \t\r\n;&|<>()":
+        if cmd[j] in "'\"":
+            k = cmd.find(cmd[j], j + 1)
+            if k < 0:
+                return None
+            word.append(cmd[j + 1:k])
+            j = k + 1
+        elif cmd[j] == "\\" and j + 1 < n:
+            word.append(cmd[j + 1])
+            j += 2
+        else:
+            word.append(cmd[j])
+            j += 1
+    return ("".join(word), bool(m.group(1)), j) if "".join(word) else None
+
+
+def closing(cmd, i):
+    """The index after the parenthesis that closes the one at i (the end of the command if none does)."""
+    depth = 0
+    for j in range(i, len(cmd)):
+        depth += {"(": 1, ")": -1}.get(cmd[j], 0)
+        if depth == 0:
+            return j + 1
+    return len(cmd)
+
+
 def segments(cmd):
     """The command's parts: split on &&, ||, ;, | and line breaks outside quotes. A heredoc body stays with the part
-    that opens it, so the code in `python -c "..."`, a heredoc or a here-string is one part. With unbalanced quotes
-    it splits on every separator."""
+    that opens it, so the code in `python -c "..."`, a heredoc or a here-string is one part. Comments are dropped,
+    and `<<` inside an arithmetic `$((...))` isn't a heredoc. With unbalanced quotes it splits on every separator."""
     parts, quote, pending, i, n = [[]], None, [], 0, len(cmd)
     while i < n:
         c, cur = cmd[i], parts[-1]
+        word_start = i == 0 or cmd[i - 1] in " \t\r\n;&|("
         if quote:
             if c == "\\" and quote == '"' and i + 1 < n:
                 cur.append(cmd[i:i + 2])
@@ -385,10 +428,18 @@ def segments(cmd):
             cur.append(cmd[i:i + 2])
             i += 2
             continue
-        elif cmd.startswith("<<", i) and not cmd.startswith("<<<", i) and (m := HEREDOC.match(cmd, i)):
-            pending.append((m.group(3), bool(m.group(1)), cur))
-            cur.append(m.group())
-            i = m.end()
+        elif c == "#" and word_start:
+            i = n if cmd.find("\n", i) < 0 else cmd.find("\n", i)
+            continue
+        elif cmd.startswith("$((", i) or (cmd.startswith("((", i) and word_start):
+            end = closing(cmd, i + (c == "$"))
+            cur.append(cmd[i:end])
+            i = end
+            continue
+        elif cmd.startswith("<<", i) and not cmd.startswith("<<<", i) and (h := heredoc_word(cmd, i)):
+            pending.append((h[0], h[1], cur))
+            cur.append(cmd[i:h[2]])
+            i = h[2]
             continue
         elif c == "\n" and pending:
             end = i                                    # body: up to the line holding each terminator word
@@ -414,16 +465,41 @@ def segments(cmd):
     return ["".join(p) for p in parts]
 
 
-def expand_vars(cmd):
-    """The command with $name, ${name} and $env:name replaced by the value of the last plain assignment before them
-    (Bash name=value, PowerShell $name = value), so a path kept in a variable is checked like one written out.
-    Values computed when the command runs ($(...), read, Join-Path) aren't known and stay as they are."""
-    found = sorted((m.start(), m.end(), m.group(1).lower(), m.group(2))
-                   for r in (SH_VAR, PS_VAR) for m in r.finditer(cmd))
+def in_quotes(cmd, ps=False):
+    """For each character of cmd: True when it is inside a quoted string (Bash, or PowerShell with ps)."""
+    out, quote, i, n = [False] * len(cmd), None, 0, len(cmd)
+    escape = "`" if ps else "\\"
+    while i < n:
+        c = cmd[i]
+        if quote:
+            out[i] = True
+            if c == escape and quote == '"' and i + 1 < n:
+                out[i + 1] = True
+                i += 2
+                continue
+            quote = None if c == quote else quote
+        elif c in "'\"":
+            quote, out[i] = c, True
+        elif c == escape:
+            i += 1
+        i += 1
+    return out
+
+
+def expand_vars(cmd, ps=False):
+    """The command with $name and ${name} (Bash) or $name and $env:name (PowerShell, with ps) replaced by the value
+    of the last plain assignment before them (Bash name=value, PowerShell $name = value), so a path kept in a
+    variable is checked like one written out. Bash names are case-sensitive, PowerShell names aren't. An assignment
+    inside a quoted string is text, not an assignment. Values computed when the command runs ($(...), read,
+    Join-Path) aren't known and stay as they are."""
+    fold = str.lower if ps else str
+    quoted = in_quotes(cmd, ps)
+    found = sorted((m.start(), m.end(), fold(m.group(1)), m.group(2))
+                   for m in (PS_VAR if ps else SH_VAR).finditer(cmd) if not quoted[m.start()])
     values = []                                        # (end of assignment, name, value)
 
     def value(m, pos):
-        name = (m.group(1) or m.group(2)).lower()
+        name = fold(m.group(1) or m.group(2))
         hits = [v for end, n, v in values if n == name and end <= pos]
         return hits[-1] if hits else m.group()
 
@@ -436,16 +512,20 @@ def expand_vars(cmd):
     return VAR_USE.sub(lambda m: value(m, m.start()), cmd) if values else cmd
 
 
-def touches(seg, cwd, q):
-    """True when a path-like word of the command segment resolves to q or a path inside it."""
+def split_words(text):
     try:
-        words = shlex.split(seg, posix=True)
+        return shlex.split(text, posix=True)
     except ValueError:
-        words = seg.split()
-    for w in words:
+        return text.split()
+
+
+def touches(seg, cwd, q, bare=False):
+    """True when a path-like word of the command segment resolves to q or a path inside it. Words without a slash
+    count only with bare (after a cd, where `rm RULES.md` may mean engine/RULES.md)."""
+    for w in split_words(seg):
         for part in re.split(r"[=,]", w):            # --out=engine/x, a,b lists
             part = part.strip("'\"")
-            if "/" not in part and "\\" not in part or "://" in part:
+            if not part or "://" in part or not bare and "/" not in part and "\\" not in part:
                 continue
             part = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", part) if os.name == "nt" else part
             part = re.sub(r"^\\\\\?\\", "", part)
@@ -458,25 +538,71 @@ def touches(seg, cwd, q):
     return False
 
 
+def with_dirs(segs, cwd):
+    """(segment, directory) for each part that isn't a cd: the directory it runs in after the cd, pushd, popd and
+    Set-Location parts before it, or None after one the guard can't follow (a variable, `-`, a substitution)."""
+    out, here, stack = [], cwd, []
+    for seg in segs:
+        m = CD.match(seg)
+        if not m:
+            out.append((seg, here))
+            continue
+        verb = m.group(1).lower()
+        if verb in ("popd", "pop-location"):
+            here = stack.pop() if stack else None
+            continue
+        if verb in ("pushd", "push-location"):
+            stack.append(here)
+        args = [a for a in split_words(m.group(2).rstrip(") \t\r\n")) if a == "-" or not a.startswith("-")]
+        target = args[0] if args else "~"
+        if here is None or target == "-" or re.search(r"[$`(]", target):
+            here = None
+        else:
+            target = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", target) if os.name == "nt" else target
+            try:
+                here = str((Path(here) / Path(target).expanduser()).resolve())
+            except (OSError, ValueError, RuntimeError):
+                here = None
+    return out
+
+
+def writes_somewhere(seg):
+    return bool(WRITE_CMD.search(seg) or WRITE_CODE.search(seg) or GIT_CHANGES.search(seg)
+                or any(t.lower() not in NO_WRITE for t in REDIRECT_TO.findall(seg)))
+
+
 def check_writes(cmd, protect, cwd=None):
     cwd = cwd or str(ROOT)
-    for seg in segments(cmd):
+    segs = segments(cmd)
+    for seg in segs:
         m = RUNS_TOOL.match(seg)
         if m and ".." in re.split(r"[/\\]", seg[m.end():].split()[0] if seg[m.end():].split() else ""):
             raise Block("run engine tools by their plain path (python engine/tools/<name>.py): no '..' in it")
+    placed = with_dirs(segs, cwd)
+    for seg, here in placed:
+        if here is None and writes_somewhere(seg):
+            raise Block("the command changes into a directory the guard can't follow (a variable, `cd -` or a "
+                        "substitution) and then writes; write the directory out, or use full paths without cd")
+    root = ROOT.resolve()
     for (label, path, redirect), q in zip(path_patterns(protect), protect):
         if redirect.search(cmd):
             raise Block(f"the command writes into {label}, which is read-only")
-        for seg in segments(cmd):
-            if RUNS_TOOL.match(seg) or not (path.search(seg) or touches(seg, cwd, q)):
+        for seg, here in placed:
+            if here is None:
+                continue
+            bare = Path(here).resolve() != root            # relative words name other paths outside the root
+            if RUNS_TOOL.match(seg) and not RUNS_MORE.search(seg):
+                continue                                   # a plain engine tool call
+            if not (path.search(seg) or touches(seg, here, q, bare)):
                 continue
             m = WRITE_CMD.search(seg)
             if m and m.group(1).lower() in COPY_CMDS:
                 args = seg[m.end():].split()
                 # only the last argument is written
-                hit = bool(args) and (bool(path.search(args[-1])) or touches(args[-1], cwd, q))
+                hit = bool(args) and (bool(path.search(args[-1])) or touches(args[-1], here, q, bare))
             else:
                 hit = bool(m) or bool(WRITE_CODE.search(seg))
+            hit = hit or any(touches(t, here, q, True) for t in REDIRECT_TO.findall(seg) if t.lower() not in NO_WRITE)
             if hit or FETCHERS.search(seg) or GIT_CHANGES.search(seg):
                 raise Block(f"the command changes {label}, which is read-only: the engine, Claude's settings and "
                             "the master CV and letter are never changed by a run (propose changes in the brief)")
@@ -505,6 +631,21 @@ def fetch_targets(seg):
     return out
 
 
+def hidden_targets(fetcher, call):
+    """True when the call reads URLs, options or a body from somewhere the guard can't see (a file, stdin)."""
+    for t in split_words(call)[1:]:
+        if t.startswith("@") or "=@" in t:
+            return True
+        if fetcher == "curl" and (re.fullmatch(r"-[a-zA-Z]*K", t) or t.startswith("--config")):
+            return True
+        if fetcher == "wget" and (re.fullmatch(r"-[a-zA-Z]*[ieB]", t)
+                                  or t.startswith(("--input-file", "--execute", "--config", "--base"))):
+            return True
+        if fetcher in ("invoke-webrequest", "invoke-restmethod", "iwr", "irm") and t.lower() == "-infile":
+            return True
+    return False
+
+
 def check_network(cmd, pii, hosts):
     if not (FETCHERS.search(cmd) or (PY_HTTP.search(cmd) and INLINE_CODE.search(cmd))):
         return
@@ -512,8 +653,14 @@ def check_network(cmd, pii, hosts):
         raise Block("proxy and host-override options aren't allowed")
     for seg in segments(cmd):
         urls = set(re.findall(r"https?://[^\s'\"<>`|;)]+", seg))
-        if FETCHERS.search(seg):
-            urls |= set(fetch_targets(seg[FETCHERS.search(seg).start():]))
+        if m := FETCHERS.search(seg):
+            call = seg[m.start():]
+            targets = fetch_targets(call)
+            if FETCH_PREFIX.search(seg[:m.start()]) and (UNRESOLVED.search(call) or VAR_USE.search(call)
+                                                          or hidden_targets(m.group(1).lower(), call) or not targets):
+                raise Block(f"{m.group(1)} needs its URL written out: no $(...), backticks, variables the guard "
+                            "can't read, URL lists or config files (-K, --config, -i, -e, @file, -InFile)")
+            urls |= set(targets)
         for u in urls:
             if hostname(u) == "to.indeed.com":
                 if not REDIRECT_LOOKUP.search(seg) or SENDS_DATA.search(seg):
@@ -542,7 +689,7 @@ def check(call):
     if tool in FILE_TOOLS:
         check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
     elif tool in SHELL_TOOLS:
-        cmd = expand_vars(inp.get("command") or "")
+        cmd = expand_vars(inp.get("command") or "", ps=tool == "PowerShell")
         if GIT_SENDS.search(cmd):
             raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
                         "computer (the candidate can push from a terminal)")
