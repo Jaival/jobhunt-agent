@@ -36,6 +36,12 @@ Then follow "Revise" below instead of the steps.
    ad text. Keep the `- **Field:** value` lines (Company, Location, URL, Source, Role type, Fit score, German
    required, Match reasons, Gaps): engine/tools/add_applied.py reads them. Add `- **Engine:** <the output of
    python engine/tools/version.py> · model <your model id>`, so a later review knows what made this job.
+   portal-answers.md: the answers application portals ask before anyone reads the CV, one line each, from
+   CLAUDE.md "Portal answers": start date, hours per week, work permit / visa, salary expectation, German level,
+   English level, notice period, willing to relocate, driving licence. Fit a value to this job only with a fact
+   from ad.json (the hours the letter offers within the ad's range; a salary per hour for a student role when
+   CLAUDE.md gives one). An empty or missing value is "ask the candidate"; never fill one in yourself. Without a
+   "Portal answers" section, write the file with every line "ask the candidate" and say so in `actions`.
 4. Keywords: `python engine/tools/keywords.py check applications/<folder>` matches the ad's key terms against the
    master CV and the candidate's files (an older extract without keywords prints "no keywords": skip this). Show
    the `addable` terms where the rules allow: the headline, the item and skill order, the letter. A term marked

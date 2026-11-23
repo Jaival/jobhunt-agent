@@ -29,6 +29,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - `revise <folder>: <change>` (new `revise` skill): the tailor subagent edits and rebuilds a draft in a fresh
   context, instead of a long chat in your session. A chat after the daily run was the biggest token cost measured
   (docs/research/token-usage-2026-11-08.md); a revise costs about what one tailoring does.
+- Each draft gets portal-answers.md: the answers application portals ask before anyone reads the CV (start date,
+  hours, work permit, salary, languages, notice period, relocation, driving licence), from a new "Portal answers"
+  section in CLAUDE.md. Empty values say "ask the candidate". Onboarding asks for them; setup_check warns when
+  the section is missing (add it from engine/templates/workspace/CLAUDE.md).
 
 ### Changed
 - The daily run keeps its context smaller: `setup_check.py --quiet` (new option) prints only the version, TODO and
@@ -139,6 +143,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   "Keyword coverage" is the tool's table, the tailor's reply has a `keywords` line, and the brief's "Apply today"
   table shows the ATS match.
 - The builder's grounding check also accepts terms from skills.md rows marked yes.
+- Apply early: among jobs within 5 points of each other, the daily run tailors the newer ad first, and the brief
+  shows each job's posted age.
 - The tailor, ad reader and mail reader run on Sonnet (`model: sonnet` in their files), also when your own session
   runs a bigger model. They ran on Sonnet in every measured run; the pin keeps it that way.
 - Untrusted pages, ads and mail have less say over what the daily run does:

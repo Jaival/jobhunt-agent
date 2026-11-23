@@ -31,6 +31,18 @@ projects.md holds the full facts and CV text for every project.
 - <e.g. "Draft student roles even when they ask for very good German; disclose my level.">
 - Rule 9 values: start <as soon as possible>; hours <...>; internship duration <...>.
 
+## Portal answers (the tailor copies these into portal-answers.md for each draft)
+Leave a value empty if you'd rather decide per job.
+- Start date:
+- Hours per week:
+- Work permit / visa:
+- Salary expectation:
+- German level:
+- English level:
+- Notice period:
+- Willing to relocate:
+- Driving licence:
+
 ## Routine settings (read by engine/ROUTINE.md)
 - Scope: <role families to search and score; student vs junior differences>.
 - Location: <preferences; what counts as a small plus>.

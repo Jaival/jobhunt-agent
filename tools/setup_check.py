@@ -262,6 +262,11 @@ def checks():
     if claude.exists():
         add("profile", "CLAUDE.md imports engine/RULES.md",
             "@engine/RULES.md" in claude.read_text(encoding="utf-8"), "add the line @engine/RULES.md")
+        add("profile", "CLAUDE.md has a Portal answers section",
+            re.search(r"^## Portal answers", claude.read_text(encoding="utf-8"), re.M) is not None,
+            "add a '## Portal answers' section (start date, hours, work permit, salary, languages, notice period, "
+            "relocation, driving licence; see engine/templates/workspace/CLAUDE.md) so each draft gets "
+            "portal-answers.md", warn=True)
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")

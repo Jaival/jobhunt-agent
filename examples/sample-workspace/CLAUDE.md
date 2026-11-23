@@ -30,6 +30,17 @@ projects.md holds the full facts and CV text for every project.
 ## My decisions on the rules (override engine/RULES.md)
 - Rule 9 values: start as soon as possible; hours 20 h/week in semester; internship duration 6 months.
 
+## Portal answers (the tailor copies these into portal-answers.md for each draft)
+- Start date: as soon as possible
+- Hours per week: 20 in the semester, up to 40 in the breaks
+- Work permit / visa: EU citizen, no permit needed
+- Salary expectation: 15 EUR per hour
+- German level: native
+- English level: C1
+- Notice period: none
+- Willing to relocate: no
+- Driving licence:
+
 ## Routine settings (read by engine/ROUTINE.md)
 - Scope: marketing, content, social media, communication and PR. Junior roles too.
 - Location: Rhine-Neckar area or remote; anything further is a hard mismatch.

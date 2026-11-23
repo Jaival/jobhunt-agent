@@ -31,6 +31,16 @@ def test_setup_check_quiet_prints_no_ok_lines(tool):
         x for x in quiet.stdout.splitlines() if x.startswith(("warn", "TODO"))]
 
 
+def test_setup_check_warns_without_portal_answers(tool, sample):
+    check = lambda: next(c for c in json.loads(tool("setup_check.py", "--init", "--json").stdout)["checks"]
+                         if c["item"] == "CLAUDE.md has a Portal answers section")
+    assert check()["status"] == "ok"
+    claude = sample / "CLAUDE.md"
+    claude.write_text(claude.read_text(encoding="utf-8").replace("## Portal answers", "## Other answers"),
+                      encoding="utf-8")
+    assert check()["status"] == "warn"
+
+
 def test_cv_map_check(tool):
     r = tool("cv_map.py", "check")
     assert r.returncode == 0, r.stdout
