@@ -48,6 +48,8 @@ BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", **UA}
 BA_SIZE, BA_PAGES = 100, 3  # results per page, pages per search (a search hitting the limit is warned about)
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
 GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
+MAX_FIELD = 200  # characters kept of an API title, company, location or date
+DATE_ONLY = re.compile(r"\d{4}-\d{2}-\d{2}|-")
 
 # Title filter (routine step 3): built from the profile: block in config.yaml, see scope.py.
 try:
@@ -191,15 +193,20 @@ def arbeitnow(since, status):
 
 
 def watchlist(since, status):
-    """Personio / Ashby / Greenhouse / Lever endpoints from the companies.md table."""
+    """Personio / Ashby / Greenhouse / Lever endpoints from the companies.md table, by their exact API form
+    (extract.ATS_FORMS); another endpoint is reported as skipped."""
     out = []
     for line in (ROOT / "companies.md").read_text(encoding="utf-8").splitlines():
         cells = [c.strip() for c in line.split("|")]
         if len(cells) < 6 or not cells[4].startswith("https://"):
             continue
         company, url = cells[1], cells[4].split()[0]
+        ats = extract.endpoint_ats(url)
+        if not ats:
+            status[company] = "skipped: not a Personio, Ashby, Greenhouse or Lever API endpoint"
+            continue
         try:
-            if "personio" in url and url.endswith("/xml"):
+            if ats == "Personio":
                 root = ET.fromstring(requests.get(url, headers=UA, timeout=30).content)
                 for p in root.iter("position"):
                     created = (p.findtext("createdAt") or "")[:10]
@@ -207,24 +214,22 @@ def watchlist(since, status):
                     out.append(dict(id=f"personio-{jid}", source=f"Watchlist ({company})", title=p.findtext("name") or "",
                                     company=company, location=p.findtext("office") or "", posted=created,
                                     url=url.replace("/xml", f"/job/{jid}")))
-            elif "api.ashbyhq.com" in url:
+            elif ats == "Ashby":
                 for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"ashby-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=j.get("location", ""),
                                     posted=(j.get("publishedAt") or "")[:10], url=j.get("jobUrl", "")))
-            elif "greenhouse.io" in url:
+            elif ats == "Greenhouse":
                 for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"gh-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=(j.get("location") or {}).get("name", ""),
                                     posted=(j.get("updated_at") or "")[:10], url=j.get("absolute_url", "")))
-            elif "api.lever.co" in url:
+            else:
                 for j in requests.get(url, headers=UA, timeout=30).json():
                     out.append(dict(id=f"lever-{j['id']}", source=f"Watchlist ({company})", title=j["text"],
                                     company=company, location=(j.get("categories") or {}).get("location", ""),
                                     posted=f"{dt.date.fromtimestamp(j['createdAt'] / 1000):%Y-%m-%d}",
                                     url=j.get("hostedUrl", "")))
-            else:
-                continue
             status[company] = "ok"
         except Exception as e:
             status[company] = f"error: {e}"
@@ -254,6 +259,8 @@ def main():
     idx = ledger.Index(ledger.load())
     seen_keys, jobs = set(), []
     for j in found:
+        # API text is untrusted (RULES.md rule 7): no control characters, a bounded length, checked before printing
+        j.update({k: extract.clean(str(j.get(k) or ""))[:MAX_FIELD] for k in ("title", "company", "location", "posted")})
         if not in_scope(j["title"]) or not REGION.keep(j):
             continue
         key = ledger.make_key(j["company"], j["title"])
@@ -287,9 +294,19 @@ def main():
             print(f"  WARNING page limit: {hit} results fetched; narrow the term or the radius, or run more often")
     print(f"\nIn scope: {len(jobs)} ({len(new)} new, {len(jobs) - len(new)} already seen). Written to {OUT.relative_to(ROOT)}\n")
     for j in sorted(new, key=lambda j: (j["role_type"], j["posted"])):
-        print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}"
-              + (" | no ad text (detail_error)" if "detail_error" in j else ""))
+        print(new_line(j))
     return 0
+
+
+def new_line(j):
+    """The printed line for a new job. A title, company or location with a link or an instruction, or a link the
+    routine can't use, prints as SUSPICIOUS without that text: the ad reader still reads the job."""
+    fields = {k: j[k] for k in ("title", "company", "location")}
+    odd = extract.text_problems(fields) or extract.url_problems(j["url"]) or not DATE_ONLY.fullmatch(j["posted"] or "-")
+    text = ("SUSPICIOUS (reader will check) | " + extract.file_stem(j["id"]) if odd
+            else f"{j['title']} | {j['company']} | {j['location']} | {j['url']}")
+    return (f"NEW  {j['posted'] if not odd else '-'}  [{j['role_type']}] {text}"
+            + (" | no ad text (detail_error)" if "detail_error" in j else ""))
 
 
 if __name__ == "__main__":

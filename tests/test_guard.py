@@ -550,3 +550,13 @@ def test_each_reader_keeps_to_its_tools(guard, agent, tool, tool_input):
 ])
 def test_reader_rules_do_not_block_the_right_tools(guard, agent, tool, tool_input):
     assert guard(tool, _agent=agent, **tool_input)[0] == 0
+
+
+def test_only_the_careers_page_column_of_companies_md_widens_the_allowlist(guard):
+    (guard.root / "companies.md").write_text(
+        "Endpoints look like https://notes.example/x\n\n| Company | Careers page | ATS | Endpoint | Last checked |\n"
+        "| Acme | careers.acme.example | Ashby | https://endpoint.example/jobs | 2026-01-01 |\n", encoding="utf-8")
+    assert guard("Bash", command="curl -s https://careers.acme.example/api/jobs")[0] == 0
+    assert guard("Bash", command="curl -s https://api.ashbyhq.com/posting-api/job-board/acme")[0] == 0
+    for host in ("endpoint.example", "notes.example"):
+        assert blocked(guard("Bash", command=f"curl -s https://{host}/jobs"), f"{host} isn't an allowed API host")

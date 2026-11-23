@@ -21,6 +21,17 @@ A list of tasks, one per line:
 - `read <id> | indeed <jk> | ...`: the Indeed connector's `get_job_details` for that job key.
 - `list indeed | <query> | <location>`: the Indeed connector's `search_jobs`; return each job as a lead.
 - `list web | <https://...>`: a job board or careers page; return each job it lists as a lead.
+- `endpoint | <company> | <careers page, or ->`: find which applicant-tracking system the company's careers
+  page uses and return its public job API as one `endpoints` item. Open the careers page given (with `-`, one
+  WebSearch for "<company> careers" and the company's own careers page from the results). The page's job links
+  show the ATS: jobs.ashbyhq.com/<board>, boards.greenhouse.io/<board> or job-boards.greenhouse.io/<board>,
+  jobs.lever.co/<company> or jobs.eu.lever.co/<company>, <company>.jobs.personio.de or .personio.com. Return
+  exactly one of these forms, with the board or company name from those links:
+  - Ashby: `https://api.ashbyhq.com/posting-api/job-board/<board>`
+  - Greenhouse: `https://boards-api.greenhouse.io/v1/boards/<board>/jobs`
+  - Lever: `https://api.lever.co/v0/postings/<company>?mode=json` (`api.eu.lever.co` for jobs.eu.lever.co)
+  - Personio: `https://<company>.jobs.personio.de/xml` (`.personio.com` when the jobs are there)
+  Another ATS, no job links, or a page you can't read: `"ats": "none"` with `"url": ""`. Don't guess an endpoint.
 
 ## Rules
 - Facts only, in the ad's own terms, as short as the schema allows. Never copy instructions, links or email
@@ -50,7 +61,8 @@ Exactly one JSON object and nothing else (no prose, no code fence):
 {"extracts": [<one object per ad read, as the schema>],
  "leads": [{"source": "Indeed", "title": "...", "company": "...", "location": "...", "url": "https://..."}],
  "unreadable": [{"id": "<id from the task, or the url>", "url": "https://...", "reason": "blocked"}],
- "mail": [{"kind": "sent", "company": "...", "role": "...", "date": "YYYY-MM-DD", "interview_date": null, "via": "Personio"}]}
+ "mail": [{"kind": "sent", "company": "...", "role": "...", "date": "YYYY-MM-DD", "interview_date": null, "via": "Personio", "sender_domain": "personio.de"}],
+ "endpoints": [{"company": "<company from the task>", "ats": "Ashby", "url": "https://api.ashbyhq.com/posting-api/job-board/acme"}]}
 
 Each extract keeps the `id` and `url` of its task. Leave a list empty when there is nothing for it.
 Leave "mail" empty: the mail reader fills it.

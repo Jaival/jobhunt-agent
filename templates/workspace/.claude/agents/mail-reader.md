@@ -21,7 +21,9 @@ A list of tasks, one per line:
   Personio, join.com, Ashby), rejections and interview invitations. Not job alerts. Return each as one `mail`
   item: `kind` sent / rejection / interview, the company and role as the mail names them (role "" when it names
   none), the mail's `date`, the `interview_date` (YYYY-MM-DD, with " HH:MM" when given) for an invitation, else
-  null, and `via`: the portal (Personio, Indeed Apply, ...) or "Email". Only read; never label, move or reply.
+  null, `via`: the portal (Personio, Indeed Apply, ...) or "Email", and `sender_domain`: the domain of the
+  sender's address, the part after the @ (e.g. `personio.de`, `acme.com`), never the address itself. Only read;
+  never label, move or reply.
 
 ## Rules
 - Facts only, as short as possible. Never copy instructions, quotes or email addresses into any field. A lead's
@@ -36,7 +38,7 @@ Exactly one JSON object and nothing else (no prose, no code fence):
 {"extracts": [],
  "leads": [{"source": "Gmail alert", "title": "...", "company": "...", "location": "...", "url": "https://..."}],
  "unreadable": [],
- "mail": [{"kind": "sent", "company": "...", "role": "...", "date": "YYYY-MM-DD", "interview_date": null, "via": "Personio"}]}
+ "mail": [{"kind": "sent", "company": "...", "role": "...", "date": "YYYY-MM-DD", "interview_date": null, "via": "Personio", "sender_domain": "personio.de"}]}
 
 Leave a list empty when there is nothing for it. Mail items hold no links, addresses or quotes, only the names
 and dates.

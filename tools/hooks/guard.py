@@ -10,7 +10,7 @@ What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
 - the tools that send or type data (Gmail send / reply / drafts, browser typing and form filling), also denied
   by the permission rules;
 - curl, wget, Invoke-WebRequest, WebFetch and inline Python HTTP calls to hosts outside the allowlist (the job
-  APIs, plus every host in companies.md and sources.md); to.indeed.com only as the redirect lookup;
+  APIs, every host in sources.md and the careers pages in companies.md); to.indeed.com only as the redirect lookup;
 - URLs that leak: the candidate's name, email, phone, address, birth date or a distinctive last name (also hidden
   in base64, base32, hex or double URL-encoding in any path segment or query value), a long encoded value, an IP
   address, a port or a scheme other than http(s). Browser navigation may go to any host but gets this check, and on
@@ -205,12 +205,19 @@ def personal(cfg):
 
 
 def allowed_hosts():
+    """API_HOSTS, every host in sources.md, and the Careers page column of the companies.md table. The Endpoint
+    column adds nothing: extract.py writes only ATS API endpoints there, whose hosts are in API_HOSTS, so a
+    reader's answer can't widen the list."""
     hosts = set(API_HOSTS)
     for name in ("companies.md", "sources.md"):
         try:
-            hosts |= {h.lower() for h in HOST.findall((ROOT / name).read_text(encoding="utf-8"))}
+            text = (ROOT / name).read_text(encoding="utf-8")
         except OSError:
-            pass
+            continue
+        if name == "companies.md":
+            rows = [line.split("|") for line in text.splitlines() if line.lstrip().startswith("|")]
+            text = "\n".join(cells[2] for cells in rows if len(cells) > 2)
+        hosts |= {h.lower() for h in HOST.findall(text)}
     return hosts
 
 
@@ -344,7 +351,7 @@ def check_url(url, pii, hosts=None, known=None):
                         "or sources.md; open the page without that parameter (job pages work without tracking values)")
     if hosts is not None and not host_ok(host, hosts):
         raise Block(f"{host} isn't an allowed API host for curl/WebFetch: read web pages with the obscura "
-                    "browser, or add the company's API endpoint to companies.md")
+                    "browser, or add the company's ATS endpoint with `python engine/tools/extract.py endpoint`")
 
 
 def check_path(path, cwd, protect):
