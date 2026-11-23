@@ -165,6 +165,7 @@ def test_save_stores_extracts_leads_and_unreadable(ws, tool):
                         "url": "https://evil.example/1"}],
              "unreadable": [{"id": "ba-2", "url": "https://acme.example/jobs/2", "reason": "blocked"},
                             {"id": "indeed-abc", "url": "https://de.indeed.com/viewjob?jk=abc", "reason": "gone"}]}
+    assert tool("extract.py", "pending").returncode == 0   # hands the tasks out
     (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
     r = tool("extract.py", "save", "data/ads/incoming.json")
     assert r.returncode == 1, r.stderr   # one bad extract, one bad lead
@@ -185,6 +186,7 @@ def test_save_stores_extracts_leads_and_unreadable(ws, tool):
 
 def test_save_a_folder_deletes_clean_replies_and_keeps_failed_ones(ws, tool):
     incoming = ws / "data" / "ads" / "incoming"
+    tool("extract.py", "pending")
     assert tool("extract.py", "save", "data/ads/incoming/").stdout.startswith("no reader replies")   # no folder yet
     incoming.mkdir()
     r = tool("extract.py", "save", "data/ads/incoming/")
@@ -229,8 +231,10 @@ def test_reader_reply_hook_saves_only_the_ad_readers_reply(sample, tmp_path):
 
 def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
     sent = {"kind": "sent", "company": "Acme GmbH", "role": "Werkstudent Marketing", "date": "2026-11-07",
-            "interview_date": None, "via": "Personio"}
-    reply = {"mail": [sent,
+            "interview_date": None, "via": "Personio", "sender_domain": "acme.jobs.personio.de"}
+    reply = {"mail": [sent, {**sent, "via": "Email", "sender_domain": "acme-careers.example"},
+                      {**sent, "sender_domain": "hr@acme.example"},
+                      {k: v for k, v in sent.items() if k != "sender_domain"},   # a mail-reader file from before it
                       {**sent, "kind": "interview", "role": "", "via": "Email", "interview_date": "2026-11-12 10:00"},
                       {**sent, "kind": "offer"},
                       {**sent, "company": "Reply to hr@acme.example"},
@@ -242,7 +246,12 @@ def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
     lines = r.stdout.splitlines()
     assert "MAIL    sent | Acme GmbH | Werkstudent Marketing | 2026-11-07 | via Personio" in lines
     assert "MAIL    interview | Acme GmbH | - | 2026-11-07 | via Email | interview 2026-11-12 10:00" in lines
-    assert lines.count("FAILED  mail") == 4
+    assert ("MAIL    sent UNVERIFIED | Acme GmbH | Werkstudent Marketing | 2026-11-07 | via Email | "
+            "from acme-careers.example") in lines
+    assert "mail.sender_domain: must be a domain" in r.stdout
+    assert ("MAIL    sent UNVERIFIED | Acme GmbH | Werkstudent Marketing | 2026-11-07 | via Personio | "
+            "from an unknown sender") in lines
+    assert lines.count("FAILED  mail") == 5
     assert "mail.kind: 'offer' is not one of" in r.stdout and "mail.company: holds a link or an email" in r.stdout
     assert "mail.date: must start with YYYY-MM-DD" in r.stdout and "mail: unknown field note" in r.stdout
     assert not (ws / "data" / "ads" / "Acme.json").exists()   # mail is printed for step 7, never stored
@@ -250,7 +259,7 @@ def test_save_prints_mail_lines_and_refuses_unsafe_ones(ws, tool):
 
 def test_the_agent_returns_mail_items_as_save_checks_them():
     body = extract.AGENT_FILE.with_name("mail-reader.md").read_text(encoding="utf-8")
-    assert "`list mail | <since YYYY-MM-DD>`" in body
+    assert "`list mail | <since YYYY-MM-DD>`" in body and '"sender_domain": ' in body
     assert set(extract.MAIL["required"]) <= set(re.findall(r'"(\w+)":', body.split('"mail": [', 1)[1].split("]", 1)[0]))
 
 
@@ -353,3 +362,95 @@ def test_urls_with_shell_characters_are_rejected(url):
                                  "https://jobs.example.com/de/stellen/werkstudent-(m-w-d)_4711?utm=a%20b#apply"])
 def test_normal_job_urls_pass(url):
     assert extract.url_problems(url) == []
+
+
+def test_a_sent_mail_from_the_jobs_own_site_is_verified(ws, tool):
+    folder = ws / "applications" / "2026-11-01_Acme_Werkstudent"
+    folder.mkdir(parents=True)
+    (folder / "job.md").write_text("- **URL:** https://careers.acme-careers.example/jobs/7\n", encoding="utf-8")
+    mail = {"kind": "sent", "company": "Acme", "role": "", "date": "2026-11-07", "interview_date": None,
+            "via": "Email", "sender_domain": "mail.acme-careers.example"}
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps({"mail": [mail]}), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming.json")
+    assert r.returncode == 0 and "MAIL    sent | Acme | - | 2026-11-07 | via Email" in r.stdout.splitlines()
+
+
+def test_a_reply_may_only_answer_the_tasks_handed_out_today(ws, tool):
+    reply = {"extracts": [{**GOOD, "id": "ba-1", "url": JOB["url"], "closed": True, "closed_evidence": "filled"}],
+             "unreadable": [{"id": "ba-2", "url": "https://acme.example/jobs/2", "reason": "gone"},
+                            {"id": "https://www.arbeitsagentur.de/jobsuche/jobdetail/1", "url": JOB["url"],
+                             "reason": "gone"},
+                            {"id": "https://jobs.example/board", "url": "https://jobs.example/board",
+                             "reason": "blocked"}]}
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
+    yesterday = {"date": "2000-01-01", "ids": ["ba-1", "ba-2"], "endpoints": []}
+    (ws / "data" / "ads" / "tasks.json").write_text(json.dumps(yesterday), encoding="utf-8")   # another day's list
+    r = tool("extract.py", "save", "data/ads/incoming.json")
+    assert r.returncode == 1
+    assert r.stdout.count("wasn't handed out by extract.py pending or add today") == 3
+    assert "UNREAD  https://jobs.example/board: blocked" in r.stdout   # a `list` source: no job to hide
+    jobs = candidates(ws)
+    assert "read_error" not in jobs["ba-1"] and "read_error" not in jobs["ba-2"] and "extract" not in jobs["ba-1"]
+
+
+COMPANIES = """# Company watchlist
+
+| Company | Careers page | ATS | Endpoint | Last checked |
+|---------|--------------|-----|----------|--------------|
+| DeepL | jobs.ashbyhq.com/deepl | Ashby | https://api.ashbyhq.com/posting-api/job-board/deepl | |
+| Beta AG | beta.example/careers | | | |
+| Gamma | | | | 2000-01-01 |
+| Delta | delta.example/jobs | | | {today} |
+"""
+
+
+@pytest.mark.parametrize("url, ats", [
+    ("https://acme.jobs.personio.de/xml", "Personio"), ("https://acme.jobs.personio.com/xml?language=en", "Personio"),
+    ("https://api.ashbyhq.com/posting-api/job-board/acme", "Ashby"),
+    ("https://boards-api.greenhouse.io/v1/boards/acme/jobs?content=true", "Greenhouse"),
+    ("https://api.eu.lever.co/v0/postings/acme?mode=json", "Lever"),
+    ("https://evil.example/api.ashbyhq.com/posting-api/job-board/acme", None),
+    ("https://api.ashbyhq.com.evil.example/posting-api/job-board/acme", None),
+    ("https://acme.jobs.personio.de.evil.example/xml", None), ("https://evil.example/personio/xml", None),
+    ("https://boards-api.greenhouse.io/v1/boards/acme/jobs?x=https://evil.example", None),
+    ("http://api.lever.co/v0/postings/acme", None), ("https://acme.wd3.myworkdayjobs.com/wday/cxs/a/b/jobs", None)])
+def test_endpoint_forms_match_the_exact_ats_host(url, ats):
+    assert extract.endpoint_ats(url) == ats
+
+
+def test_pending_hands_out_endpoint_tasks_and_save_writes_the_endpoint(ws, tool):
+    import datetime as dt
+    today = dt.date.today().isoformat()
+    (ws / "companies.md").write_text(COMPANIES.format(today=today), encoding="utf-8")
+    out = tool("extract.py", "pending").stdout.splitlines()
+    assert out[-3:] == ["endpoint | Beta AG | beta.example/careers", "endpoint | Gamma | -",
+                        "3 ad(s) to read, 2 endpoint(s) to find"]
+    good = {"company": "beta ag", "ats": "Greenhouse", "url": "https://boards-api.greenhouse.io/v1/boards/beta/jobs"}
+    reply = {"endpoints": [good, {"company": "Gamma", "ats": "Ashby", "url": "https://evil.example/posting-api"},
+                           {"company": "Delta", "ats": "Lever", "url": "https://api.lever.co/v0/postings/delta"},
+                           {"company": "DeepL", "ats": "none", "url": ""}]}
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps(reply), encoding="utf-8")
+    r = tool("extract.py", "save", "data/ads/incoming.json")
+    assert r.returncode == 1
+    assert "ENDPOINT Beta AG: Greenhouse https://boards-api.greenhouse.io/v1/boards/beta/jobs" in r.stdout
+    assert "endpoint.url: not a Ashby API endpoint" in r.stdout
+    assert "Delta wasn't handed out as an endpoint task" in r.stdout and "DeepL wasn't handed out" in r.stdout
+    text = (ws / "companies.md").read_text(encoding="utf-8")
+    assert f"| Beta AG | beta.example/careers | Greenhouse | https://boards-api.greenhouse.io/v1/boards/beta/jobs | {today} |" in text
+    assert "evil.example/posting" not in text and "api.lever.co" not in text and "| Gamma | | | | 2000-01-01 |" in text
+
+    (ws / "data" / "ads" / "incoming.json").write_text(json.dumps({"endpoints": [
+        {"company": "Gamma", "ats": "none", "url": ""}]}), encoding="utf-8")
+    assert "ENDPOINT Gamma: none found" in tool("extract.py", "save", "data/ads/incoming.json").stdout
+    assert "endpoint |" not in tool("extract.py", "pending").stdout   # checked today: not asked again for 30 days
+
+
+def test_endpoint_command_writes_a_hand_found_endpoint(ws, tool):
+    (ws / "companies.md").write_text(COMPANIES.format(today=""), encoding="utf-8")
+    r = tool("extract.py", "endpoint", "Gamma", "https://gamma.jobs.personio.de/xml")
+    assert r.returncode == 0 and r.stdout.startswith("ENDPOINT Gamma: Personio https://gamma.jobs.personio.de/xml")
+    r = tool("extract.py", "endpoint", "Gamma", "https://gamma.example/careers")
+    assert r.returncode == 1 and "isn't a Personio, Ashby, Greenhouse or Lever API endpoint" in r.stderr
+    r = tool("extract.py", "endpoint", "Nobody", "https://nobody.jobs.personio.de/xml")
+    assert r.returncode == 1 and "no row for Nobody" in r.stdout
+    assert "https://gamma.jobs.personio.de/xml" in (ws / "companies.md").read_text(encoding="utf-8")

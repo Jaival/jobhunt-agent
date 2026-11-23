@@ -48,6 +48,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   for yet (experienced professionals, apprenticeships, freelance) and what it needs.
 
 ### Fixed
+- `search_jobs.py` prints API titles, companies and locations without control characters and cut to 200
+  characters. A new job whose title, company or location holds a link or an instruction, or whose link has
+  shell characters, prints as `NEW ... SUSPICIOUS (reader will check)` without that text; the ad reader still
+  reads it.
 - The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
   let a blocked call through when data/guard.json wasn't a JSON object. Both now keep blocking.
   `guard.py --status` adds a "guard errors" line when the guard itself failed on a call, and
@@ -106,6 +110,26 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
 
 ### Behaviour changes
+- Untrusted pages, ads and mail have less say over what the daily run does:
+  - Watchlist endpoints are found by the ad reader, not the run itself: `extract.py pending` hands out an
+    `endpoint | <company> | <careers page>` task for each companies.md row without an Endpoint (again after 30
+    days when none was found), and `extract.py save` writes the endpoint into companies.md only in the
+    Personio, Ashby, Greenhouse or Lever API form. The run no longer opens career pages itself. New command for
+    an endpoint you found: `python engine/tools/extract.py endpoint "<company>" <url>`.
+  - `search_jobs.py` reads a watchlist endpoint only when its host is the ATS's exact API host (before,
+    `https://evil.example/api.ashbyhq.com/...` counted as Ashby); another endpoint, such as Workday or
+    SmartRecruiters, is listed as `skipped` in the Watchlist status line.
+  - The guard's host allowlist takes only the Careers page column of companies.md, plus every host in
+    sources.md and the job APIs as before. Hosts written elsewhere in companies.md no longer allow curl or
+    WebFetch.
+  - `extract.py pending` and `add` record the tasks they hand out in data/ads/tasks.json. A reader reply may
+    save an extract, or mark an ad unreadable or gone, only for a job handed out that day; for another job in
+    candidates.json `save` prints FAILED, so a page can't hide other jobs.
+  - The mail reader also returns the sender's domain. A `sent` confirmation from a sender that is neither a
+    known application portal nor the site of a draft's job link prints `MAIL sent UNVERIFIED`; the run then
+    doesn't add the tracker row but puts a `sent <folder>` item in the brief's Decisions for you to tick.
+  - Migration: `setup_check.py --init` or "update the engine" copies the new ad-reader.md and mail-reader.md
+    into `.claude/agents/`. Until then no endpoint is found and every `sent` mail prints UNVERIFIED.
 - The guard hook reads Bash and PowerShell more like a shell does, and blocks more:
   - A multi-line command is split into its lines, outside quotes and heredoc bodies. Before, a file write on one
     line and `python engine/tools/...` on the next counted as one part and was blocked as a write into engine/.
