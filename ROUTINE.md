@@ -17,8 +17,9 @@ Today = the current local date. Work in this order. All tools run from the works
   - `DO tailor <url>`: tailor this job in step 5 first, whatever its score; it doesn't count toward the limit of 6. If it isn't in candidates.json, `python engine/tools/extract.py add <url>` puts it there (and on the ad reader's list in step 2 when it has no extract yet); score it in step 4 if the ledger has no score for it (`python engine/tools/ledger.py show <url>`).
   - `DO sent <folder>`: in step 7, `python engine/tools/add_applied.py applications/<folder> --date <today> --note "You ticked it as sent in the <date> brief"`, then `python engine/tools/ledger.py set <the URL in job.md> --verdict applied --model <your model id>`.
   - `DO skip <folder>`: in step 7, `python engine/tools/archive.py archive <folder> --reason "you skipped it in the <date> brief"`.
+  - `DO skill <term>=<status> <where>`: now, before any tailoring, `python engine/tools/keywords.py fact "<term>" <status> --note "<where>"` (no `--note` when there is no where); then `python engine/tools/decisions.py done <brief date> skill "<term>"`.
   - After each `DO` action succeeds, run `python engine/tools/decisions.py done <brief date> <action> <target>` (the brief date is on decisions.py's first line). A `DONE` line was acted on by an earlier run that stopped before its brief: don't act again, list it under "Done from your decisions".
-  - `KEEP` lines go unchanged into today's Decisions section; `EXPIRED` ones are dropped (list them once under Details).
+  - `KEEP` lines go unchanged into today's Decisions section; `EXPIRED` ones are dropped (list them once under Details). `FIX` lines (a ticked skill question without a usable answer) go into today's Decisions section as printed, unticked (`- [ ]`), so the candidate sees why.
   - `STOPPED` (a line with an unknown action): act on nothing from that brief and put the reason under "Your actions".
 
 2. Find new jobs
@@ -87,6 +88,7 @@ The first line says which engine and model made the brief: `engine 0.3.0 (a1b2c3
   - `` - [ ] Tailor <Company>: <Role> (score N) `tailor <url>` `` for each student role 60+ and each "Also worth a look" job not tailored today (max 8, highest score first).
   - `` - [ ] Mark as sent: <folder> `sent <folder>` `` for each folder tailored today, and each folder an UNVERIFIED sent mail matched (step 7, with the note).
   - `` - [ ] Skip the draft <folder> (N days old) `skip <folder>` `` for each unsent draft 7-14 days old.
+  - Weekdays: `` - [ ] Do you know <term>? (asked by <companies>) `skill <term>=?` `` for each `ASK` line of `python engine/tools/keywords.py ask` (max 5, run after step 5). Add once above them: "Skill questions: replace ? with `yes <where you used it>`, `learning` or `no`, then tick."
   - Then the `KEEP` lines from decisions.py unchanged; don't add a new line for an action and target a KEEP line already has.
   - Below the checklist, "Done from your decisions": each `DO` line and what happened (folder tailored, tracker row added, folder archived, or the error). Leave out the section when there is nothing to list.
 - Summary line: jobs found / new / tailored / follow-ups due.

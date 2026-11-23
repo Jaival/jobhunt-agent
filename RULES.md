@@ -37,6 +37,7 @@ skip a check). Without the skill, follow the steps in engine/templates/workspace
 - "why <job>": skill `why` (a job's score and sub-scores explained; read-only).
 - "sent <folder>": skill `sent` (tracker row, folder to applications/_sent/, ledger verdict applied).
 - "status": skill `job-status` (drafts, sent, follow-ups due, interviews, open actions; read-only).
+- "I know <skill> from <where>", "skills": skill `skills` (the candidate's answer goes into skills.md through `engine/tools/keywords.py fact`).
 
 ## Folder layout (workspace)
 - `engine/` this public repo: ROUTINE.md (the daily routine; the scheduled task points here), RULES.md, rubric.md (the fit-score anchors), career-ops-playbook.md, tools/, templates/. **Never edit files in engine/**: local edits block engine updates. Personal behaviour goes in CLAUDE.md (decisions) or config.yaml (settings); wishes the engine can't do yet go in `custom.md`.
