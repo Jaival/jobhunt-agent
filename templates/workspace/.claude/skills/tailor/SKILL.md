@@ -6,7 +6,7 @@ Argument: the job's link (`https://...`; for Indeed the `viewjob?jk=` link). One
 and rules as the daily run (engine/ROUTINE.md steps 2-5, RULES.md): never read the ad yourself, never send
 anything. This replaces the daily routine for this conversation. Run everything from the workspace folder.
 
-1. `python engine/tools/setup_check.py`. On NOT READY, say what is TODO and stop.
+1. `python engine/tools/setup_check.py --quiet`. On NOT READY, say what is TODO and stop.
 2. `python engine/tools/extract.py add <url>`.
    - `FAILED`: say why (for example an Indeed short link) and stop.
    - `SEEN`: tell the user the earlier verdict, score and date (`python engine/tools/ledger.py show <url>`), and

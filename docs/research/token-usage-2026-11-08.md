@@ -110,6 +110,24 @@ Gmail reads in main 0.36M carried [e]; search_jobs output ~1.9k tokens per run.
   `eval_run.py --model haiku` matches v1.0.0 (German 94%, role type 95%). Tailor and main stay Sonnet.
 - Already fixed by hand (not counted): get_job_details retries, guard-block retries.
 
+## Status 2026-11-23 (two more sessions measured)
+
+Sessions: 3bd76a97 (13 Nov, scheduled, Sonnet) and 96a8ef89 (19 Nov, chat after a run, Opus).
+
+- 13 Nov run [m]: main 30 calls, context 53k → 155k, 3.5M cache reads; tailors 0.24M and 0.28M, ad readers
+  0.13–0.20M each. The largest outputs kept in main: ROUTINE.md read (24.7k chars), setup_check (11.8k), one call
+  printing decisions + tracker/applications.md + sources.md + the playbook (28.5k), git status + search (13.7k),
+  extract.py pending (13.4k).
+- 19 Nov chat [m]: main 47 calls on Opus, 2.6M cache reads, for one tailored job: keyword fixes, a hiring-panel
+  screen, two fact checks, three rebuilds. Same shape as sink #1: edits after the run in a long main context.
+- P1: done in Unreleased (permission template denies unused Desktop tools; ad-reader drops unused tools).
+- P2: done (foreground subagents). P3: replaced by the SubagentStop hook that saves reader replies (no re-typing).
+- New (plans 022–026): ad keywords in the extract + `keywords.py` so the tailor covers keywords without a chat;
+  skill questions in the brief; `revise` skill so edits run in a fresh tailor context; subagents pinned to
+  Sonnet; `setup_check.py --quiet`, playbook E only when outreach is due, and a "print only what a step names"
+  rule in ROUTINE.md.
+- Verify on the next runs: main context at the last call < 120k; a revise costs < 0.5M (one tailor call).
+
 ## How to measure after each change
 Re-run the harness weekly review and the per-run split: routine main per run (now 3.95M avg), first-call cache
 write (now ~51k), mid-run wait calls (now 51 / 5.4M), incoming.json Write chars (now 397k), subagent tokens.

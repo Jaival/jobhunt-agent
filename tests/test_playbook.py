@@ -32,7 +32,8 @@ def test_no_letters_lists_the_headings(capsys):
 
 def test_the_routine_prints_every_section_it_points_to():
     routine = (ENGINE / "ROUTINE.md").read_text(encoding="utf-8")
-    assert "playbook.py A B E F G` (Fridays: `A B E F G H I`)" in routine
+    assert "playbook.py A B F G` (Fridays: `A B F G H I`)" in routine
+    assert "`python engine/tools/playbook.py E`" in routine     # E only when a job needs outreach (step 5)
     cited = set(re.findall(r"playbook ([A-I])\b", routine))
     assert cited <= FRIDAY and cited - {"H", "I"} <= DAILY      # H and I are the Friday steps only
     assert set(playbook.sections(playbook.PLAYBOOK.read_text(encoding="utf-8"))[1]) >= FRIDAY | TAILOR
