@@ -106,6 +106,22 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
 
 ### Behaviour changes
+- The guard hook reads Bash and PowerShell more like a shell does, and blocks more:
+  - A multi-line command is split into its lines, outside quotes and heredoc bodies. Before, a file write on one
+    line and `python engine/tools/...` on the next counted as one part and was blocked as a write into engine/.
+    Code in `python -c "..."` or a heredoc is checked as one part, so a script that names an engine/ path in one
+    statement and writes to it in another is blocked. Comments are skipped; `<<` in `$((...))` isn't a heredoc;
+    a heredoc word with quotes in it (`<<E"O"F`) ends where Bash ends it.
+  - An engine tool call is exempt from the write checks only when it runs nothing else: one with `$(...)`,
+    backticks, `<(...)` or a second line is checked like any command.
+  - Shell variables set in the same command (`p=engine/x; rm $p`, PowerShell `$p = '...'`) are replaced by their
+    value before the checks, for the read-only paths and for the allowed hosts. Bash names are case-sensitive;
+    `name=` inside a quoted string isn't an assignment.
+  - `cd`, `pushd`, `popd` and `Set-Location` are followed, so `cd engine && rm RULES.md` is blocked. A write after a
+    cd the guard can't follow (a variable, `cd -`, a substitution) is blocked.
+  - curl, wget and Invoke-WebRequest/RestMethod must have their URL written out: `$(...)`, backticks, a variable
+    the guard can't read, no URL at all (`xargs curl`), config or URL-list files (`-K`, `--config`, `-i`, `-e`)
+    and `@file` / `-InFile` bodies are blocked.
 - Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
   new `list mail | <since>` task, instead of the daily run opening Gmail itself. The reader returns names and
   dates only; `extract.py save` checks them like leads (no links, addresses or instructions) and prints a `MAIL`
