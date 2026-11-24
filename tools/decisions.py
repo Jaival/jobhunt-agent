@@ -7,6 +7,7 @@ with its action in backticks, and may say since when it has been open:
     - [ ] Tailor Acme GmbH: Werkstudent Marketing (score 66) `tailor https://jobs.example/acme/1` · since 2026-10-28
     - [ ] Mark as sent: 2026-10-30_Acme_Marketing `sent 2026-10-30_Acme_Marketing`
     - [ ] Skip the draft 2026-10-20_Beta_Sales (12 days old) `skip 2026-10-20_Beta_Sales`
+    - [ ] Do you know Agile? (asked by Acme GmbH) `skill Agile=?`
 
 The candidate ticks a box ([x]) in the file. The next run reads the newest earlier brief that has a Decisions
 section and prints one line per item:
@@ -15,9 +16,12 @@ section and prints one line per item:
     DONE     <action> <target>   ticked and already acted on (in the log below): don't act again
     KEEP     <the line>          not ticked, open for less than 7 days: copy it unchanged into today's brief
     EXPIRED  <action> <target>   not ticked for 7 days: drop it (the brief's Details list it once)
+    FIX      <the line> · <why>  a ticked skill question without a usable answer: copy it into today's brief
 
 Actions: `tailor <url>` (tailor the job), `sent <folder>` (the candidate sent it: tracker row, folder to
-_sent/), `skip <folder>` (archive the draft). A line with another action stops the tool with the reason.
+_sent/), `skip <folder>` (archive the draft), `skill <term>=<answer>` (a question about a skill an ad asks
+for: the candidate replaces `?` with `yes <where they used it>`, `learning` or `no` and ticks the box; DO prints
+`skill <term>=<status> <where>` for keywords.py fact). A line with another action stops the tool with the reason.
 With --no-tailor (weekend runs, which don't tailor) a ticked `tailor` comes back as a ticked KEEP line, so
 Monday's run acts on it.
 
@@ -39,9 +43,11 @@ from config import ROOT
 DAILY = ROOT / "daily"
 LOG = ROOT / "data" / "decisions_done.txt"
 CARRY_DAYS = 7
-ACTIONS = ("tailor", "sent", "skip")
+ACTIONS = ("tailor", "sent", "skip", "skill")
 HEAD = re.compile(r"^#+\s+Decisions\s*$", re.M)
 ITEM = re.compile(r"^\s*[-*]\s*\[\s*([xX]?)\s*\]\s*.*`(\w+) ([^`\s]+)`.*$")
+SKILL_ITEM = re.compile(r"^\s*[-*]\s*\[\s*([xX]?)\s*\]\s*.*`skill ([^`=]{1,40}?)\s*=\s*([^`]*)`.*$")
+ANSWER = re.compile(r"(yes|learning|no)\b[\s:,-]*(.*)", re.I)
 SINCE = re.compile(r"since (\d{4}-\d{2}-\d{2})")
 
 
@@ -68,17 +74,38 @@ def newest(today, daily=DAILY):
 
 
 def items(day, lines):
-    """(ticked, action, target, since, line) for each checklist line; DecisionError on an unknown action."""
+    """(ticked, action, target, since, line, answer) for each checklist line (answer: the text after `=` of a skill
+    question, else None); DecisionError on an unknown action."""
     out = []
     for line in lines:
-        m = ITEM.match(line)
-        if not m:
-            continue
-        if m[2] not in ACTIONS:
-            raise DecisionError(f"unknown action '{m[2]}' in: {line.strip()} (use {', '.join(ACTIONS)})")
+        m, answer = SKILL_ITEM.match(line), None
+        if m:
+            answer = m[3].strip()
+        else:
+            m = ITEM.match(line)
+            if not m:
+                continue
+            if m[2] not in ACTIONS or m[2] == "skill":
+                raise DecisionError(f"unknown action '{m[2]}' in: {line.strip()} (use {', '.join(ACTIONS)}; "
+                                    "a skill question is `skill <term>=<answer>`)")
+        action, target = ("skill", m[2].strip()) if answer is not None else (m[2], m[3])
         since = SINCE.search(line)
-        out.append((bool(m[1]), m[2], m[3], dt.date.fromisoformat(since[1]) if since else day, line.strip()))
+        out.append((bool(m[1]), action, target, dt.date.fromisoformat(since[1]) if since else day, line.strip(),
+                    answer))
     return out
+
+
+def skill_answer(answer):
+    """(status, where) from a skill question's answer, or (None, why it can't be used)."""
+    m = ANSWER.fullmatch(answer.strip())
+    if not m:
+        return None, "write yes <where you used it>, learning or no after the = (instead of ?)"
+    status, where = m[1].lower(), m[2].strip()
+    if status == "yes" and not where:
+        return None, "a yes needs where you used it (job, project, course): yes <where>"
+    if "|" in where:
+        return None, "no | in the answer"
+    return status, where
 
 
 def plan(today, no_tailor=False, daily=DAILY, log=LOG):
@@ -89,11 +116,15 @@ def plan(today, no_tailor=False, daily=DAILY, log=LOG):
     day, lines = found
     done = set(log.read_text(encoding="utf-8").splitlines()) if log.exists() else set()
     out = []
-    for ticked, action, target, since, line in items(day, lines):
+    for ticked, action, target, since, line, answer in items(day, lines):
         if not SINCE.search(line):
             line += f" · since {since:%Y-%m-%d}"
         if ticked and f"{day:%Y-%m-%d} {action} {target}" in done:
             out.append(("DONE", f"{action} {target}"))
+        elif ticked and action == "skill":
+            status, where = skill_answer(answer)
+            out.append(("DO", f"skill {target}={status} {where}".rstrip()) if status
+                       else ("FIX", f"{line.split(' · why: ')[0]} · why: {where}"))
         elif ticked and not (no_tailor and action == "tailor"):
             out.append(("DO", f"{action} {target}"))
         elif ticked or (today - since).days < CARRY_DAYS:

@@ -22,6 +22,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   Datenbanken = databases) come from `engine/templates/keyword_aliases.yaml` and your skills.md.
 - skills.md keeps your answers about skills ads ask for: `keywords.py fact "<skill>" yes|learning|no --note
   "<where>"`. A `yes` row (it needs a note) counts as your own fact in the builder's grounding check.
+- Skill questions in the brief: on weekdays the Decisions list asks about up to 5 terms recent ads wanted that
+  none of your files mention: `` - [ ] Do you know Agile? (asked by Acme) `skill Agile=?` ``. Replace `?` with
+  `yes <where you used it>`, `learning` or `no` and tick it; the next run writes it to skills.md. Or tell Claude in
+  the workspace ("I know Agile from Maven"): the new `skills` skill records it.
 
 ### Changed
 - The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
