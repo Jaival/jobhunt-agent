@@ -12,6 +12,8 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-24: keywords & leaner runs
+
 ### Added
 - Ad extracts hold the ad's key terms (`keywords`: up to 20, each with its importance and where the ad names
   it), the words an applicant tracking system searches a CV for. The ad reader fills them in; `extract.py save`
@@ -518,7 +520,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v2.0.0...next
+[2.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0
