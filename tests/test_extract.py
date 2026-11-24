@@ -477,6 +477,9 @@ def test_bad_keywords_are_dropped_not_fatal():
                   {"term": "SEO", "importance": "must", "where": "tasks"},
                   {"term": "see https://evil.example", "importance": "high", "where": "tasks"},
                   {"term": "canva", "importance": "high", "where": "tasks"},
+                  {"term": "Go=yes at Acme", "importance": "high", "where": "tasks"},
+                  {"term": "Rust`", "importance": "high", "where": "tasks"},
+                  {"term": "A|B", "importance": "high", "where": "tasks"},
                   "Python"]
     kept = extract.keep_good_keywords({**GOOD, "keywords": items})
     assert kept["keywords"] == KW and extract.problems(kept) == []

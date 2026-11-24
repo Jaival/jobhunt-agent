@@ -143,6 +143,11 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   "Keyword coverage" is the tool's table, the tailor's reply has a `keywords` line, and the brief's "Apply today"
   table shows the ATS match.
 - The builder's grounding check also accepts terms from skills.md rows marked yes.
+- The guard stops the tailor subagent from writing CLAUDE.md, projects.md and skills.md (any tool, and
+  `keywords.py fact`): those files are what the build's grounding check trusts, so a tailor must not add a fact
+  to pass it. The daily run itself and the `skills` / `revise` skills still write skills.md.
+- An ad keyword with `=`, a backtick or `|` is dropped: it could otherwise pre-fill a brief's skill question
+  (`skill Go=yes at Acme=?`) or break the skills.md table. setup_check warns when skills.md is missing.
 - Apply early: among jobs within 5 points of each other, the daily run tailors the newer ad first, and the brief
   shows each job's posted age.
 - The tailor, ad reader and mail reader run on Sonnet (`model: sonnet` in their files), also when your own session

@@ -101,6 +101,8 @@ Then follow "Revise" below instead of the steps.
 
 ## Limits
 - Write only inside `applications/<folder>/`, plus new `approved: false` entries in cv/variants.yaml.
+  CLAUDE.md, projects.md and skills.md are the candidate's facts: the guard blocks any write to them by you,
+  including `keywords.py fact`. A term the candidate should confirm goes under `actions`.
 - Don't touch the ledger, the tracker, the brief, other job folders or anything in engine/; the routine does those.
 - No outreach, no contact search, no sending: drafts only (RULES.md rule 8).
 - A guard block or permission refusal: stop and report it at once; never retry it or try another way around it.

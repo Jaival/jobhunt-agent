@@ -195,6 +195,11 @@ def problems(data):
     return validate(data, SCHEMA) + url_problems(data.get("url")) + text_problems(data)
 
 
+# A term goes into the brief as `skill <term>=?` and into skills.md table cells: these characters would let an ad
+# write the answer itself (`Go=yes at Acme`) or break the table.
+KEYWORD_BREAKS = re.compile(r"[=`|]")
+
+
 def keep_good_keywords(ext):
     """ext with only the keywords that pass the schema and the link / instruction check, without duplicates, at
     most maxItems. A bad keyword costs that keyword, not the whole extract (the reader would have to read the ad
@@ -205,7 +210,7 @@ def keep_good_keywords(ext):
         return ext
     schema, seen, kept = SCHEMA["properties"]["keywords"], set(), []
     for item in ext["keywords"]:
-        if validate(item, schema["items"]) or text_problems(item):
+        if validate(item, schema["items"]) or text_problems(item) or KEYWORD_BREAKS.search(item["term"]):
             continue
         if item["term"] and item["term"].casefold() not in seen:
             seen.add(item["term"].casefold())

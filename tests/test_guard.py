@@ -560,3 +560,27 @@ def test_only_the_careers_page_column_of_companies_md_widens_the_allowlist(guard
     assert guard("Bash", command="curl -s https://api.ashbyhq.com/posting-api/job-board/acme")[0] == 0
     for host in ("endpoint.example", "notes.example"):
         assert blocked(guard("Bash", command=f"curl -s https://{host}/jobs"), f"{host} isn't an allowed API host")
+
+
+@pytest.mark.parametrize("tool, tool_input, reason", [
+    ("Bash", {"command": 'python engine/tools/keywords.py fact "Agile" yes --note "x"'}, "doesn't record skills"),
+    ("PowerShell", {"command": r"python engine\tools\keywords.py  fact Go yes --note x"}, "doesn't record skills"),
+    ("Write", {"file_path": "skills.md", "content": "x"}, "skills.md is read-only"),
+    ("Edit", {"file_path": "{root}/CLAUDE.md"}, "CLAUDE.md is read-only"),
+    ("Bash", {"command": "echo '| Go | yes | x | |' >> skills.md"}, "skills.md"),
+    ("Bash", {"command": "sed -i 's/a/b/' projects.md"}, "projects.md"),
+])
+def test_the_tailor_cannot_write_the_candidates_facts(guard, tool, tool_input, reason):
+    tool_input = {k: v.replace("{root}", str(guard.root)) for k, v in tool_input.items()}
+    assert blocked(guard(tool, _agent="tailor", **tool_input), reason)
+
+
+@pytest.mark.parametrize("agent, tool, tool_input", [
+    ("tailor", "Bash", {"command": "python engine/tools/keywords.py check applications/x"}),
+    ("tailor", "Write", {"file_path": "applications/x/job.md", "content": "x"}),
+    ("tailor", "Read", {"file_path": "skills.md"}),
+    (None, "Bash", {"command": 'python engine/tools/keywords.py fact "Agile" yes --note "x"'}),
+    (None, "Write", {"file_path": "skills.md", "content": "x"}),
+])
+def test_the_main_session_and_the_tailors_own_work_stay_allowed(guard, agent, tool, tool_input):
+    assert guard(tool, _agent=agent, **tool_input)[0] == 0

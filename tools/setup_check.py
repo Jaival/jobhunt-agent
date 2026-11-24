@@ -270,6 +270,9 @@ def checks():
 
     for name in ("sources.md", "companies.md", "cv/variants.yaml", "tracker/Job_Application_Tracker.xlsx"):
         add("workspace", name, (ROOT / name).exists(), "python engine/tools/setup_check.py --init")
+    add("workspace", "skills.md", (ROOT / "skills.md").exists(),
+        "python engine/tools/setup_check.py --init (the tailor reads it; without it, skill answers start empty)",
+        warn=True)
     top = history.toplevel(ROOT)
     add("workspace", "workspace history (git)", top == ROOT.resolve(),
         "git isn't installed, so the daily runs aren't committed: install git, then run "
