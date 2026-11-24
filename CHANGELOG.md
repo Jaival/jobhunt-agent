@@ -31,6 +31,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   (docs/research/token-usage-2026-11-08.md); a revise costs about what one tailoring does.
 
 ### Changed
+- The daily run keeps its context smaller: `setup_check.py --quiet` (new option) prints only the version, TODO and
+  warn lines and the verdict; the outreach section of the playbook (E) is printed only when a job needs outreach;
+  and ROUTINE.md tells the run to print only what a step names. Every output stays in the run's context and is paid
+  for again on each later call (13 Nov run: 53k → 155k tokens).
 - The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
   comes back as the call's result, so the run no longer spends turns waiting with `sleep` or empty turns
   (51 such calls, 5.4M tokens in 10 runs; docs/research/token-usage-2026-11-08.md). The ad reader also drops

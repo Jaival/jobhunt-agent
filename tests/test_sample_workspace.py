@@ -19,6 +19,18 @@ def test_setup_check_ready(tool):
                for c in result["checks"])
 
 
+def test_setup_check_quiet_prints_no_ok_lines(tool):
+    tool("setup_check.py", "--init")
+    full, quiet = tool("setup_check.py"), tool("setup_check.py", "--quiet")
+    assert quiet.returncode == full.returncode
+    assert any(line.startswith("ok  ") for line in full.stdout.splitlines())
+    assert not any(line.startswith("ok  ") for line in quiet.stdout.splitlines())
+    assert quiet.stdout.splitlines()[0] == full.stdout.splitlines()[0]          # the engine line
+    assert quiet.stdout.strip().splitlines()[-1] == full.stdout.strip().splitlines()[-1]   # READY / NOT READY
+    assert [x for x in full.stdout.splitlines() if x.startswith(("warn", "TODO"))] == [
+        x for x in quiet.stdout.splitlines() if x.startswith(("warn", "TODO"))]
+
+
 def test_cv_map_check(tool):
     r = tool("cv_map.py", "check")
     assert r.returncode == 0, r.stdout

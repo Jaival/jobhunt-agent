@@ -11,6 +11,8 @@ Usage (from the workspace folder, the one that contains engine/):
                                                   an existing file; settings are merged), and start the
                                                   workspace history (git init) unless it's a git repo already
     python engine/tools/setup_check.py --json     same checks as JSON, for the routine
+    python engine/tools/setup_check.py --quiet    only the version, the TODO and warn lines and the verdict (the
+                                                  daily run: the ok lines would stay in its context all run)
 
 Exit code 0 = ready (warnings allowed), 1 = something is still "todo".
 
@@ -317,6 +319,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--init", action="store_true", help="copy templates and create folders first")
     ap.add_argument("--json", action="store_true", help="print the checks as JSON")
+    ap.add_argument("--quiet", action="store_true", help="print only the version, TODO and warn lines and the verdict")
     args = ap.parse_args()
 
     done = init() if args.init else []
@@ -330,6 +333,8 @@ def main():
         for line in done:
             print(f"init  {line}")
         for c in result:
+            if args.quiet and c["status"] == "ok":
+                continue
             mark = {"ok": "ok  ", "todo": "TODO", "warn": "warn"}[c["status"]]
             fix = f"  -> {c['fix']}" if c["status"] != "ok" and c["fix"] else ""
             print(f"{mark}  {c['area']}: {c['item']}{fix}")

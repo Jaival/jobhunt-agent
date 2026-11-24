@@ -4,7 +4,7 @@ description: Show the job hunt at a glance - drafts to send, applications waitin
 ---
 Read-only summary; don't search for jobs or run the daily routine. Run everything from the workspace folder.
 
-1. `python engine/tools/setup_check.py`: the engine line, NOT READY items and warnings (an engine update
+1. `python engine/tools/setup_check.py --quiet`: the engine line, NOT READY items and warnings (an engine update
    available, the guard).
 2. `python engine/tools/tracker_to_md.py` (it only regenerates the views), then read tracker/applications.md and
    applications/INDEX.md.
