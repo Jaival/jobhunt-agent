@@ -97,3 +97,4 @@ effect, not the function.
 | `v0.5.0` | `143dd3b` | 2026-10-31 | Grounded & modular (PR #73) |
 | `v1.0.0` | `1d7384b` | 2026-11-01 | Versioned & interactive (PR #85) |
 | `v1.1.0` | `2d702cd` | 2026-11-08 | Your own design (PR #104) |
+| `v2.0.0` | `4b031de` | 2026-11-24 | Keywords & leaner runs (PR #139) |
