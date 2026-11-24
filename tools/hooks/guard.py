@@ -680,6 +680,10 @@ def check_network(cmd, pii, hosts):
         raise Block("the command would send the candidate's name, email or phone number over the network")
 
 
+TAILOR_READ_ONLY = ("skills.md", "CLAUDE.md", "projects.md")
+KEYWORDS_FACT = re.compile(r"keywords\.py\b.*?\bfact\b", re.I | re.S)
+
+
 def check(call):
     tool = call.get("tool_name") or ""
     inp = call.get("tool_input") or {}
@@ -693,14 +697,22 @@ def check(call):
                                    or (tool.startswith("mcp__") and "gmail" not in tool.lower())):
         raise Block("the mail reader only reads Gmail: no web, browser or Indeed tools")
     cfg = config()
+    protect = protected(cfg)
+    if agent == "tailor":
+        # The tailor's facts are the candidate's files: it may not write them, or a failed grounding check could
+        # be "fixed" by adding the claim as a fact (tailor.md Limits). The candidate and the main session can.
+        protect += [(ROOT / name).resolve() for name in TAILOR_READ_ONLY]
+        if tool in SHELL_TOOLS and KEYWORDS_FACT.search(inp.get("command") or ""):
+            raise Block("the tailor doesn't record skills: skills.md holds the candidate's own answers "
+                        "(report the term under actions instead)")
     if tool in FILE_TOOLS:
-        check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
+        check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protect)
     elif tool in SHELL_TOOLS:
         cmd = expand_vars(inp.get("command") or "", ps=tool == "PowerShell")
         if GIT_SENDS.search(cmd):
             raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
                         "computer (the candidate can push from a terminal)")
-        check_writes(cmd, protected(cfg), cwd)
+        check_writes(cmd, protect, cwd)
         check_network(cmd, personal(cfg), allowed_hosts())
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
