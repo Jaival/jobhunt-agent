@@ -187,10 +187,30 @@ def url_problems(url, where="url"):
 
 
 def problems(data):
-    """Everything wrong with one extract; [] when it is safe to use."""
+    """Everything wrong with one extract; [] when it is safe to use. An extract from before `keywords` (engine
+    1.x) has none: it reads as an empty list."""
     if not isinstance(data, dict):
         return ["the extract isn't a JSON object"]
+    data = {**data, "keywords": data.get("keywords", [])}
     return validate(data, SCHEMA) + url_problems(data.get("url")) + text_problems(data)
+
+
+def keep_good_keywords(ext):
+    """ext with only the keywords that pass the schema and the link / instruction check, without duplicates, at
+    most maxItems. A bad keyword costs that keyword, not the whole extract (the reader would have to read the ad
+    again for a field the routine can do without)."""
+    if isinstance(ext, dict) and "keywords" not in ext:
+        return {**ext, "keywords": []}
+    if not isinstance(ext, dict) or not isinstance(ext["keywords"], list):
+        return ext
+    schema, seen, kept = SCHEMA["properties"]["keywords"], set(), []
+    for item in ext["keywords"]:
+        if validate(item, schema["items"]) or text_problems(item):
+            continue
+        if item["term"] and item["term"].casefold() not in seen:
+            seen.add(item["term"].casefold())
+            kept.append(item)
+    return {**ext, "keywords": kept[:schema["maxItems"]]}
 
 
 def lead_problems(lead):
@@ -561,6 +581,7 @@ def save_reply(path):
         bad += bool(found)
         print("\n".join(["FAILED  mail"] + [f"  {x}" for x in found]) if found else mail_line(mail))
     for ext in data.get("extracts") or []:
+        ext = keep_good_keywords(ext)
         found = problems(ext)
         if not found:
             found = [x for x in [asked_about(ext["id"], cands, tasks)] if x]
@@ -616,6 +637,7 @@ def cmd_read(a):
             print(f"FAILED  {j['id']}: {e}")
             continue
         ext.update(id=j["id"], url=j["url"])
+        ext = keep_good_keywords(ext)
         found = problems(ext)
         bad += bool(found)
         print(store(ext, cands) if not found else "\n".join([f"FAILED  {j['id']}"] + [f"  {x}" for x in found]))
