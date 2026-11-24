@@ -11,7 +11,8 @@ PHRASES = {"ats-review": ["run the ATS review", "check my CV"],
            "remap-cv": ["remap my CV"],
            "onboarding": ["setup_check.py reports anything as TODO"],
            "tailor": ["tailor <url>"], "why": ["why <job>"], "sent": ["sent <folder>"],
-           "job-status": ['"status"', "job status"], "skills": ["I know Agile from Maven", '"skills"']}
+           "job-status": ['"status"', "job status"], "skills": ["I know Agile from Maven", '"skills"'],
+           "revise": ["revise <folder>", "add Agile to the Checkmk CV"]}
 
 
 @pytest.mark.parametrize("name", PHRASES)
