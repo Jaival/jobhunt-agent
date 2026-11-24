@@ -25,7 +25,7 @@ over 2 pages or the letter over 1.
 
 Grounding: every number and every skill or tool term (tools/skills.txt plus config.yaml profile.score_bonus) in a
 letter, the CV headline or the letter headline must appear in the candidate's own files (master CV, CLAUDE.md without its Gaps section,
-projects.md, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
+projects.md, the skills.md rows marked yes, cv/variants.yaml) or in the job's ad.json; otherwise the build fails with the list. Terms only the ad
 has pass with a warning. `grounding_ok: [term, ...]` in the frontmatter lets reviewed exceptions through. Numbers
 written as words ("three", "zwölf") are checked too: a warning by default, an error with config.yaml
 `grounding_number_words: fail`. The context of a term (claimed or named as a gap) isn't checked. config.yaml
@@ -684,7 +684,8 @@ def load_terms():
 
 def own_sources(variants):
     """The candidate's own files as one text: the master CV, CLAUDE.md without its Gaps section, projects.md, the
-    master and approved texts of cv/variants.yaml, and the internship duration from config.yaml."""
+    skills.md rows marked yes, the master and approved texts of cv/variants.yaml, and the internship duration from
+    config.yaml."""
     parts = [doc_text(docx.Document(MASTER_CV)), str(INTERNSHIP_DURATION)]
     claude = ROOT / "CLAUDE.md"
     if claude.exists():
@@ -693,6 +694,8 @@ def own_sources(variants):
     projects = ROOT / "projects.md"
     if projects.exists():
         parts.append(projects.read_text(encoding="utf-8"))
+    import keywords
+    parts.append(keywords.confirmed_text())
     for v in variants.values():
         parts.append(v.get("master", ""))
         parts += [alt.get("text", "") for alt in (v.get("variants") or {}).values() if alt.get("approved")]
@@ -737,7 +740,7 @@ def grounding(meta, bodies, variants, folder):
                 else:
                     missing.append(term)
         if missing:
-            problems.append(f"{name}: not in your CV, CLAUDE.md, projects.md or the ad: {', '.join(missing)}")
+            problems.append(f"{name}: not in your CV, CLAUDE.md, projects.md, skills.md or the ad: {', '.join(missing)}")
     if problems:
         problems.append("Remove or correct these claims. Only a term the letter doesn't claim as the candidate's "
                         "(a product of the company, a gap named as one) may go into grounding_ok: [...] in "

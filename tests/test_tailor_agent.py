@@ -21,7 +21,7 @@ def test_tools_are_an_allow_list_without_web_mail_or_agents():
 
 def test_reply_block_matches_the_routine():
     keys = re.findall(r"^(\w+):", AGENT.read_text(encoding="utf-8").split("## What you return")[1], re.M)
-    assert keys == ["folder", "build", "pdfs", "personalise", "grounding", "actions"]
+    assert keys == ["folder", "build", "pdfs", "personalise", "grounding", "keywords", "actions"]
     routine = ROUTINE.read_text(encoding="utf-8")
     assert "subagent_type `tailor`" in routine
     assert all(f"`{k}`" in routine for k in keys)

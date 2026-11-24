@@ -51,7 +51,7 @@ def test_letter_headline_is_grounded(tool, sample):
     add_tagline(sample)
     edit(sample, APP, "short: Example-Company", "short: Example-Company\nletter_headline: Marketing Student | 40% reach")
     r = tool("build_application.py", APP, "--no-pdf")
-    assert r.returncode == 1 and "letter headline: not in your CV, CLAUDE.md, projects.md or the ad: 40%" in r.stderr
+    assert r.returncode == 1 and "letter headline: not in your CV, CLAUDE.md, projects.md, skills.md or the ad: 40%" in r.stderr
 
 
 def test_cv_map_check_shows_the_letter_headline(tool, sample):

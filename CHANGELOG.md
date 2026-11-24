@@ -16,6 +16,12 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 - Ad extracts hold the ad's key terms (`keywords`: up to 20, each with its importance and where the ad names
   it), the words an applicant tracking system searches a CV for. The ad reader fills them in; `extract.py save`
   drops a bad term instead of the whole extract. Extracts saved before this have none and stay valid.
+- `keywords.py check <folder>` matches the ad's key terms against the CV, the letter and your files and gives an
+  ATS match (the weighted share of the terms your CV shows). Each term is `cv`, `letter`, `addable` (you have it,
+  the CV doesn't show it yet), `learning`, `no` or `confirm` (nobody knows yet). Aliases (k8s = Kubernetes,
+  Datenbanken = databases) come from `engine/templates/keyword_aliases.yaml` and your skills.md.
+- skills.md keeps your answers about skills ads ask for: `keywords.py fact "<skill>" yes|learning|no --note
+  "<where>"`. A `yes` row (it needs a note) counts as your own fact in the builder's grounding check.
 
 ### Changed
 - The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
@@ -118,6 +124,10 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ### Behaviour changes
 - The ad reader also returns the ad's key terms (`keywords` in data/ads/<id>.json).
+- The tailor runs `keywords.py check` before writing (to show the terms you have) and after the build: job.md's
+  "Keyword coverage" is the tool's table, the tailor's reply has a `keywords` line, and the brief's "Apply today"
+  table shows the ATS match.
+- The builder's grounding check also accepts terms from skills.md rows marked yes.
 - Untrusted pages, ads and mail have less say over what the daily run does:
   - Watchlist endpoints are found by the ad reader, not the run itself: `extract.py pending` hands out an
     `endpoint | <company> | <careers page>` task for each companies.md row without an Endpoint (again after 30
@@ -178,6 +188,9 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
   the ad reader no longer has mail tasks. An instruction hidden in an ad or an email can no longer combine
   reading mail with opening web pages. The guard hook enforces the split. Costs one more subagent call per run.
   `setup_check.py --init` (or "update the engine") installs the new agent file and updates the reply hook.
+
+### Migration
+- "update the engine" (`setup_check.py --init`) adds an empty skills.md to the workspace.
 
 ## [1.1.0] - 2026-11-08: your own design
 

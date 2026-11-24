@@ -56,8 +56,8 @@ Today = the current local date. Work in this order. All tools run from the works
   `tailor <id> | applications/<folder> | score <N> (skills=N seniority=N language=N location=N hours=N) | <role type> | <reasons and gaps from step 4> | <notes>`
   Notes: the posting check (playbook B), "also on: ..." platforms, the letter languages when CLAUDE.md asks for others for this job, and "no build: layout none" or "no build: CV map broken" when config.yaml has `layout: none` or setup_check.py warned about the CV map in step 0.
   Call the tailors one at a time (the PDF export drives Word, which can't run two exports at once). Don't write job.md, application.md or the letter yourself, and don't open the folder's files to check them: the tailor's reply is the result.
-- The tailor attaches the extract, writes job.md and application.md, builds the CV and letters (grounding and page checks included) and replies with a block: `folder`, `build`, `pdfs`, `personalise`, `grounding`, `actions`. Keep each block for the brief:
-  - `build: OK` -> the "Apply today" table, with `personalise` as its sentence.
+- The tailor attaches the extract, writes job.md and application.md, builds the CV and letters (grounding and page checks included) and replies with a block: `folder`, `build`, `pdfs`, `personalise`, `grounding`, `keywords`, `actions`. Keep each block for the brief:
+  - `build: OK` -> the "Apply today" table, with `personalise` as its sentence and the `keywords` line's ATS match.
   - `build: FAILED` or `not built` -> under "Your actions" with the reason (e.g. which project the tailor would leave out to fit 2 pages; "your CV changed since it was mapped: say 'remap my CV'" once for a broken map).
   - `pdfs: none` -> "PDFs not built (<reason>)" under "Your actions".
   - `grounding` terms and every `actions` line -> "Your actions" (variants waiting for approval, facts to check).
@@ -90,7 +90,7 @@ The first line says which engine and model made the brief: `engine 0.3.0 (a1b2c3
   - Then the `KEEP` lines from decisions.py unchanged; don't add a new line for an action and target a KEEP line already has.
   - Below the checklist, "Done from your decisions": each `DO` line and what happened (folder tailored, tracker row added, folder archived, or the error). Leave out the section when there is nothing to list.
 - Summary line: jobs found / new / tailored / follow-ups due.
-- "Apply today" table, top 3: role type, role, company, score, German, location/commute, link, folder, and one sentence on what to personalise. Include a student role when one scores >= 70.
+- "Apply today" table, top 3: role type, role, company, score, German, location/commute, link, folder, ATS match, and one sentence on what to personalise. Include a student role when one scores >= 70.
 - "Your actions": anything only the candidate can do (sends, portal profiles, approvals of new variants, tracker rows added from emails to double-check).
 - "Follow-ups": drafted today (1st / 2nd step), due in the next days, cold ones.
 - Plan for today: the daily plan from CLAUDE.md "Routine settings" (for example triage, applying to the top 2-3 and their LinkedIn notes, evening follow-ups, one concrete small portfolio step continuing yesterday's, language practice).
