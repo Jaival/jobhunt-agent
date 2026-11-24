@@ -103,9 +103,13 @@ Write each answer into the file named in brackets right after the round.
    if there are none, delete the example projects and move on): status, tools used, link, what is really done
    (results, users, what is live), and anything not to claim yet. Copy the CV lines word for word into "CV text". Fill the table and the
    suggested order by role type. Remove the example projects.
-8. **Rules and daily plan** [CLAUDE.md "My decisions on the rules", "Routine settings"]
+8. **Rules and daily plan** [CLAUDE.md "My decisions on the rules", "Routine settings", "Portal answers"]
    Read out the defaults from engine/RULES.md rule 9 (start date, hours, weekdays, duration, salary wording) and
    ask for changes. Ask how much time they have per day and turn it into the "Plan for today" line.
+   Then the "Portal answers" section of CLAUDE.md (all optional): the answers application portals ask before
+   anyone reads the CV - start date, hours per week, work permit / visa, salary expectation (a range; per hour
+   for student roles), German and English level, notice period, willing to relocate, driving licence. Reuse what
+   earlier rounds already gave; leave a line empty when they'd rather decide per job.
 9. **Search** [sources.md, config.yaml: search.home, companies.md]
    Propose 5-8 search terms from rounds 3 and 3b (mix English and German titles, e.g. "Werkstudent Marketing",
    "Working Student Content") and let them edit the list. Replace the example terms in sources.md, and mark

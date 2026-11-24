@@ -12,6 +12,212 @@ follow [docs/RELEASING.md](docs/RELEASING.md). Each release lists:
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-24: keywords & leaner runs
+
+### Added
+- Ad extracts hold the ad's key terms (`keywords`: up to 20, each with its importance and where the ad names
+  it), the words an applicant tracking system searches a CV for. The ad reader fills them in; `extract.py save`
+  drops a bad term instead of the whole extract. Extracts saved before this have none and stay valid.
+- `keywords.py check <folder>` matches the ad's key terms against the CV, the letter and your files and gives an
+  ATS match (the weighted share of the terms your CV shows). Each term is `cv`, `letter`, `addable` (you have it,
+  the CV doesn't show it yet), `learning`, `no` or `confirm` (nobody knows yet). Aliases (k8s = Kubernetes,
+  Datenbanken = databases) come from `engine/templates/keyword_aliases.yaml` and your skills.md.
+- skills.md keeps your answers about skills ads ask for: `keywords.py fact "<skill>" yes|learning|no --note
+  "<where>"`. A `yes` row (it needs a note) counts as your own fact in the builder's grounding check.
+- Skill questions in the brief: on weekdays the Decisions list asks about up to 5 terms recent ads wanted that
+  none of your files mention: `` - [ ] Do you know Agile? (asked by Acme) `skill Agile=?` ``. Replace `?` with
+  `yes <where you used it>`, `learning` or `no` and tick it; the next run writes it to skills.md. Or tell Claude in
+  the workspace ("I know Agile from Maven"): the new `skills` skill records it.
+- `revise <folder>: <change>` (new `revise` skill): the tailor subagent edits and rebuilds a draft in a fresh
+  context, instead of a long chat in your session. A chat after the daily run was the biggest token cost measured
+  (docs/research/token-usage-2026-11-08.md); a revise costs about what one tailoring does.
+- Each draft gets portal-answers.md: the answers application portals ask before anyone reads the CV (start date,
+  hours, work permit, salary, languages, notice period, relocation, driving licence), from a new "Portal answers"
+  section in CLAUDE.md. Empty values say "ask the candidate". Onboarding asks for them; setup_check warns when
+  the section is missing (add it from engine/templates/workspace/CLAUDE.md).
+
+### Changed
+- The daily run keeps its context smaller: `setup_check.py --quiet` (new option) prints only the version, TODO and
+  warn lines and the verdict; the outreach section of the playbook (E) is printed only when a job needs outreach;
+  and ROUTINE.md tells the run to print only what a step names. Every output stays in the run's context and is paid
+  for again on each later call (13 Nov run: 53k → 155k tokens).
+- The daily run calls the ad reader and the tailor in the foreground (`run_in_background: false`): the reply
+  comes back as the call's result, so the run no longer spends turns waiting with `sleep` or empty turns
+  (51 such calls, 5.4M tokens in 10 runs; docs/research/token-usage-2026-11-08.md). The ad reader also drops
+  the Desktop tools it never uses (file sending, plugin search, the Claude browser), whose schemas loaded on
+  every call.
+- The ad reader puts a job under `unreadable` with the reason `connector error` when Indeed's `get_job_details`
+  fails, instead of retrying. The tailor stops at once on a guard block or permission refusal.
+- The workspace permission template denies Desktop tools that no run or session in a workspace has used (plugin
+  install and search, worktrees, the terminal, session, sidebar, window and connector tools, the Chrome
+  extension), so their schemas no longer load on every call. Tools you use yourself in the workspace (the Claude
+  browser, file sending, widgets, scheduled tasks) stay. Migration: `setup_check.py --init` or "update the engine"
+  adds the rules to `.claude/settings.json`.
+- The ad reader's replies are saved by a hook (`.claude/hooks/reader_reply.py`, SubagentStop) to
+  `data/ads/incoming/`, and `extract.py save data/ads/incoming/` stores all of them; a reply that saved cleanly is
+  deleted, a failed one stays. The daily run and the `tailor <url>` command no longer copy each reply into
+  incoming.json themselves (397k characters re-typed in 10 runs). Without the hook they fall back to the old way
+  and say so. Migration: `setup_check.py --init` or "update the engine" installs the hook.
+- The daily run and the tailor print only the playbook sections they use (`python engine/tools/playbook.py A B E F
+  G`, Fridays also H and I; the tailor B C D) instead of reading the whole career-ops-playbook.md: about half
+  the text in every later call of the run. New tool: `playbook.py`. If your scheduled task's instructions tell it
+  to read engine/career-ops-playbook.md, drop that part: ROUTINE.md says which sections to print.
+- Rejections and interview invitations are recorded with a tool: `python engine/tools/tracker.py status <folder>
+  --status Rejected|Interview|Offer [--response-date ...] [--interview-date ...]`, with the same backup and
+  Excel-open check as `add_applied.py`. The daily run no longer edits the Excel file itself.
+- The builder warns when application.md sets a recipient, subject or date that cv/layout.yaml doesn't map
+  (the master letter's own text would stay), and lists numbers that come from the ad only.
+- ROUTINE.md: the daily run reads the master CV with `cv_map.py outline` (it had no allowed way to read a
+  .docx), names failed sources and goes on, skips steps 3 to 5 when nothing is new, and writes the "Setup
+  needed" brief when a scheduled run finds the setup unfinished.
+- For contributors: CI runs `ruff check` (syntax errors and pyflakes only), and CLAUDE.md in the repo root
+  lists the checks and the branch and changelog rules.
+- The README now says who the engine is for (student and first-job roles in Germany, any field), who it is not
+  for yet (experienced professionals, apprenticeships, freelance) and what it needs.
+
+### Fixed
+- `extract.py save` no longer stops with a traceback on a reader reply that isn't UTF-8 or can't be read. It
+  prints FAILED for that file, sets it aside in `data/ads/failed/` and saves the other replies.
+- `search_jobs.py` prints API titles, companies and locations without control characters and cut to 200
+  characters. A new job whose title, company or location holds a link or an instruction, or whose link has
+  shell characters, prints as `NEW ... SUSPICIOUS (reader will check)` without that text; the ad reader still
+  reads it.
+- The guard hook stopped checking network calls when config.yaml had a `profile:` that wasn't a mapping, and
+  let a blocked call through when data/guard.json wasn't a JSON object. Both now keep blocking.
+  `guard.py --status` adds a "guard errors" line when the guard itself failed on a call, and
+  `setup_check.py` tests the guard with a network call as well as a send call.
+- The guard hook now also blocks these writes into engine/, .claude/ and the master files: downloads with an
+  output file (`curl -o`, `wget -O`, `-OutFile`), the `>|` redirect, PowerShell aliases (`sc`, `ri`, ...), paths
+  that reach a protected folder through `..`, the Windows `\\?\` path prefix, git commands that change the
+  engine's work tree (checkout, reset, stash, ...) from Bash, and `python engine/tools/../...`. Page scripts
+  can't call `requestSubmit`. The update steps in UPGRADING.md (fetch, tag, worktree, show) are unaffected.
+- A job you ticked as "tailor" in the brief (or added with `extract.py add`) was dropped from
+  data/candidates.json by the next search, so it was never read or tailored. The search now keeps such jobs
+  until the ledger has them.
+- The tracker is saved to a temp file and swapped in, so a run that is cut off can't leave a half-written
+  Excel file.
+- `add_applied.py` treated a folder as "already in the tracker" when its name was the start of another
+  folder's name (`..._Acme_Data` vs `..._Acme_Data-Engineer`) and moved it to _sent/ without a row.
+- An application confirmed by email now also gets the ledger verdict `applied`.
+- The docs promised a tracker/pending_rows.csv fallback that never existed; when the tracker is open in
+  Excel the brief now lists what to run again.
+- A CV over 2 pages or a letter over 1 page stayed in the folder under its final name although the build
+  failed: the page check ran after the files were renamed. The builder now exports and checks the temp files
+  and writes the final .docx and PDF only when every check passed.
+- A date in application.md that isn't YYYY-MM-DD, or a crash of Word / LibreOffice during the PDF export, gave
+  a traceback and left ~build_ files behind. Both are reported as normal build messages now, and temp files
+  are always removed.
+- Student letters: the builder required a phrase like "as soon as possible" even when your CLAUDE.md gives a
+  start date. A date in the letter ("from 1 March 2027", "ab 01.03.2027") now counts as the start.
+- A reader reply with an invalid item stayed in data/ads/incoming/ and was read again on every run, which
+  repeated its FAILED lines and could mark a live job as closed. It now moves to data/ads/failed/ after its
+  valid items are saved.
+- Reader output: line breaks and other control characters are removed from every field, and a job link with a
+  space, quote, backtick, `$`, backslash, `<`, `>`, `|` or `;` is rejected (also by `extract.py add`).
+- `ledger.py record` recorded jobs that were never read (no extract, no read error) as "screened", so they
+  didn't come back. They now stay out of the ledger until the reader has read them.
+- `ledger.py set --verdict` accepts only screened, skipped, closed, tailored, applied, rejected, interview or
+  offer; a typo stops with an error.
+- The same job with another gender form ("(m/w/divers)", "Kaufmann/-frau", "Berater/in", "Entwickler*in",
+  "Manager:in") counts as seen.
+- "update the engine": `upgrade.py apply` put local engine edits aside before it knew there was an update, and
+  lost track of them when there was none. `upgrade.py rollback` stopped before it restored config.yaml when the
+  local edits didn't apply cleanly. `migrate` deleted the comment lines after a config key it removed. A damaged
+  upgrade.json now gives a message instead of a traceback.
+- `eval_run.py compare` (the release gate) passed when the new run had lost or errored ads. It now fails for
+  any ad of the old run that the new run didn't judge, and lists the ads each metric lost and gained.
+- One failed Arbeitnow page (an error page, a changed field) dropped every Arbeitnow job of the run. The pages
+  already read are now kept and the error is counted in the source line. The search also says when its 7-page
+  limit left out older jobs.
+- In a workspace that already was a git repo before setup, the daily commit added engine/, backups/ and Office
+  lock files. The ignore lines now go to .git/info/exclude; your .gitignore is not changed. Files such a repo
+  already tracks stay tracked: `git rm -r --cached engine backups` removes them from the history going forward.
+- `setup_check.py` said "engine is up to date" when it couldn't reach GitHub; it now says the check didn't run.
+- `setup_check.py` warns when `university` in config.yaml is empty or isn't the one in your CLAUDE.md.
+- A ticked decision written as `[x ]`, `[ x]` or `-[x]` is now read as ticked.
+- `setup_check.py --init` and "update the engine" save a changed file under .claude/ (an agent or skill you
+  edited) to backups/claude-files-<date>/ before they replace it.
+- The archive reason for a cold application says "2 follow-ups drafted": the engine doesn't know if you sent them.
+
+### Behaviour changes
+- The ad reader also returns the ad's key terms (`keywords` in data/ads/<id>.json).
+- The tailor runs `keywords.py check` before writing (to show the terms you have) and after the build: job.md's
+  "Keyword coverage" is the tool's table, the tailor's reply has a `keywords` line, and the brief's "Apply today"
+  table shows the ATS match.
+- The builder's grounding check also accepts terms from skills.md rows marked yes.
+- The guard stops the tailor subagent from writing CLAUDE.md, projects.md and skills.md (any tool, and
+  `keywords.py fact`): those files are what the build's grounding check trusts, so a tailor must not add a fact
+  to pass it. The daily run itself and the `skills` / `revise` skills still write skills.md.
+- An ad keyword with `=`, a backtick or `|` is dropped: it could otherwise pre-fill a brief's skill question
+  (`skill Go=yes at Acme=?`) or break the skills.md table. setup_check warns when skills.md is missing.
+- Apply early: among jobs within 5 points of each other, the daily run tailors the newer ad first, and the brief
+  shows each job's posted age.
+- The tailor, ad reader and mail reader run on Sonnet (`model: sonnet` in their files), also when your own session
+  runs a bigger model. They ran on Sonnet in every measured run; the pin keeps it that way.
+- Untrusted pages, ads and mail have less say over what the daily run does:
+  - Watchlist endpoints are found by the ad reader, not the run itself: `extract.py pending` hands out an
+    `endpoint | <company> | <careers page>` task for each companies.md row without an Endpoint (again after 30
+    days when none was found), and `extract.py save` writes the endpoint into companies.md only in the
+    Personio, Ashby, Greenhouse or Lever API form. The run no longer opens career pages itself. New command for
+    an endpoint you found: `python engine/tools/extract.py endpoint "<company>" <url>`.
+  - `search_jobs.py` reads a watchlist endpoint only when its host is the ATS's exact API host (before,
+    `https://evil.example/api.ashbyhq.com/...` counted as Ashby); another endpoint, such as Workday or
+    SmartRecruiters, is listed as `skipped` in the Watchlist status line.
+  - The guard's host allowlist takes only the Careers page column of companies.md, plus every host in
+    sources.md and the job APIs as before. Hosts written elsewhere in companies.md no longer allow curl or
+    WebFetch.
+  - `extract.py pending` and `add` record the tasks they hand out in data/ads/tasks.json. A reader reply may
+    save an extract, or mark an ad unreadable or gone, only for a job handed out that day; for another job in
+    candidates.json `save` prints FAILED, so a page can't hide other jobs.
+  - The mail reader also returns the sender's domain. A `sent` confirmation from a sender that is neither a
+    known application portal nor the site of a draft's job link prints `MAIL sent UNVERIFIED`; the run then
+    doesn't add the tracker row but puts a `sent <folder>` item in the brief's Decisions for you to tick.
+  - Migration: `setup_check.py --init` or "update the engine" copies the new ad-reader.md and mail-reader.md
+    into `.claude/agents/`. Until then no endpoint is found and every `sent` mail prints UNVERIFIED.
+- The guard hook reads Bash and PowerShell more like a shell does, and blocks more:
+  - A multi-line command is split into its lines, outside quotes and heredoc bodies. Before, a file write on one
+    line and `python engine/tools/...` on the next counted as one part and was blocked as a write into engine/.
+    Code in `python -c "..."` or a heredoc is checked as one part, so a script that names an engine/ path in one
+    statement and writes to it in another is blocked. Comments are skipped; `<<` in `$((...))` isn't a heredoc;
+    a heredoc word with quotes in it (`<<E"O"F`) ends where Bash ends it.
+  - An engine tool call is exempt from the write checks only when it runs nothing else: one with `$(...)`,
+    backticks, `<(...)` or a second line is checked like any command.
+  - Shell variables set in the same command (`p=engine/x; rm $p`, PowerShell `$p = '...'`) are replaced by their
+    value before the checks, for the read-only paths and for the allowed hosts. Bash names are case-sensitive;
+    `name=` inside a quoted string isn't an assignment.
+  - `cd`, `pushd`, `popd` and `Set-Location` are followed, so `cd engine && rm RULES.md` is blocked. A write after a
+    cd the guard can't follow (a variable, `cd -`, a substitution) is blocked.
+  - curl, wget and Invoke-WebRequest/RestMethod must have their URL written out: `$(...)`, backticks, a variable
+    the guard can't read, no URL at all (`xargs curl`), config or URL-list files (`-K`, `--config`, `-i`, `-e`)
+    and `@file` / `-InFile` bodies are blocked.
+- Replies to your applications (confirmations, rejections, interview invitations) are read by the ad reader, as a
+  new `list mail | <since>` task, instead of the daily run opening Gmail itself. The reader returns names and
+  dates only; `extract.py save` checks them like leads (no links, addresses or instructions) and prints a `MAIL`
+  line each, which step 7 matches to your folders. The main run no longer reads mail text (RULES.md rule 7).
+- The guard hook now also blocks: writes to its own files (data/guard.json, data/guard.log), `git push` and
+  `git remote add / set-url / rename` from Bash or PowerShell, a URL with a backslash before its path, and a
+  WebSearch query that holds your name, email or phone number. `setup_check.py --init` (or "update the engine")
+  updates the hook matcher in .claude/settings.json so WebSearch reaches the guard.
+- The builder's placeholder, banned-phrase and `never_write` checks now read the whole document, including
+  headers, footers, text boxes and tables inside tables. A master CV or letter with `[`, `]` or a banned phrase
+  in such a place now fails the build until it is fixed.
+- Angle-bracket placeholders (`<role at company>`), TBD, TODO, XXX and "lorem ipsum" fail the build like
+  square brackets do.
+- Numbers with a unit ("10k", "2.5M", "3 Mio" written as "3mio") are checked against your files and the ad;
+  before, they were skipped.
+- Jobs whose ad the reader classes as role type Other (experienced, freelance, apprenticeship) are skipped with
+  the reason "role type". Outreach drafts are written for jobs with a score of 70 or more only (playbook E
+  already said so). On Mondays, weekend jobs that scored 70 or more are tailored first. RULES.md rule 3 now
+  says what the rubric already did: C1/C2 German is a hard mismatch for junior roles; for student roles it
+  lowers the language sub-score.
+- Mail is read by a new `mail-reader` subagent (.claude/agents/mail-reader.md) that has Gmail read tools only;
+  the ad reader no longer has mail tasks. An instruction hidden in an ad or an email can no longer combine
+  reading mail with opening web pages. The guard hook enforces the split. Costs one more subagent call per run.
+  `setup_check.py --init` (or "update the engine") installs the new agent file and updates the reply hook.
+
+### Migration
+- "update the engine" (`setup_check.py --init`) adds an empty skills.md to the workspace.
+
 ## [1.1.0] - 2026-11-08: your own design
 
 ### Added
@@ -314,7 +520,8 @@ Config version 1.
 
 - IT job titles only (search_jobs.py), one fixed two-column table CV, Word on Windows for PDFs.
 
-[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...next
+[Unreleased]: https://github.com/Jaival/jobhunt-agent/compare/v2.0.0...next
+[2.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/Jaival/jobhunt-agent/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/Jaival/jobhunt-agent/compare/v0.4.0...v0.5.0

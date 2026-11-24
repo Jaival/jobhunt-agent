@@ -88,8 +88,31 @@ def test_compare_flags_a_drop_beyond_tolerance():
     good = [result(EXP_GOOD, judgment(), f"{i:02}") for i in range(5)]
     worse = good[:2] + [result(EXP_GOOD, judgment(score=50), f"{i:02}") for i in range(2, 5)]
     lines, regressed = eval_run.compare(run_of(good), run_of(worse, "0.4.0"), tolerance=2)
-    assert regressed and "Score inside the range: 5/5 -> 2/5 REGRESSION" in lines
+    assert regressed and "Score inside the range: 5/5 -> 2/5 REGRESSION (lost: 02, 03, 04)" in lines
     assert not eval_run.compare(run_of(good), run_of(worse, "0.4.0"), tolerance=3)[1]
+
+
+def test_compare_fails_when_an_ad_was_not_judged():
+    old = [result(EXP_GOOD, judgment(), f"{i:02}") for i in range(4)]
+    errored = old[:3] + [{"ad": "03", "expected": EXP_GOOD, "error": "timeout", "got": {}, "grades": {}}]
+    lines, regressed = eval_run.compare(run_of(old), run_of(errored, "0.4.0"), tolerance=2)
+    assert regressed and "NOT JUDGED in the new run: 03 REGRESSION" in lines
+    lines, regressed = eval_run.compare(run_of(old), run_of(old[:2], "0.4.0"), tolerance=2)
+    assert regressed and "NOT JUDGED in the new run: 02, 03 REGRESSION" in lines
+
+
+def test_compare_names_the_ads_a_metric_lost_and_gained():
+    old = [result(EXP_GOOD, judgment(score=50), "00"), result(EXP_GOOD, judgment(), "01")]
+    new = [result(EXP_GOOD, judgment(), "00"), result(EXP_GOOD, judgment(score=50), "01")]
+    lines, regressed = eval_run.compare(run_of(old), run_of(new, "0.4.0"), tolerance=2)
+    assert not regressed
+    assert "Score inside the range: 1/2 -> 1/2 (lost: 01; gained: 00)" in lines
+
+
+def test_compare_ignores_ads_only_the_new_run_has():
+    old = [result(EXP_GOOD, judgment(), "00")]
+    new = old + [result(EXP_GOOD, judgment(), "01")]
+    assert not eval_run.compare(run_of(old), run_of(new, "0.4.0"), tolerance=0)[1]
 
 
 def test_run_writes_both_files(tmp_path, monkeypatch, capsys):

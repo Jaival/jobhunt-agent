@@ -1,4 +1,6 @@
 """Ledger matching: reposts count as seen, different jobs at the same company don't (S1-5)."""
+import sys
+
 import pytest
 
 
@@ -58,3 +60,37 @@ def test_rows_from_an_older_ledger_match(ledger_mod):
     row = dict.fromkeys(ledger_mod.FIELDS, "")
     row.update(key="acme|industriekauffrau vertrieb", company="Acme", title="Industriekauffrau Vertrieb")
     assert ledger_mod.Index([row]).find("Acme", "Industriekaufmann Vertrieb") is row
+
+
+@pytest.mark.parametrize("a, b", [
+    ("Werkstudent Marketing (m/w/divers)", "Werkstudent Marketing (m/w/d)"),
+    ("Kaufmann/-frau für Büromanagement", "Kauffrau für Büromanagement"),
+    ("Kauffrau/-mann Büromanagement", "Kaufmann Büromanagement"),
+    ("Berater/in Vertrieb", "Berater Vertrieb"),
+    ("Berater/-in Vertrieb", "Beraterin Vertrieb"),
+    ("Entwickler*in Backend", "Entwickler Backend"),
+    ("Manager:in Marketing", "Manager Marketing"),
+    ("Praktikant_in Controlling", "Praktikant Controlling"),
+])
+def test_gender_forms_are_the_same_job(ledger_mod, a, b):
+    idx = ledger_mod.Index([])
+    idx.add(company="Acme GmbH", title=a, url="https://example.org/a")
+    assert idx.match("Acme", b) is not None
+
+
+@pytest.mark.parametrize("a, b", [
+    ("Trainer Inhouse", "Trainer"),
+    ("Sales Manager Inbound", "Sales Manager"),
+    ("SAP FI Berater", "SAP CO Berater"),
+])
+def test_different_jobs_stay_different(ledger_mod, a, b):
+    idx = ledger_mod.Index([])
+    idx.add(company="Acme GmbH", title=a, url="https://example.org/a")
+    assert idx.match("Acme", b) is None
+
+
+def test_set_rejects_an_unknown_verdict(ledger_mod, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["ledger.py", "set", "x", "--verdict", "tailord"])
+    with pytest.raises(SystemExit) as e:
+        ledger_mod.main()
+    assert e.value.code == 2 and "tailord" in capsys.readouterr().err

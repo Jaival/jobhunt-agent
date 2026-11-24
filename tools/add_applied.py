@@ -12,20 +12,15 @@ Usage (from the JobHunt folder):
 import argparse
 import copy
 import datetime as dt
-import os
 import re
-import shutil
-import subprocess
 import sys
-from pathlib import Path
 
 import openpyxl
 
 import appdirs
+import tracker
 
 from config import ROOT
-XLSX = ROOT / "tracker" / "Job_Application_Tracker.xlsx"
-LOCK = ROOT / "tracker" / "~$Job_Application_Tracker.xlsx"
 GERMAN = ("none", "basic", "B2", "C1+", "unknown")
 CADENCE_DAYS = 7
 
@@ -74,6 +69,7 @@ def main():
     ap.add_argument("--id", help="Job ID, default: the folder name")
     ap.add_argument("--note", default="")
     a = ap.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")
 
     folder = appdirs.find(a.folder)
     if not folder:
@@ -116,24 +112,23 @@ def main():
         "Notes": a.note,
     }
 
-    if LOCK.exists():
-        print("FAILED: the tracker is open in Excel (lock file found). Close it and run again.", file=sys.stderr)
+    if tracker.locked():
+        print(tracker.LOCKED, file=sys.stderr)
         return 1
-    wb = openpyxl.load_workbook(XLSX)
+    wb = openpyxl.load_workbook(tracker.XLSX)
     ws = wb["Applications"]
     hdr = [c.value for c in ws[1]]
     col = {h: i + 1 for i, h in enumerate(hdr)}
     last = max(r for r in range(1, ws.max_row + 1) if ws.cell(r, 1).value)
-    for r in range(2, last + 1):
-        if ws.cell(r, col["Job ID"]).value == row["Job ID"] or folder.name in str(ws.cell(r, col["CV Doc"]).value or ""):
-            print(f"SKIP: {folder.name} is already in the tracker (row {r})")
-            if appdirs.bucket_of(folder) == "drafts":
-                appdirs.move(folder, "sent")
-                print(f"MOVED {folder.name} -> _sent/")
-            return 0
-    backup = ROOT / "backups" / f"{dt.date.today():%Y-%m-%d}"
-    backup.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(XLSX, backup / f"Job_Application_Tracker_before-{folder.name[11:40]}.xlsx")
+    dup = tracker.row_of(ws, col, folder.name) or next(
+        (r for r in range(2, last + 1) if ws.cell(r, col["Job ID"]).value == row["Job ID"]), None)
+    if dup:
+        print(f"SKIP: {folder.name} is already in the tracker (row {dup})")
+        if appdirs.bucket_of(folder) == "drafts":
+            appdirs.move(folder, "sent")
+            print(f"MOVED {folder.name} -> _sent/")
+        return 0
+    tracker.backup(folder.name[11:40])
     r = last + 1
     for h, v in row.items():
         c = ws.cell(r, col[h])
@@ -141,7 +136,7 @@ def main():
         src = ws.cell(r - 1, col[h])
         if src.has_style:
             c._style = copy.copy(src._style)
-    wb.save(XLSX)
+    tracker.save(wb)
     print(f"OK row {r}: {row['Company']} | {row['Title']} | applied {applied:%d.%m.%Y}")
     if appdirs.bucket_of(folder) != "sent":
         appdirs.move(folder, "sent")
@@ -149,8 +144,7 @@ def main():
     for h in ("Company", "Location", "Fit Score", "German Required", "Job URL", "Contact Person"):
         if row[h] in ("", None):
             print(f"  check: '{h}' is empty")
-    subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "tracker_to_md.py")], check=True,
-                   env={**os.environ, "JOBHUNT_ROOT": str(ROOT)})
+    tracker.refresh()
     return 0
 
 

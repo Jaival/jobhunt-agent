@@ -66,5 +66,6 @@ def test_set_and_drop_key():
     text = "# head\na: 1  # keep\nb:\n  x: 1\n# about c\nc: 3\n"
     t = upgrade.set_key(text, "b", {"y": 2})
     assert t == "# head\na: 1  # keep\nb: {y: 2}\n# about c\nc: 3\n"
-    assert upgrade.drop_key(t, "b") == "# head\na: 1  # keep\nc: 3\n"
+    assert upgrade.drop_key(t, "b") == "# head\na: 1  # keep\n# about c\nc: 3\n"
+    assert upgrade.drop_key("a: 1\nb:\n  x: 1\n  # inside b\n\n# about c\nc: 3\n", "b") == "a: 1\n\n# about c\nc: 3\n"
     assert upgrade.set_key(text, "d", [1, 2]).endswith("c: 3\nd: [1, 2]\n")

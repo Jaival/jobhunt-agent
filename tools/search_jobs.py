@@ -22,7 +22,6 @@ import base64
 import datetime as dt
 import html
 import json
-import os
 import re
 import sys
 import time
@@ -49,6 +48,8 @@ BA_HEADERS = {"X-API-Key": "jobboerse-jobsuche", **UA}
 BA_SIZE, BA_PAGES = 100, 3  # results per page, pages per search (a search hitting the limit is warned about)
 ARBEITNOW = "https://www.arbeitnow.com/api/job-board-api"
 GIVE_UP = 3  # detail fetches failing in a row before the rest are skipped
+MAX_FIELD = 200  # characters kept of an API title, company, location or date
+DATE_ONLY = re.compile(r"\d{4}-\d{2}-\d{2}|-")
 
 # Title filter (routine step 3): built from the profile: block in config.yaml, see scope.py.
 try:
@@ -157,34 +158,55 @@ def write(jobs, status, since):
                                        "status": status, "jobs": jobs}, ensure_ascii=False, indent=1))
 
 
+ARBEITNOW_PAGES = 7
+
+
 def arbeitnow(since, status):
+    """Arbeitnow's job board, newest first, up to ARBEITNOW_PAGES pages. A page that fails (HTTP error, not
+    JSON, an item without its fields) ends the search and keeps the pages already read; the error goes to
+    status["errors"]. A full last page inside the window is reported as status["warning"]."""
     out, cutoff = [], dt.datetime.fromisoformat(since).timestamp()
-    for page in range(1, 8):
-        data = requests.get(ARBEITNOW, params={"page": page}, headers=UA, timeout=30).json().get("data", [])
+    for page in range(1, ARBEITNOW_PAGES + 1):
+        try:
+            r = requests.get(ARBEITNOW, params={"page": page}, headers=UA, timeout=30)
+            r.raise_for_status()
+            data = r.json().get("data", [])
+            found = []
+            for x in data:
+                if x["created_at"] < cutoff or not x["url"].startswith("https://www.arbeitnow.com/"):
+                    continue
+                text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", x.get("description", ""))))
+                found.append(dict(id=f"an-{x['slug']}", source="Arbeitnow", title=x["title"], company=x["company_name"],
+                                  location=x.get("location", ""), remote=x.get("remote"),
+                                  posted=f"{dt.date.fromtimestamp(x['created_at']):%Y-%m-%d}", url=x["url"], text=text))
+            done = not data or min(x["created_at"] for x in data) < cutoff
+        except Exception as e:  # keep the pages already read; report in the status line
+            status.setdefault("errors", []).append(f"page {page}: {type(e).__name__}: {e}")
+            return out
         status["fetched"] = status.get("fetched", 0) + len(data)
-        for x in data:
-            if x["created_at"] < cutoff or not x["url"].startswith("https://www.arbeitnow.com/"):
-                continue
-            text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", x.get("description", ""))))
-            out.append(dict(id=f"an-{x['slug']}", source="Arbeitnow", title=x["title"], company=x["company_name"],
-                            location=x.get("location", ""), remote=x.get("remote"),
-                            posted=f"{dt.date.fromtimestamp(x['created_at']):%Y-%m-%d}", url=x["url"], text=text))
-        if not data or min(x["created_at"] for x in data) < cutoff:
-            break
+        out += found
+        if done:
+            return out
         time.sleep(1)
+    status["warning"] = f"stopped after {ARBEITNOW_PAGES} pages, older jobs in the window were left out: run more often"
     return out
 
 
 def watchlist(since, status):
-    """Personio / Ashby / Greenhouse / Lever endpoints from the companies.md table."""
+    """Personio / Ashby / Greenhouse / Lever endpoints from the companies.md table, by their exact API form
+    (extract.ATS_FORMS); another endpoint is reported as skipped."""
     out = []
     for line in (ROOT / "companies.md").read_text(encoding="utf-8").splitlines():
         cells = [c.strip() for c in line.split("|")]
         if len(cells) < 6 or not cells[4].startswith("https://"):
             continue
         company, url = cells[1], cells[4].split()[0]
+        ats = extract.endpoint_ats(url)
+        if not ats:
+            status[company] = "skipped: not a Personio, Ashby, Greenhouse or Lever API endpoint"
+            continue
         try:
-            if "personio" in url and url.endswith("/xml"):
+            if ats == "Personio":
                 root = ET.fromstring(requests.get(url, headers=UA, timeout=30).content)
                 for p in root.iter("position"):
                     created = (p.findtext("createdAt") or "")[:10]
@@ -192,24 +214,22 @@ def watchlist(since, status):
                     out.append(dict(id=f"personio-{jid}", source=f"Watchlist ({company})", title=p.findtext("name") or "",
                                     company=company, location=p.findtext("office") or "", posted=created,
                                     url=url.replace("/xml", f"/job/{jid}")))
-            elif "api.ashbyhq.com" in url:
+            elif ats == "Ashby":
                 for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"ashby-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=j.get("location", ""),
                                     posted=(j.get("publishedAt") or "")[:10], url=j.get("jobUrl", "")))
-            elif "greenhouse.io" in url:
+            elif ats == "Greenhouse":
                 for j in requests.get(url, headers=UA, timeout=30).json().get("jobs", []):
                     out.append(dict(id=f"gh-{j['id']}", source=f"Watchlist ({company})", title=j["title"],
                                     company=company, location=(j.get("location") or {}).get("name", ""),
                                     posted=(j.get("updated_at") or "")[:10], url=j.get("absolute_url", "")))
-            elif "api.lever.co" in url:
+            else:
                 for j in requests.get(url, headers=UA, timeout=30).json():
                     out.append(dict(id=f"lever-{j['id']}", source=f"Watchlist ({company})", title=j["text"],
                                     company=company, location=(j.get("categories") or {}).get("location", ""),
                                     posted=f"{dt.date.fromtimestamp(j['createdAt'] / 1000):%Y-%m-%d}",
                                     url=j.get("hostedUrl", "")))
-            else:
-                continue
             status[company] = "ok"
         except Exception as e:
             status[company] = f"error: {e}"
@@ -239,6 +259,8 @@ def main():
     idx = ledger.Index(ledger.load())
     seen_keys, jobs = set(), []
     for j in found:
+        # API text is untrusted (RULES.md rule 7): no control characters, a bounded length, checked before printing
+        j.update({k: extract.clean(str(j.get(k) or ""))[:MAX_FIELD] for k in ("title", "company", "location", "posted")})
         if not in_scope(j["title"]) or not REGION.keep(j):
             continue
         key = ledger.make_key(j["company"], j["title"])
@@ -249,6 +271,14 @@ def main():
         j.update(role_type=role_type(j["title"]), key=key,
                  seen=bool(hit), seen_as=f"{hit['first_seen']} {hit['verdict']} {hit['score']}".strip() if hit else "")
         jobs.append(j)
+
+    # jobs the candidate added by link (extract.py add) stay until the ledger has them
+    have = {j["id"] for j in jobs} | {j["url"] for j in jobs}
+    for j in extract.load_candidates()["jobs"]:
+        if (j.get("source") == "manual" and j["id"] not in have and j["url"] not in have
+                and j["url"] not in idx.by_url and j["id"] not in idx.by_id):
+            j.pop("read_error", None)   # like a searched job, it is tried again each run
+            jobs.append(j)
 
     new = [j for j in jobs if not j["seen"]]
     write(jobs, status, since)  # before the details, so a crash there can't lose the search
@@ -264,9 +294,19 @@ def main():
             print(f"  WARNING page limit: {hit} results fetched; narrow the term or the radius, or run more often")
     print(f"\nIn scope: {len(jobs)} ({len(new)} new, {len(jobs) - len(new)} already seen). Written to {OUT.relative_to(ROOT)}\n")
     for j in sorted(new, key=lambda j: (j["role_type"], j["posted"])):
-        print(f"NEW  {j['posted']}  [{j['role_type']}] {j['title']} | {j['company']} | {j['location']} | {j['url']}"
-              + (" | no ad text (detail_error)" if "detail_error" in j else ""))
+        print(new_line(j))
     return 0
+
+
+def new_line(j):
+    """The printed line for a new job. A title, company or location with a link or an instruction, or a link the
+    routine can't use, prints as SUSPICIOUS without that text: the ad reader still reads the job."""
+    fields = {k: j[k] for k in ("title", "company", "location")}
+    odd = extract.text_problems(fields) or extract.url_problems(j["url"]) or not DATE_ONLY.fullmatch(j["posted"] or "-")
+    text = ("SUSPICIOUS (reader will check) | " + extract.file_stem(j["id"]) if odd
+            else f"{j['title']} | {j['company']} | {j['location']} | {j['url']}")
+    return (f"NEW  {j['posted'] if not odd else '-'}  [{j['role_type']}] {text}"
+            + (" | no ad text (detail_error)" if "detail_error" in j else ""))
 
 
 if __name__ == "__main__":

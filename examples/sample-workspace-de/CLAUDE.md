@@ -28,6 +28,17 @@ projects.md holds the full facts and CV text for every project.
 ## My decisions on the rules (override engine/RULES.md)
 - Letters: German for every application.
 
+## Portal answers (the tailor copies these into portal-answers.md for each draft)
+- Start date: 1 March 2026
+- Hours per week: 40
+- Work permit / visa: EU citizen, no permit needed
+- Salary expectation: 52,000-56,000 EUR per year
+- German level: native
+- English level: C1
+- Notice period: none
+- Willing to relocate: within Bayern
+- Driving licence: B
+
 ## Routine settings (read by engine/ROUTINE.md)
 - Scope: junior simulation, Berechnung, CAE, Konstruktion and Entwicklungsingenieur roles in Bayern.
 - Tracker: it only holds sent applications. Sent = I say so, or a confirmation email arrived.

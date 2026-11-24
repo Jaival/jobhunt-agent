@@ -22,7 +22,7 @@ def test_invented_metric_fails(tool, sample):
     edit(sample, APP, "the account gained 1,200 new followers", "website traffic increased by 40%")
     r = tool("build_application.py", APP, "--no-pdf")
     assert r.returncode == 1
-    assert "letter: not in your CV, CLAUDE.md, projects.md or the ad: 40%" in r.stderr
+    assert "letter: not in your CV, CLAUDE.md, projects.md, skills.md or the ad: 40%" in r.stderr
 
 
 def test_thousands_separator_matches_any_form(tool, sample):
@@ -54,7 +54,7 @@ def test_without_ad_json_ad_terms_fail(tool, sample):
 def test_headline_is_checked(tool, sample):
     edit(sample, APP, "Instagram, LinkedIn & Analytics", "Instagram, Salesforce & Analytics")
     r = tool("build_application.py", APP, "--no-pdf")
-    assert r.returncode == 1 and "CV headline: not in your CV, CLAUDE.md, projects.md or the ad: Salesforce" in r.stderr
+    assert r.returncode == 1 and "CV headline: not in your CV, CLAUDE.md, projects.md, skills.md or the ad: Salesforce" in r.stderr
 
 
 def test_exact_case_terms_ignore_ordinary_words(tool, sample):

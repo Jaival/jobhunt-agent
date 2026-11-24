@@ -2,7 +2,8 @@
 
 Rules (every move is printed so the daily brief can list it):
     to _sent/      a draft that has a tracker row (sent)
-    to _archive/   tracker Status "Rejected"; cold (2 follow-ups, the last one 7+ days old, no response);
+    to _archive/   tracker Status "Rejected"; cold (2 follow-up drafts, the last one 7+ days old,
+                   no response; whether you sent them isn't known);
                    an unsent draft with a **Closed:** line in job.md; an unsent draft older than 14 days
     back to _sent/ an archived folder whose tracker row now shows a response that isn't a rejection,
                    an interview date or Status "Interview"/"Offer"
@@ -82,7 +83,7 @@ def decide(bucket, folder, row, today):
         if status == "Applied" and not resp and len(fus) >= 2:
             last = as_date(fus[-1].name[:10])
             if last and (today - last).days >= COLD_WAIT_DAYS:
-                return "archive", f"cold: 2 follow-ups, last on {last:%d.%m.%Y}, no reply"
+                return "archive", f"cold: 2 follow-ups drafted, last on {last:%d.%m.%Y}, no reply"
         return ("sent", "in the tracker (sent)") if bucket == "drafts" else None
     if bucket != "drafts":
         return None

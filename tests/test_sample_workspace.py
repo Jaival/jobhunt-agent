@@ -19,6 +19,28 @@ def test_setup_check_ready(tool):
                for c in result["checks"])
 
 
+def test_setup_check_quiet_prints_no_ok_lines(tool):
+    tool("setup_check.py", "--init")
+    full, quiet = tool("setup_check.py"), tool("setup_check.py", "--quiet")
+    assert quiet.returncode == full.returncode
+    assert any(line.startswith("ok  ") for line in full.stdout.splitlines())
+    assert not any(line.startswith("ok  ") for line in quiet.stdout.splitlines())
+    assert quiet.stdout.splitlines()[0] == full.stdout.splitlines()[0]          # the engine line
+    assert quiet.stdout.strip().splitlines()[-1] == full.stdout.strip().splitlines()[-1]   # READY / NOT READY
+    assert [x for x in full.stdout.splitlines() if x.startswith(("warn", "TODO"))] == [
+        x for x in quiet.stdout.splitlines() if x.startswith(("warn", "TODO"))]
+
+
+def test_setup_check_warns_without_portal_answers(tool, sample):
+    check = lambda: next(c for c in json.loads(tool("setup_check.py", "--init", "--json").stdout)["checks"]
+                         if c["item"] == "CLAUDE.md has a Portal answers section")
+    assert check()["status"] == "ok"
+    claude = sample / "CLAUDE.md"
+    claude.write_text(claude.read_text(encoding="utf-8").replace("## Portal answers", "## Other answers"),
+                      encoding="utf-8")
+    assert check()["status"] == "warn"
+
+
 def test_cv_map_check(tool):
     r = tool("cv_map.py", "check")
     assert r.returncode == 0, r.stdout
@@ -102,3 +124,21 @@ def test_old_config_asks_for_engine_update(tool, sample):
     result = json.loads(tool("setup_check.py", "--init", "--json").stdout)
     version = [c for c in result["checks"] if c["item"] == "config version"][0]
     assert not result["ready"] and version["status"] == "todo" and "update the engine" in version["fix"]
+
+
+def test_university_check(tool, sample):
+    def check():
+        result = json.loads(tool("setup_check.py", "--json").stdout)
+        return result["ready"], [c for c in result["checks"] if c["item"] == "university (student letters name it)"][0]
+    ready, uni = check()
+    assert uni["status"] == "ok"
+    cfg = sample / "config.yaml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("university: Universität Mannheim", "university:"),
+                   encoding="utf-8")
+    ready_after, uni = check()
+    assert uni["status"] == "warn" and "university is empty" in uni["fix"]
+    assert ready_after == ready
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("university:", "university: 42"), encoding="utf-8")
+    ready_after, uni = check()
+    assert uni["status"] == "warn" and "must be a name or a list of names" in uni["fix"]
+    assert ready_after == ready

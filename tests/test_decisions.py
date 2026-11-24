@@ -2,6 +2,8 @@
 next run and carries unticked ones over for 7 days."""
 import re
 
+import pytest
+
 from test_stamping import ENGINE
 
 URL = "https://jobs.example/acme/1"
@@ -76,3 +78,50 @@ def test_routine_line_forms_parse(tool, sample):
     out = tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
     assert out[1:] == ["DO       tailor <url>", "DO       sent <folder>", "DO       skip <folder>"]
     assert "python engine/tools/decisions.py" in routine and "--no-tailor" in routine
+
+
+@pytest.mark.parametrize("box, kind", [
+    ("- [x ]", "DO"), ("- [ x]", "DO"), ("-[x]", "DO"), ("- [X]", "DO"), ("*  [x]", "DO"),
+    ("- []", "KEEP"), ("- [  ]", "KEEP"),
+])
+def test_odd_checkbox_spacing(tool, sample, box, kind):
+    brief(sample, "2026-10-31", f"## Decisions\n{box} Mark as sent: f `sent 2026-10-30_Acme_Marketing`\n")
+    out = tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
+    assert out[1].startswith(kind) and (kind == "KEEP" or out[1] == "DO       sent 2026-10-30_Acme_Marketing")
+
+
+SKILLS = """## Decisions
+- [x] Do you know Agile? (asked by Acme GmbH) `skill Agile=yes Scrum sprints at Example Media`
+- [x] Do you know Google Analytics? (asked by Beta) `skill Google Analytics = learning`
+- [X] Do you know Python? (asked by Beta) `skill Python=no`
+- [x] Do you know SQL? (asked by Beta) `skill SQL=?`
+- [x] Do you know Jira? (asked by Acme GmbH) `skill Jira=yes`
+- [ ] Do you know Excel? (asked by Beta) `skill Excel=?`
+"""
+
+
+def test_skill_questions(tool, sample):
+    brief(sample, "2026-10-30", SKILLS)
+    tool("decisions.py", "done", "2026-10-30", "skill", "Python")
+    r = tool("decisions.py", "--today", "2026-11-01")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.splitlines() == [
+        "from daily/2026-10-30.md",
+        "DO       skill Agile=yes Scrum sprints at Example Media",
+        "DO       skill Google Analytics=learning",
+        "DONE     skill Python",
+        "FIX      - [x] Do you know SQL? (asked by Beta) `skill SQL=?` · since 2026-10-30 · why: write yes <where you "
+        "used it>, learning or no after the = (instead of ?)",
+        "FIX      - [x] Do you know Jira? (asked by Acme GmbH) `skill Jira=yes` · since 2026-10-30 · why: a yes needs "
+        "where you used it (job, project, course): yes <where>",
+        "KEEP     - [ ] Do you know Excel? (asked by Beta) `skill Excel=?` · since 2026-10-30",
+    ]
+
+
+def test_a_fix_line_carried_into_the_next_brief_gets_one_reason(tool, sample):
+    brief(sample, "2026-10-30", SKILLS)
+    fix = [line[9:] for line in tool("decisions.py", "--today", "2026-11-01").stdout.splitlines()
+           if line.startswith("FIX")]
+    brief(sample, "2026-11-01", "## Decisions\n" + "\n".join(fix) + "\n")
+    again = [line for line in tool("decisions.py", "--today", "2026-11-02").stdout.splitlines() if "SQL" in line]
+    assert len(again) == 1 and again[0].count("· why:") == 1

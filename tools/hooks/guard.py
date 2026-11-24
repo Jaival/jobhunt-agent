@@ -5,16 +5,23 @@ setup_check.py --init, starts it through .claude/hooks/jobhunt_guard.py). It rea
 exits 2 with a one-line reason on stderr to block it; the model sees the reason and lists the block in the brief.
 
 What it blocks (docs/spike-scheduled-tasks.md, "Browser and network policy"):
-- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern;
+- writes into engine/, .claude/ and the master CV and letter: file tools by path, Bash/PowerShell by pattern
+  (also downloads with an output file, git commands that change the work tree, and paths through `..`);
 - the tools that send or type data (Gmail send / reply / drafts, browser typing and form filling), also denied
   by the permission rules;
 - curl, wget, Invoke-WebRequest, WebFetch and inline Python HTTP calls to hosts outside the allowlist (the job
-  APIs, plus every host in companies.md and sources.md); to.indeed.com only as the redirect lookup;
+  APIs, every host in sources.md and the careers pages in companies.md); to.indeed.com only as the redirect lookup;
 - URLs that leak: the candidate's name, email, phone, address, birth date or a distinctive last name (also hidden
   in base64, base32, hex or double URL-encoding in any path segment or query value), a long encoded value, an IP
   address, a port or a scheme other than http(s). Browser navigation may go to any host but gets this check, and on
   a host outside companies.md and sources.md also a shorter value that decodes to text or looks random;
-- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...).
+- browser scripts that make network calls (fetch, XMLHttpRequest, sendBeacon, WebSocket, ...);
+- writes to its own files (data/guard.json, data/guard.log), so a run can't hide its blocks;
+- `git push` and `git remote add / set-url / rename` from Bash or PowerShell: the workspace history is never pushed;
+- a URL with a backslash before its path (`https://a.example\\@b.example/`: two programs may read two hosts);
+- a WebSearch query that holds the candidate's name, email or phone number;
+- a reader using the other reader's tools: the ad reader any Gmail tool; the mail reader WebFetch, WebSearch or
+  any MCP tool other than Gmail.
 
 Every call it sees refreshes data/guard.json (the heartbeat, with the session's transcript path); blocks are
 appended to data/guard.log. `python engine/tools/hooks/guard.py --status` prints whether the guard is active in
@@ -24,11 +31,12 @@ reads this session's transcript for tool results saying so and lists them as "re
 
 Limits: plain words in a URL (`?cv=SAP+FI+5+years`) can't be told from a search query, so CV facts that aren't
 personal markers pass, as does text encoded in a way it doesn't try (reversed, ciphered, split over several
-parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would.
-`cd engine && ...`, generated code or an encoded command get past it, and so can a page told something by which URL
-is opened. The permission rules are the main
+parameters). A bare first name or common last name isn't a marker. It reads Bash as text, not as a shell would:
+it follows cd / pushd / Set-Location and plain variable assignments, and blocks a write after a cd it can't follow
+and a curl / wget whose URL it can't read. Generated code or an encoded command get past it, and so can a page told
+something by which URL is opened. The permission rules are the main
 control; this is defence in depth. It never blocks because of its own error: a crash lets the call through and is
-logged.
+logged. `--status` lists such errors.
 """
 import base64
 import binascii
@@ -66,7 +74,8 @@ SHELL_TOOLS = {"Bash", "PowerShell"}
 NAVIGATE = re.compile(r"^mcp__.+__(browser_)?navigate$")
 SCRIPT_TOOLS = re.compile(r"^mcp__.+__(browser_evaluate|javascript_tool)$")
 NETWORK_JS = re.compile(r"\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|\bimport\s*\(|"
-                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|\.submit\s*\(")
+                        r"window\.open|\blocation(\.href)?\s*=(?!=)|\.(src|href|action)\s*=(?!=)|"
+                        r"\.(?:submit|requestSubmit)\s*\(")
 FETCHERS = re.compile(r"(?<![\w-])(curl|wget|Invoke-WebRequest|Invoke-RestMethod|iwr|irm)(?:\.exe)?(?![\w-])", re.I)
 PY_HTTP = re.compile(r"\b(requests|urllib|httpx|http\.client|aiohttp|urlopen)\b")
 INLINE_CODE = re.compile(r"python3?(\.exe)?\s+-c|<<|-Command|\bnode\s+-e")
@@ -81,12 +90,32 @@ LONG_ARGS = {"--output", "--write-out", "--user-agent", "--header", "--data", "-
              "-useragent", "-timeoutsec", "-contenttype"}
 REDIRECT_LOOKUP = re.compile(r"-o\s+(/dev/null|NUL)\b|(?<!\S)(-I|--head|-\w*I)(?!\S)")
 SENDS_DATA = re.compile(r"(?<!\S)(-d|--data\S*|-F|--form\S*|-T|--upload-file|--json|-X\s*(POST|PUT|PATCH))(?!\S)")
-COPY_CMDS = {"cp", "copy", "copy-item", "xcopy", "robocopy", "ln", "unzip", "tar"}
+COPY_CMDS = {"cp", "copy", "copy-item", "cpi", "xcopy", "robocopy", "ln", "unzip", "tar"}
 RUNS_TOOL = re.compile(r"\s*python3?(\.exe)?\s+(\S*[/\\])?engine[/\\]tools[/\\]")
+# A tool call holding one of these runs more than the tool (a substitution, a second line), so it gets the checks.
+RUNS_MORE = re.compile(r"\n|\$\(|`|[<>]\(")
+CD = re.compile(r"^\s*\(?\s*(cd|chdir|pushd|popd|Set-Location|sl|Push-Location|Pop-Location)(?![\w-])(.*)$",
+                re.I | re.S)
+REDIRECT_TO = re.compile(r"(?<![<>])\d?>{1,2}\|?\s*(?!&)([^\s;&|<>()]+)")
+NO_WRITE = {"/dev/null", "nul", "$null"}
+UNRESOLVED = re.compile(r"\$\(|`|<\(")
+# what may stand before a fetcher that runs (rather than a word like `grep curl x`): wrappers, xargs, a substitution
+FETCH_PREFIX = re.compile(r"(?:^\s*(?:\w+=\S*\s+)*(?:(?:sudo|env|command|exec|nohup|time|timeout(?:\s+\S+)?|"
+                          r"xargs(?:\s+-\S+)*|&)\s+)*|(?:\$\(|`|\()\s*)$", re.I)
 HOST = re.compile(r"(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
 WRITE_CMD = re.compile(r"(?<![\w-])(cp|mv|rm|rmdir|tee|touch|truncate|ln|chmod|dd|unzip|tar|sed\s+-i|perl\s+-i|"
                        r"Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item|Rename-Item|"
-                       r"del|erase|copy|move|ren|xcopy|robocopy)(?![\w-])", re.I)
+                       r"del|erase|copy|move|ren|xcopy|robocopy|sc|ac|ri|mi|cpi|ni|rni)(?![\w-])", re.I)
+GIT_CHANGES = re.compile(r"(?<![\w-])git(?:\.exe)?\b.*?\s(checkout|switch|reset|restore|clean|apply|am|merge|pull|"
+                         r"rebase|stash|rm|mv|commit|cherry-pick|revert)(?![\w-])", re.I)
+GIT_SENDS = re.compile(r"(?<![\w-])git(?:\.exe)?\b[^|;&\n]*?\s(push|remote\s+(?:add|set-url|rename))(?![\w-])", re.I)
+DRIVE = re.compile(r"^/([a-zA-Z])/")   # Git Bash: /d/x -> D:/x
+HEREDOC = re.compile(r"<<(-?)[ \t]*")
+SEPARATORS = re.compile(r"&&|\|\||;|\||\r?\n")
+SH_VAR = re.compile(r"""(?:^|(?<=[\s;&|(]))(?:(?:export|local|readonly|declare(?:\s+-\w+)?)\s+)?"""
+                    r"""([A-Za-z_]\w*)=('[^']*'|"[^"]*"|[^\s;&|)]*)""")
+PS_VAR = re.compile(r"""\$(?:env:)?([A-Za-z_]\w*)\s*=\s*(@'.*?'@|@".*?"@|'[^']*'|"[^"]*"|[^\s;|]+)""", re.S)
+VAR_USE = re.compile(r"\$\{([A-Za-z_]\w*)\}|\$(?:env:)?([A-Za-z_]\w*)")
 WRITE_CODE = re.compile(r"open\([^)]*,\s*['\"][^'\"]*[wax+]|write_text|write_bytes|\.unlink|rmtree|os\.remove|"
                         r"os\.rename|os\.replace|shutil\.(copy|move)|\.save\(|WriteAllText|\.touch\(")
 ENCODED = re.compile(r"^(?:[0-9a-f]{64,}|[A-Za-z0-9+/_=-]{64,})$")
@@ -114,14 +143,16 @@ class Block(Exception):
 def config():
     try:
         import yaml
-        return yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8")) or {}
+        cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+        return cfg if isinstance(cfg, dict) else {}
     except Exception:
         return {}
 
 
 def protected(cfg):
-    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the master files."""
-    paths = [ROOT / "engine", ROOT / ".claude"]
+    """Workspace paths (resolved) that tool calls must not write: engine/, .claude/, the guard's own heartbeat and
+    log, the master files."""
+    paths = [ROOT / "engine", ROOT / ".claude", HEARTBEAT, LOG]
     for key in ("master_cv", "master_letter"):
         if cfg.get(key):
             paths.append(ROOT / str(cfg[key]))
@@ -140,7 +171,8 @@ def marker(words):
 def personal(cfg):
     """Regexes for the candidate's name, emails, phone numbers, address and birth date (config.yaml, CLAUDE.md)."""
     out, out.weak = Pii(), []
-    titles = set(re.findall(r"[a-zäöüß]{3,}", str((cfg.get("profile") or {}).get("include_titles")).lower()))
+    profile = cfg.get("profile") if isinstance(cfg.get("profile"), dict) else {}
+    titles = set(re.findall(r"[a-zäöüß]{3,}", str(profile.get("include_titles")).lower()))
     for key in ("applicant", "name_in_master"):
         words = re.findall(r"\w+", str(cfg.get(key) or ""))
         if len(words) >= 2 and str(cfg.get(key)) != "Your Name":
@@ -173,12 +205,19 @@ def personal(cfg):
 
 
 def allowed_hosts():
+    """API_HOSTS, every host in sources.md, and the Careers page column of the companies.md table. The Endpoint
+    column adds nothing: extract.py writes only ATS API endpoints there, whose hosts are in API_HOSTS, so a
+    reader's answer can't widen the list."""
     hosts = set(API_HOSTS)
     for name in ("companies.md", "sources.md"):
         try:
-            hosts |= {h.lower() for h in HOST.findall((ROOT / name).read_text(encoding="utf-8"))}
+            text = (ROOT / name).read_text(encoding="utf-8")
         except OSError:
-            pass
+            continue
+        if name == "companies.md":
+            rows = [line.split("|") for line in text.splitlines() if line.lstrip().startswith("|")]
+            text = "\n".join(cells[2] for cells in rows if len(cells) > 2)
+        hosts |= {h.lower() for h in HOST.findall(text)}
     return hosts
 
 
@@ -276,6 +315,8 @@ def check_url(url, pii, hosts=None, known=None):
     that decodes to text or looks random is refused too."""
     if url in ("about:blank",):
         return
+    if re.match(r"(?:[a-z][a-z0-9+.-]*://)?[^/?#]*\\", url, re.I):
+        raise Block("the URL has a backslash before its path; write the address with forward slashes only")
     parts = urlsplit(url if "://" in url else "https://" + url)
     host = (parts.hostname or "").lower()
     if parts.scheme not in ("http", "https"):
@@ -310,10 +351,11 @@ def check_url(url, pii, hosts=None, known=None):
                         "or sources.md; open the page without that parameter (job pages work without tracking values)")
     if hosts is not None and not host_ok(host, hosts):
         raise Block(f"{host} isn't an allowed API host for curl/WebFetch: read web pages with the obscura "
-                    "browser, or add the company's API endpoint to companies.md")
+                    "browser, or add the company's ATS endpoint with `python engine/tools/extract.py endpoint`")
 
 
 def check_path(path, cwd, protect):
+    path = re.sub(r"^\\\\\?\\(UNC\\)?", lambda m: "\\\\" if m.group(1) else "", str(path))
     p = Path(path)
     p = (p if p.is_absolute() else Path(cwd) / p).resolve()
     for q in protect:
@@ -338,28 +380,237 @@ def path_patterns(protect):
         alt = "|".join(re.escape(f).replace("/", r"[/\\]+") for f in sorted(forms, key=len, reverse=True))
         tail = r"""(?=$|[/\\\s'")])"""
         out.append((rel(q), re.compile(rf"""(?:^|(?<=[\s'"=(,]))(?:\./)?(?:{alt}){tail}""", re.I),
-                    re.compile(rf""">{{1,2}}\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
+                    re.compile(rf""">{{1,2}}\|?\s*['"]?(?:\./)?(?:{alt}){tail}""", re.I)))
     return out
 
 
+def heredoc_word(cmd, i):
+    """(terminator, strip tabs, end) of the heredoc operator `<<` at i, or None. The word may be quoted in parts
+    (`<<E"O"F` ends at a line `EOF`), as Bash reads it."""
+    m = HEREDOC.match(cmd, i)
+    word, j, n = [], m.end(), len(cmd)
+    while j < n and cmd[j] not in " \t\r\n;&|<>()":
+        if cmd[j] in "'\"":
+            k = cmd.find(cmd[j], j + 1)
+            if k < 0:
+                return None
+            word.append(cmd[j + 1:k])
+            j = k + 1
+        elif cmd[j] == "\\" and j + 1 < n:
+            word.append(cmd[j + 1])
+            j += 2
+        else:
+            word.append(cmd[j])
+            j += 1
+    return ("".join(word), bool(m.group(1)), j) if "".join(word) else None
+
+
+def closing(cmd, i):
+    """The index after the parenthesis that closes the one at i (the end of the command if none does)."""
+    depth = 0
+    for j in range(i, len(cmd)):
+        depth += {"(": 1, ")": -1}.get(cmd[j], 0)
+        if depth == 0:
+            return j + 1
+    return len(cmd)
+
+
 def segments(cmd):
-    return re.split(r"&&|\|\||;|\|", cmd)
+    """The command's parts: split on &&, ||, ;, | and line breaks outside quotes. A heredoc body stays with the part
+    that opens it, so the code in `python -c "..."`, a heredoc or a here-string is one part. Comments are dropped,
+    and `<<` inside an arithmetic `$((...))` isn't a heredoc. With unbalanced quotes it splits on every separator."""
+    parts, quote, pending, i, n = [[]], None, [], 0, len(cmd)
+    while i < n:
+        c, cur = cmd[i], parts[-1]
+        word_start = i == 0 or cmd[i - 1] in " \t\r\n;&|("
+        if quote:
+            if c == "\\" and quote == '"' and i + 1 < n:
+                cur.append(cmd[i:i + 2])
+                i += 2
+                continue
+            quote = None if c == quote else quote
+        elif c in "'\"":
+            quote = c
+        elif c == "\\" and i + 1 < n:
+            cur.append(cmd[i:i + 2])
+            i += 2
+            continue
+        elif c == "#" and word_start:
+            i = n if cmd.find("\n", i) < 0 else cmd.find("\n", i)
+            continue
+        elif cmd.startswith("$((", i) or (cmd.startswith("((", i) and word_start):
+            end = closing(cmd, i + (c == "$"))
+            cur.append(cmd[i:end])
+            i = end
+            continue
+        elif cmd.startswith("<<", i) and not cmd.startswith("<<<", i) and (h := heredoc_word(cmd, i)):
+            pending.append((h[0], h[1], cur))
+            cur.append(cmd[i:h[2]])
+            i = h[2]
+            continue
+        elif c == "\n" and pending:
+            end = i                                    # body: up to the line holding each terminator word
+            for word, tabs, part in pending:
+                start = end
+                while end < n:
+                    end = cmd.find("\n", end + 1)
+                    end = n if end < 0 else end
+                    line = cmd[cmd.rfind("\n", 0, end) + 1:end].rstrip("\r")
+                    if (line.lstrip("\t") if tabs else line) == word:
+                        break
+                part.append(cmd[start:end])
+            pending, i = [], end
+            continue
+        elif cmd.startswith(("&&", "||"), i) or c in ";|\n":
+            parts.append([])
+            i += 2 if cmd.startswith(("&&", "||"), i) else 1
+            continue
+        cur.append(c)
+        i += 1
+    if quote:
+        return SEPARATORS.split(cmd)
+    return ["".join(p) for p in parts]
 
 
-def check_writes(cmd, protect):
-    for label, path, redirect in path_patterns(protect):
+def in_quotes(cmd, ps=False):
+    """For each character of cmd: True when it is inside a quoted string (Bash, or PowerShell with ps)."""
+    out, quote, i, n = [False] * len(cmd), None, 0, len(cmd)
+    escape = "`" if ps else "\\"
+    while i < n:
+        c = cmd[i]
+        if quote:
+            out[i] = True
+            if c == escape and quote == '"' and i + 1 < n:
+                out[i + 1] = True
+                i += 2
+                continue
+            quote = None if c == quote else quote
+        elif c in "'\"":
+            quote, out[i] = c, True
+        elif c == escape:
+            i += 1
+        i += 1
+    return out
+
+
+def expand_vars(cmd, ps=False):
+    """The command with $name and ${name} (Bash) or $name and $env:name (PowerShell, with ps) replaced by the value
+    of the last plain assignment before them (Bash name=value, PowerShell $name = value), so a path kept in a
+    variable is checked like one written out. Bash names are case-sensitive, PowerShell names aren't. An assignment
+    inside a quoted string is text, not an assignment. Values computed when the command runs ($(...), read,
+    Join-Path) aren't known and stay as they are."""
+    fold = str.lower if ps else str
+    quoted = in_quotes(cmd, ps)
+    found = sorted((m.start(), m.end(), fold(m.group(1)), m.group(2))
+                   for m in (PS_VAR if ps else SH_VAR).finditer(cmd) if not quoted[m.start()])
+    values = []                                        # (end of assignment, name, value)
+
+    def value(m, pos):
+        name = fold(m.group(1) or m.group(2))
+        hits = [v for end, n, v in values if n == name and end <= pos]
+        return hits[-1] if hits else m.group()
+
+    for start, end, name, raw in found:
+        if raw[:2] in ("@'", '@"'):
+            raw = raw[2:-2].strip("\r\n")
+        elif raw[:1] in "'\"" and len(raw) > 1:
+            raw = raw[1:-1]
+        values.append((end, name, VAR_USE.sub(lambda m, pos=start: value(m, pos), raw)))   # a=x; b=$a/y
+    return VAR_USE.sub(lambda m: value(m, m.start()), cmd) if values else cmd
+
+
+def split_words(text):
+    try:
+        return shlex.split(text, posix=True)
+    except ValueError:
+        return text.split()
+
+
+def touches(seg, cwd, q, bare=False):
+    """True when a path-like word of the command segment resolves to q or a path inside it. Words without a slash
+    count only with bare (after a cd, where `rm RULES.md` may mean engine/RULES.md)."""
+    for w in split_words(seg):
+        for part in re.split(r"[=,]", w):            # --out=engine/x, a,b lists
+            part = part.strip("'\"")
+            if not part or "://" in part or not bare and "/" not in part and "\\" not in part:
+                continue
+            part = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", part) if os.name == "nt" else part
+            part = re.sub(r"^\\\\\?\\", "", part)
+            try:
+                p = (Path(cwd) / part).resolve()
+            except (OSError, ValueError):
+                continue
+            if p == q or q in p.parents:
+                return True
+    return False
+
+
+def with_dirs(segs, cwd):
+    """(segment, directory) for each part that isn't a cd: the directory it runs in after the cd, pushd, popd and
+    Set-Location parts before it, or None after one the guard can't follow (a variable, `-`, a substitution)."""
+    out, here, stack = [], cwd, []
+    for seg in segs:
+        m = CD.match(seg)
+        if not m:
+            out.append((seg, here))
+            continue
+        verb = m.group(1).lower()
+        if verb in ("popd", "pop-location"):
+            here = stack.pop() if stack else None
+            continue
+        if verb in ("pushd", "push-location"):
+            stack.append(here)
+        args = [a for a in split_words(m.group(2).rstrip(") \t\r\n")) if a == "-" or not a.startswith("-")]
+        target = args[0] if args else "~"
+        if here is None or target == "-" or re.search(r"[$`(]", target):
+            here = None
+        else:
+            target = DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", target) if os.name == "nt" else target
+            try:
+                here = str((Path(here) / Path(target).expanduser()).resolve())
+            except (OSError, ValueError, RuntimeError):
+                here = None
+    return out
+
+
+def writes_somewhere(seg):
+    return bool(WRITE_CMD.search(seg) or WRITE_CODE.search(seg) or GIT_CHANGES.search(seg)
+                or any(t.lower() not in NO_WRITE for t in REDIRECT_TO.findall(seg)))
+
+
+def check_writes(cmd, protect, cwd=None):
+    cwd = cwd or str(ROOT)
+    segs = segments(cmd)
+    for seg in segs:
+        m = RUNS_TOOL.match(seg)
+        if m and ".." in re.split(r"[/\\]", seg[m.end():].split()[0] if seg[m.end():].split() else ""):
+            raise Block("run engine tools by their plain path (python engine/tools/<name>.py): no '..' in it")
+    placed = with_dirs(segs, cwd)
+    for seg, here in placed:
+        if here is None and writes_somewhere(seg):
+            raise Block("the command changes into a directory the guard can't follow (a variable, `cd -` or a "
+                        "substitution) and then writes; write the directory out, or use full paths without cd")
+    root = ROOT.resolve()
+    for (label, path, redirect), q in zip(path_patterns(protect), protect):
         if redirect.search(cmd):
             raise Block(f"the command writes into {label}, which is read-only")
-        for seg in segments(cmd):
-            if not path.search(seg) or RUNS_TOOL.match(seg):
+        for seg, here in placed:
+            if here is None:
+                continue
+            bare = Path(here).resolve() != root            # relative words name other paths outside the root
+            if RUNS_TOOL.match(seg) and not RUNS_MORE.search(seg):
+                continue                                   # a plain engine tool call
+            if not (path.search(seg) or touches(seg, here, q, bare)):
                 continue
             m = WRITE_CMD.search(seg)
             if m and m.group(1).lower() in COPY_CMDS:
                 args = seg[m.end():].split()
-                hit = bool(args) and bool(path.search(args[-1]))   # only the last argument is written
+                # only the last argument is written
+                hit = bool(args) and (bool(path.search(args[-1])) or touches(args[-1], here, q, bare))
             else:
                 hit = bool(m) or bool(WRITE_CODE.search(seg))
-            if hit:
+            hit = hit or any(touches(t, here, q, True) for t in REDIRECT_TO.findall(seg) if t.lower() not in NO_WRITE)
+            if hit or FETCHERS.search(seg) or GIT_CHANGES.search(seg):
                 raise Block(f"the command changes {label}, which is read-only: the engine, Claude's settings and "
                             "the master CV and letter are never changed by a run (propose changes in the brief)")
 
@@ -387,6 +638,21 @@ def fetch_targets(seg):
     return out
 
 
+def hidden_targets(fetcher, call):
+    """True when the call reads URLs, options or a body from somewhere the guard can't see (a file, stdin)."""
+    for t in split_words(call)[1:]:
+        if t.startswith("@") or "=@" in t:
+            return True
+        if fetcher == "curl" and (re.fullmatch(r"-[a-zA-Z]*K", t) or t.startswith("--config")):
+            return True
+        if fetcher == "wget" and (re.fullmatch(r"-[a-zA-Z]*[ieB]", t)
+                                  or t.startswith(("--input-file", "--execute", "--config", "--base"))):
+            return True
+        if fetcher in ("invoke-webrequest", "invoke-restmethod", "iwr", "irm") and t.lower() == "-infile":
+            return True
+    return False
+
+
 def check_network(cmd, pii, hosts):
     if not (FETCHERS.search(cmd) or (PY_HTTP.search(cmd) and INLINE_CODE.search(cmd))):
         return
@@ -394,8 +660,14 @@ def check_network(cmd, pii, hosts):
         raise Block("proxy and host-override options aren't allowed")
     for seg in segments(cmd):
         urls = set(re.findall(r"https?://[^\s'\"<>`|;)]+", seg))
-        if FETCHERS.search(seg):
-            urls |= set(fetch_targets(seg[FETCHERS.search(seg).start():]))
+        if m := FETCHERS.search(seg):
+            call = seg[m.start():]
+            targets = fetch_targets(call)
+            if FETCH_PREFIX.search(seg[:m.start()]) and (UNRESOLVED.search(call) or VAR_USE.search(call)
+                                                          or hidden_targets(m.group(1).lower(), call) or not targets):
+                raise Block(f"{m.group(1)} needs its URL written out: no $(...), backticks, variables the guard "
+                            "can't read, URL lists or config files (-K, --config, -i, -e, @file, -InFile)")
+            urls |= set(targets)
         for u in urls:
             if hostname(u) == "to.indeed.com":
                 if not REDIRECT_LOOKUP.search(seg) or SENDS_DATA.search(seg):
@@ -408,21 +680,47 @@ def check_network(cmd, pii, hosts):
         raise Block("the command would send the candidate's name, email or phone number over the network")
 
 
+TAILOR_READ_ONLY = ("skills.md", "CLAUDE.md", "projects.md")
+KEYWORDS_FACT = re.compile(r"keywords\.py\b.*?\bfact\b", re.I | re.S)
+
+
 def check(call):
     tool = call.get("tool_name") or ""
     inp = call.get("tool_input") or {}
     cwd = call.get("cwd") or str(ROOT)
     if SEND_TOOLS.match(tool):
         raise Block(f"{tool} sends or types data; the routine never sends anything (drafts go in applications/)")
+    agent = call.get("agent_type") or ""
+    if agent == "ad-reader" and "gmail" in tool.lower():
+        raise Block("the ad reader has no mail tools; mail goes through the mail reader")
+    if agent == "mail-reader" and (tool in ("WebFetch", "WebSearch")
+                                   or (tool.startswith("mcp__") and "gmail" not in tool.lower())):
+        raise Block("the mail reader only reads Gmail: no web, browser or Indeed tools")
     cfg = config()
+    protect = protected(cfg)
+    if agent == "tailor":
+        # The tailor's facts are the candidate's files: it may not write them, or a failed grounding check could
+        # be "fixed" by adding the claim as a fact (tailor.md Limits). The candidate and the main session can.
+        protect += [(ROOT / name).resolve() for name in TAILOR_READ_ONLY]
+        if tool in SHELL_TOOLS and KEYWORDS_FACT.search(inp.get("command") or ""):
+            raise Block("the tailor doesn't record skills: skills.md holds the candidate's own answers "
+                        "(report the term under actions instead)")
     if tool in FILE_TOOLS:
-        check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protected(cfg))
+        check_path(inp.get("file_path") or inp.get("notebook_path") or "", cwd, protect)
     elif tool in SHELL_TOOLS:
-        cmd = inp.get("command") or ""
-        check_writes(cmd, protected(cfg))
+        cmd = expand_vars(inp.get("command") or "", ps=tool == "PowerShell")
+        if GIT_SENDS.search(cmd):
+            raise Block("the routine never pushes or changes git remotes: the workspace history stays on this "
+                        "computer (the candidate can push from a terminal)")
+        check_writes(cmd, protect, cwd)
         check_network(cmd, personal(cfg), allowed_hosts())
     elif tool == "WebFetch":
         check_url(inp.get("url") or "", personal(cfg), allowed_hosts())
+    elif tool == "WebSearch":
+        query = unquoted(str(inp.get("query") or "")).lower()
+        if any(p.search(query) for p in personal(cfg)):
+            raise Block("the search query contains the candidate's name, email or phone number; search without "
+                        "personal data")
     elif NAVIGATE.match(tool):
         check_url(inp.get("url") or "", personal(cfg), known=allowed_hosts())
     elif SCRIPT_TOOLS.match(tool):
@@ -452,6 +750,8 @@ def beat(call, blocked=None):
     try:
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8")) if HEARTBEAT.exists() else {}
     except (OSError, ValueError):
+        state = {}
+    if not isinstance(state, dict):
         state = {}
     sid = call.get("session_id") or ""
     if state.get("session_id") != sid:
@@ -532,24 +832,30 @@ def status():
     try:
         state = json.loads(HEARTBEAT.read_text(encoding="utf-8"))
         age = (now() - dt.datetime.fromisoformat(state["last_seen"])).total_seconds()
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, TypeError):
         state, age = {}, None
     if age is None or age > FRESH:
         print("guard NOT active: no tool call reached engine/tools/hooks/guard.py in this session. The task must be "
               "a local Code-tab task on this folder; run python engine/tools/setup_check.py --init")
         return 1
-    reasons = []
-    if state.get("blocked") and LOG.exists():
+    reasons, errors = [], 0
+    if LOG.exists():
         for line in LOG.read_text(encoding="utf-8").splitlines():
             try:
                 e = json.loads(line)
             except ValueError:
                 continue
             if e.get("session_id") == state.get("session_id"):
-                reasons.append(f"{e.get('tool')}: {e.get('reason')}")
+                if "error" in e:
+                    errors += 1
+                else:
+                    reasons.append(f"{e.get('tool')}: {e.get('reason')}")
     refused = refusals(state)
     print(f"guard active: {state.get('calls', 0)} call(s) checked, {state.get('blocked', 0)} blocked"
           + (f", {len(refused)} refused by the permission rules" if refused else "") + " this session")
+    if errors:
+        print(f"  guard errors: {errors} call(s) passed unchecked because the guard itself failed (data/guard.log); "
+              "say 'update the engine'")
     for r in reasons[-10:]:
         print(f"  blocked {r}")
     for tool, what, why in refused[-10:]:
@@ -567,14 +873,21 @@ def main():
     try:
         check(call)
     except Block as e:
-        beat(call, str(e))
         print(f"guard: {e}", file=sys.stderr)
+        try:
+            beat(call, str(e))
+        except Exception:
+            pass  # the block stands even if the heartbeat can't be written
         return 2
     except Exception as e:  # never block because of the guard's own bug
-        beat(call)
+        try:
+            beat(call)
+        except Exception:
+            pass
         try:
             with LOG.open("a", encoding="utf-8") as f:
-                f.write(json.dumps({"time": now().isoformat(timespec="seconds"), "error": repr(e)}) + "\n")
+                f.write(json.dumps({"time": now().isoformat(timespec="seconds"),
+                                    "session_id": call.get("session_id") or "", "error": repr(e)}) + "\n")
         except OSError:
             pass
         return 0

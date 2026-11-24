@@ -6,14 +6,15 @@ Argument: the job's link (`https://...`; for Indeed the `viewjob?jk=` link). One
 and rules as the daily run (engine/ROUTINE.md steps 2-5, RULES.md): never read the ad yourself, never send
 anything. This replaces the daily routine for this conversation. Run everything from the workspace folder.
 
-1. `python engine/tools/setup_check.py`. On NOT READY, say what is TODO and stop.
+1. `python engine/tools/setup_check.py --quiet`. On NOT READY, say what is TODO and stop.
 2. `python engine/tools/extract.py add <url>`.
    - `FAILED`: say why (for example an Indeed short link) and stop.
    - `SEEN`: tell the user the earlier verdict, score and date (`python engine/tools/ledger.py show <url>`), and
      ask whether to tailor it again. Stop on a no.
 3. If it printed a `read ...` line, call the ad-reader subagent (Agent tool, subagent_type `ad-reader`) with that
-   line only. Write its reply unchanged to data/ads/incoming.json and run
-   `python engine/tools/extract.py save data/ads/incoming.json`. `UNREAD` or `CLOSED`: tell the user and stop.
+   line only, `run_in_background: false`. A hook saves its reply: run
+   `python engine/tools/extract.py save data/ads/incoming/`. Only if that prints "no reader replies", write the
+   reply unchanged to data/ads/incoming.json and save that file instead. `UNREAD` or `CLOSED`: tell the user and stop.
    `FAILED`: send the task once more, then stop. Without the ad-reader subagent, stop: say "ad reader missing:
    run setup_check.py --init".
 4. Score it as ROUTINE.md step 4: five sub-scores against engine/rubric.md from data/ads/<id>.json, then
@@ -27,6 +28,6 @@ anything. This replaces the daily routine for this conversation. Run everything 
    the CV map or config.yaml has `layout: none`). Don't write job.md, application.md or the letter yourself.
 7. `python engine/tools/ledger.py set <url> --verdict tailored --score N --model <your model id>` when the tailor
    built or wrote it.
-8. Reply: the score with its sub-scores and reasons, the tailor's `build`, `pdfs`, `personalise`, `grounding` and
-   `actions` lines, the folder, and "say 'sent <folder>' when you have sent it". Offer an outreach note
+8. Reply: the score with its sub-scores and reasons, the tailor's `build`, `pdfs`, `personalise`, `grounding`, `keywords` and
+   `actions` lines, the folder, and "say 'sent <folder>' when you have sent it" and "say 'revise <folder>: <change>' to change it". Offer an outreach note
    (playbook E) only as a draft.

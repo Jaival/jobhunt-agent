@@ -74,6 +74,9 @@ def test_install_merges_and_is_idempotent(tmp_path):
     assert "jobhunt_guard.py" in data["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
     assert (tmp_path / ".claude" / "hooks" / "jobhunt_guard.py").is_file()
     assert "file .claude/hooks/jobhunt_guard.py" in added
+    reader = data["hooks"]["SubagentStop"][0]
+    assert reader["matcher"] == "ad-reader|mail-reader" and "reader_reply.py" in reader["hooks"][0]["command"]
+    assert (tmp_path / ".claude" / "hooks" / "reader_reply.py").is_file()
     assert data["permissions"]["allow"] == ["Bash(git status)", "Bash(python engine/tools/*)"]
     assert data["permissions"]["deny"].count("mcp__*__reply") == 1
     assert set(DENY) | {"Edit(/cv/Me_CV.docx)"} == set(data["permissions"]["deny"])
@@ -101,7 +104,7 @@ def test_install_removes_a_deny_for_agent_with_a_backup(tmp_path):
 def test_hooks_are_merged_by_command():
     want = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
     have = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python g.py"}]}]}}
-    assert permissions.merge(have, want) == (have, [])
+    assert permissions.merge(have, want) == (want, ["matcher PreToolUse *"])   # the engine's matcher wins
     merged, added = permissions.merge({}, want)
     assert merged["hooks"] == want["hooks"] and added == ["hook PreToolUse python g.py"]
 
@@ -144,3 +147,57 @@ def test_migrate_adds_rules_to_existing_settings(tool_de, sample_de):
     assert (sample_de / ".claude" / "settings.local.json").read_text(encoding="utf-8") == \
         '{"permissions": {"allow": ["Bash(ls)"]}}'
     assert "permission rules: all in place" in tool_de("upgrade.py", "migrate").stdout
+
+
+# Tools the daily run, the skills or the candidate's own sessions in a workspace call (transcripts 2026-09-28 to
+# 2026-11-08). A tool-name deny removes the tool from every session in the workspace, so none may match these.
+USED = ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "Agent", "Skill", "ToolSearch", "WebFetch", "WebSearch",
+        "Monitor", "TaskStop", "AskUserQuestion", "SendUserFile", "SuggestSkills", "ListSkills", "SearchSkills",
+        "SendMessage", "SubagentHandback", "mcp__ccd_turn__update_plan", "mcp__ccd_turn__wrap_up",
+        "mcp__ccd_pr__get_status", "mcp__obscura__browser_navigate", "mcp__obscura__browser_markdown",
+        "mcp__Claude_Browser__navigate", "mcp__visualize__show_widget", "mcp__scheduled-tasks__list_scheduled_tasks",
+        "mcp__claude_ai_Gmail__search_threads", "mcp__claude_ai_Gmail__get_thread", "mcp__claude_ai_Indeed__search_jobs"]
+
+
+def removes(rule, tool):
+    """A bare tool-name deny: a name or glob for the whole name, or an MCP server (mcp__<server>)."""
+    return fnmatch.fnmatchcase(tool, rule) or (rule.count("__") == 1 and tool.startswith(rule + "__"))
+
+
+@pytest.mark.parametrize("tool", USED)
+def test_no_deny_rule_removes_a_tool_in_use(tool):
+    assert not [r for r in TOOL_RULES if removes(r, tool)]
+
+
+def test_unused_desktop_tools_are_denied():
+    """Their schemas loaded on every call of the daily run (docs/research/token-usage-2026-11-08.md)."""
+    assert {"SuggestPluginInstall", "SearchPlugins", "mcp__terminal", "mcp__ccd_session", "mcp__claude-in-chrome"} <= set(DENY)
+    assert removes("mcp__ccd_session", "mcp__ccd_session__spawn_task")
+    assert not removes("mcp__ccd_session", "mcp__ccd_session_mgmt__get_session")
+
+
+def test_merge_updates_the_matcher_of_an_existing_hook(tmp_path):
+    want = permissions.wanted()
+    old = json.loads(json.dumps(want))
+    old["hooks"]["PreToolUse"][0]["matcher"] = "Bash|Write"
+    merged, added = permissions.merge(old, want)
+    assert merged["hooks"]["PreToolUse"][0]["matcher"] == want["hooks"]["PreToolUse"][0]["matcher"]
+    assert len(merged["hooks"]["PreToolUse"]) == 1
+    assert any(a.startswith("matcher PreToolUse") for a in added)
+    assert permissions.merge(merged, want)[1] == []
+
+
+def test_install_saves_an_edited_claude_file_before_replacing_it(tmp_path):
+    import datetime as dt
+    permissions.install(tmp_path)
+    agent = tmp_path / ".claude" / "agents" / "tailor.md"
+    template = (permissions.TEMPLATE.parent / "agents" / "tailor.md").read_text(encoding="utf-8")
+    agent.write_text(template + "my own line\n", encoding="utf-8")
+    added = permissions.install(tmp_path)
+    folder = f"claude-files-{dt.date.today().isoformat()}"
+    assert agent.read_text(encoding="utf-8") == template
+    keep = tmp_path / "backups" / folder / "agents" / "tailor.md"
+    assert keep.read_text(encoding="utf-8").endswith("my own line\n")
+    assert f"saved the old .claude/agents/tailor.md to backups/{folder}/" in added
+    assert not [a for a in permissions.install(tmp_path) if a.startswith("saved ")]
+    assert [p.name for p in keep.parent.iterdir()] == ["tailor.md"]

@@ -9,10 +9,13 @@ def test_record_leaves_unread_jobs_out_and_closes_gone_pages(ledger_mod, monkeyp
     cands.write_text(json.dumps({"jobs": [
         dict(job, id="an-1", title="Werkstudent Marketing", url="https://example.org/1"),
         dict(job, id="an-2", title="Werkstudent Vertrieb", url="https://example.org/2", read_error="blocked"),
-        dict(job, id="an-3", title="Werkstudent IT", url="https://example.org/3", read_error="gone")]}),
+        dict(job, id="an-3", title="Werkstudent IT", url="https://example.org/3", read_error="gone"),
+        dict(job, id="an-4", title="Werkstudent Einkauf", url="https://example.org/4")]}),
         encoding="utf-8")
     monkeypatch.setattr(ledger_mod, "CANDIDATES", cands)
     monkeypatch.setattr(sys, "argv", ["ledger.py", "record"])
+    import extract
+    monkeypatch.setattr(extract, "has_extract", lambda job_id: job_id != "an-4")
     assert ledger_mod.main() == 0
-    assert "recorded 2 new jobs, 2 in ledger; 1 unread job(s) left out" in capsys.readouterr().out
+    assert "recorded 2 new jobs, 2 in ledger; 2 unread job(s) left out" in capsys.readouterr().out
     assert {r["job_id"]: r["verdict"] for r in ledger_mod.load()} == {"an-1": "screened", "an-3": "closed"}

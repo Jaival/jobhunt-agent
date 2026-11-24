@@ -46,14 +46,14 @@ Add a table to job.md for every tailored job, in two passes:
 ## D. CV and letter quality checks
 Before converting to PDF, check each tailored CV and letter:
 - **Six-second test:** the top third of the CV (headline + profile) makes the target role and the strongest matching skill obvious. If a recruiter would have to hunt for the fit, rewrite the profile summary (still a surgical edit, CLAUDE.md rule 5).
-- **Keyword coverage:** list the ad's 8-15 key terms (tools, methods, role words) in job.md as "covered" (appears truthfully in the CV or letter) or "missing". A missing term goes into the CV only if the master CV or CLAUDE.md backs it. No keyword stuffing, no hidden text, never a skill I don't have.
+- **Keyword coverage:** `python engine/tools/keywords.py check applications/<folder>` matches the ad's key terms (the extract's `keywords`) against the CV, the letter and my files (skills.md included) and gives the ATS match. Copy its table and last line into job.md. Without keywords in the extract (an older one), list the ad's 8-15 key terms by hand as "covered" or "missing". A missing term goes into the CV only if the master CV, CLAUDE.md or a skills.md `yes` row backs it. No keyword stuffing, no hidden text, never a skill I don't have.
 - **Bullets:** prefer "action + system + tool + outcome". Avoid weak openers ("helped", "assisted", "responsible for", "worked on") when the master CV supports a stronger true verb.
 - **Never claim authorship** of a tool, repo or project unless the master CV or CLAUDE.md says I built it.
 - **Recruiter check (per tailored job, in job.md under "Recruiter check"):** act as a senior technical recruiter for this exact role and write, bluntly:
   1. One line on what pulls the fit score down.
   2. The top 5 missing or underrepresented keywords: where in the ad each appears (Aufgaben / Profil / title) and how important it is. Reuse the keyword table; don't repeat it.
   3. The 3 red flags a hiring manager would spot in ten seconds for *this* ad (e.g. old/short experience, student status not visible, German level, location), and how the CV headline or letter handles each one.
-- **ATS and six-second check (per built CV):** extract the PDF text (pypdf) and confirm: the applicant name from config.yaml is the first line; title/author metadata are set; the file name starts with the file prefix from config.yaml; and how many of the ad's key terms appear in the CV text (list the missing ones in job.md). Then name where a hiring manager's eyes land first and whether the headline answers "student, which role, strongest matching skill". If CLAUDE.md records that the candidate keeps a table or column layout, don't flag it again.
+- **ATS and six-second check (per built CV):** extract the PDF text (pypdf) and confirm: the applicant name from config.yaml is the first line; title/author metadata are set; the file name starts with the file prefix from config.yaml; and the ATS match from keywords.py (above). Then name where a hiring manager's eyes land first and whether the headline answers "student, which role, strongest matching skill". If CLAUDE.md records that the candidate keeps a table or column layout, don't flag it again.
 
 ## E. Outreach to one real person (drafts only)
 For every tailored job with score >= 70, create `outreach.md` in its folder:

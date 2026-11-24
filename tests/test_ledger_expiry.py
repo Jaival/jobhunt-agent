@@ -55,6 +55,8 @@ def test_record_reuses_the_expired_row(ledger_mod, monkeypatch, capsys, tmp_path
                                                title="Werkstudent Marketing", url="https://example.org/2",
                                                posted="2026-10-27")]}), encoding="utf-8")
     monkeypatch.setattr(ledger_mod, "CANDIDATES", cands)
+    import extract
+    monkeypatch.setattr(extract, "has_extract", lambda job_id: True)
     assert "recorded 1 new jobs, 1 in ledger" in run(ledger_mod, monkeypatch, capsys, "record")
     [row] = ledger_mod.load()
     assert row["first_seen"] == f"{dt.date.today():%Y-%m-%d}" and row["verdict"] == "screened"

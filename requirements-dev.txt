@@ -1,4 +1,5 @@
-# For working on the engine: the runtime packages plus the test runner.
+# For working on the engine: the runtime packages plus the test runner and the linter.
 # Install: python -m pip install -r requirements-dev.txt, then python -m pytest tests
 -r requirements.txt
 pytest==9.1.1
+ruff==0.17.4
