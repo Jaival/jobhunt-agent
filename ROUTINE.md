@@ -52,7 +52,7 @@ Today = the current local date. Work in this order. All tools run from the works
 - **Record the outcome in the ledger:** `python engine/tools/ledger.py record --model <your model id>` (adds every job in candidates.json), then `python engine/tools/ledger.py set <url or key> --verdict screened|skipped|closed|tailored --score N --subscores skills=N seniority=N language=N location=N hours=N --model <your model id> --note "<reason>"` for each job you scored or skipped (`--subscores` only for jobs you scored; not for UNREAD jobs: `record` leaves them out so they come back), including jobs from Indeed, Gmail and the browser (add them to candidates.json first or `set` by URL after `record`).
 
 5. Tailor (weekdays only)
-- Tailor the top 3 (score >= 70, no hard mismatch) plus every other student role scoring >= 70, up to 6 per run; list further ones in the brief. On Monday, jobs the weekend briefs list with a score >= 70 and no hard mismatch come first and count toward the 6.
+- Tailor the top 3 (score >= 70, no hard mismatch) plus every other student role scoring >= 70, up to 6 per run; list further ones in the brief. Apply early: when two jobs are within 5 points of each other, the newer ad (the `posted` date on search_jobs.py's NEW line) goes first; early applicants are read first and many ads fill within days. On Monday, jobs the weekend briefs list with a score >= 70 and no hard mismatch come first and count toward the 6.
 - Backlog limit: if more than 10 drafts from the last 14 days are unsent (tracker/applications.md, "Drafts not sent yet"), tailor only the top 3 and say so.
 - **One `tailor` subagent per job** (.claude/agents/tailor.md: a fresh context with the candidate's files, no web, mail or browser tools). For each selected job, create the empty folder applications/<today>_<Company>_<Role>/ and call the Agent tool (subagent_type `tailor`, `run_in_background: false`) with one task line:
   `tailor <id> | applications/<folder> | score <N> (skills=N seniority=N language=N location=N hours=N) | <role type> | <reasons and gaps from step 4> | <notes>`
@@ -93,12 +93,12 @@ The first line says which engine and model made the brief: `engine 0.3.0 (a1b2c3
   - Then the `KEEP` lines from decisions.py unchanged; don't add a new line for an action and target a KEEP line already has.
   - Below the checklist, "Done from your decisions": each `DO` line and what happened (folder tailored, tracker row added, folder archived, or the error). Leave out the section when there is nothing to list.
 - Summary line: jobs found / new / tailored / follow-ups due.
-- "Apply today" table, top 3: role type, role, company, score, German, location/commute, link, folder, ATS match, and one sentence on what to personalise. Include a student role when one scores >= 70.
+- "Apply today" table, top 3: role type, role, company, score, posted (`N days ago`, `?` when unknown), German, location/commute, link, folder, ATS match, and one sentence on what to personalise. Include a student role when one scores >= 70.
 - "Your actions": anything only the candidate can do (sends, portal profiles, approvals of new variants, tracker rows added from emails to double-check).
 - "Follow-ups": drafted today (1st / 2nd step), due in the next days, cold ones.
 - Plan for today: the daily plan from CLAUDE.md "Routine settings" (for example triage, applying to the top 2-3 and their LinkedIn notes, evening follow-ups, one concrete small portfolio step continuing yesterday's, language practice).
 Bottom half inside `<details><summary>Details</summary> ... </details>` (leave a blank line after the summary line so the Markdown inside renders):
-- "Student roles" 60+ not tailored, grouped by type; "Also worth a look" 60-69; "Skipped" with reasons (below 60, experienced, out of scope, repeats, closed).
+- "Student roles" 60+ not tailored, grouped by type, and "Also worth a look" 60-69, each with its posted age (`N days ago` / `?`); "Skipped" with reasons (below 60, experienced, out of scope, repeats, closed).
 - "Drafts waiting to be sent" (last 14 days, newest first, score, age, closed ones marked).
 - "Folder moves": every move from `engine/tools/archive.py auto` and `add_applied.py` (folder, from → to, reason).
 - "Reach out": outreach contacts drafted today.
